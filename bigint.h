@@ -1,4 +1,4 @@
-#include<bits/stdc++.h>
+#include <vector>
 #include <boost/multiprecision/gmp.hpp>
 using namespace boost::multiprecision;
 using BigInt = mpz_int;
