@@ -78,7 +78,7 @@ int main() {
    RelationGenerator manager;
    for(int phi = 0;phi <= 6;phi++) {
       for(int sigma = 0;sigma <= 6;sigma++) {
-         for(int s = phi + sigma + 2;s <= phi + sigma + 4;s++) {
+         for(int s = phi + sigma + 2;s <= phi + sigma + 6;s++) {
             Fraction<Univariate> frac = get_fraction(phi, sigma, s);
             string name = "L(Phi^" + to_string(phi) + " * Sigma^" + to_string(sigma)
              + ", " + to_string(s) + ")";
@@ -86,7 +86,7 @@ int main() {
             cout << name << endl;
             cout << toString(frac.getNumerator(), "X") << "/" << toString(frac.getDenominator(), "X") << endl;
             
-            manager.addFraction(name, frac);
+            manager.addFraction(name, frac);            
          }
       }
    }
