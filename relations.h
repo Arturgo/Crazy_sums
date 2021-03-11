@@ -7,7 +7,7 @@ struct RelationGenerator {
 
    vector<Univariate> polynomial_basis;
    
-   void addPolynomial(Univariate poly);
+   void addPolynomial(Univariate poly, int index = 0);
    vector<pair<int, int>> decompose(Univariate poly);
    void addFraction(string name, Fraction<Univariate> frac);
    
@@ -22,8 +22,8 @@ void RelationGenerator::addFraction(string name, Fraction<Univariate> frac) {
    addPolynomial(frac.getDenominator());
 }
 
-void RelationGenerator::addPolynomial(Univariate poly) {
-   for(int iElement = 0;iElement < (int)polynomial_basis.size();iElement++) {
+void RelationGenerator::addPolynomial(Univariate poly, int index) {
+   for(int iElement = index;iElement < (int)polynomial_basis.size();iElement++) {
    	if(poly.size() <= 1) {
    		return;
    	}
@@ -41,7 +41,7 @@ void RelationGenerator::addPolynomial(Univariate poly) {
       	element = element / pgcd;
       }
       
-      addPolynomial(element);
+      addPolynomial(element, iElement);
       
       while(poly % pgcd == Univariate(0))
       	poly = poly / pgcd;
@@ -95,12 +95,39 @@ void RelationGenerator::printRelations() {
    cerr << rows.nbRows() << " " << rows.nbCols() << endl;
    cerr << "Simplifying.." << endl;
    
-   Matrix<Rational> relations = LLL(rows, Rational(3) / Rational(4));
+   // On vire les colonnes inutiles
+   Matrix<Rational> cleaned_rows(rows.nbRows(), 0);
+   
+   vector<size_t> iCol_in_rows;
+   
+   for(size_t iCol = 0;iCol < rows.nbCols();iCol++) {
+   	bool isNull = true;
+   	for(size_t iRow = 0;iRow < rows.nbRows();iRow++) {
+   		if(!(rows.coeffs[iRow][iCol] == Rational(0))) {
+   			isNull = false;
+   		}
+   	}
+   	
+   	if(!isNull) {
+   		iCol_in_rows.push_back(iCol);
+   		
+   		for(size_t iRow = 0;iRow < rows.nbRows();iRow++) {
+   			cleaned_rows.coeffs[iRow].push_back(rows.coeffs[iRow][iCol]);
+			}
+   	}
+   }
+   
+   cerr << "Matrix simplified. Size : " << endl;
+   cerr << cleaned_rows.nbRows() << " " << cleaned_rows.nbCols() << endl;
+   cerr << "Simplifying.." << endl;
+   
+   Matrix<Rational> relations = LLL(cleaned_rows, Rational(3) / Rational(4));
+   //Matrix<Rational> relations = row_echelon_form(rows);
    
    for(const vector<Rational>& relation : relations.coeffs) {
       for(size_t iCol = 0;iCol < relation.size();iCol++) {
          if(!(relation[iCol] == Rational(0))) {
-            cout << names[iCol] << "^" << toString(relation[iCol]) << " ";
+            cout << names[iCol_in_rows[iCol]] << "^" << toString(relation[iCol]) << " ";
          }
       }
       cout << "= 1" << endl;

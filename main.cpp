@@ -76,9 +76,9 @@ int main() {
    y.setCoeff(1, U);
    
    RelationGenerator manager;
-   for(int phi = 0;phi <= 6;phi++) {
-      for(int sigma = 0;sigma <= 6;sigma++) {
-         for(int s = phi + sigma + 2;s <= phi + sigma + 6;s++) {
+   for(int phi = 0;phi <= 3;phi++) {
+      for(int sigma = 0;sigma <= 3;sigma++) {
+         for(int s = phi + sigma + 2;s <= phi + sigma + 8;s++) {
             Fraction<Univariate> frac = get_fraction(phi, sigma, s);
             string name = "L(Phi^" + to_string(phi) + " * Sigma^" + to_string(sigma)
              + ", " + to_string(s) + ")";
