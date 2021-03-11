@@ -5,7 +5,7 @@ class Fraction {
 public:
   Fraction(T _numerator, T _denominator);
   Fraction(T _numerator);
-  Fraction(int64_t _constant);
+  Fraction(int64_t _constant = 0);
   T getNumerator() const;
   T getDenominator() const;
 private:
