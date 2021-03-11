@@ -121,8 +121,9 @@ void RelationGenerator::printRelations() {
    cerr << cleaned_rows.nbRows() << " " << cleaned_rows.nbCols() << endl;
    cerr << "Simplifying.." << endl;
    
-   Matrix<Rational> relations = LLL(cleaned_rows, Rational(3) / Rational(4));
-   //Matrix<Rational> relations = row_echelon_form(rows);
+   //Matrix<Rational> relations = LLL(cleaned_rows, Rational(3) / Rational(4));
+   //Matrix<Rational> relations = row_echelon_form(cleaned_rows);
+   Matrix<Rational> relations = cleaned_rows;
    
    for(const vector<Rational>& relation : relations.coeffs) {
       for(size_t iCol = 0;iCol < relation.size();iCol++) {

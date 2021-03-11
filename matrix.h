@@ -3,6 +3,8 @@ using namespace std;
 
 // We work with row vectors
 
+// TODO : adapt the algorithm to sparse matrix
+
 template<typename T>
 vector<T> operator + (const vector<T>& a, const vector<T>& b) {
    vector<T> res(b.size(), T(0));
