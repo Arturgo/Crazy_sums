@@ -2,6 +2,8 @@
 #include "relations.h"
 using namespace std;
 
+#define PRIME 53
+
 Univariate X, U;
 
 Bivariate x, y, u;
@@ -74,25 +76,46 @@ int main() {
    u.setCoeff(0, U);
    x.setCoeff(0, X);
    y.setCoeff(1, U);
-   
+
+   modulo.value = PRIME;
+   inverseTable.push_back(BigInt(0));
+   for (int i = 1; i < PRIME; i++) {
+      int j = 1;
+      while ((i*j)%PRIME != 1) {
+         j++;
+      }
+      inverseTable.push_back(BigInt(j));
+   }
+
+   BigInt p = PRIME;
+   BigInt inv[PRIME];
+   for (int i = 1; i < PRIME; i++) {
+      int j = 1;
+      while ((i*j)%PRIME != 1) {
+         j++;
+      }
+      inv[i] = j;
+   }
    RelationGenerator manager;
    for(int phi = 0;phi <= 2;phi++) {
       for(int sigma = 0;sigma <= 2;sigma++) {
-         for(int s = phi + sigma + 2;s <= phi + sigma + 14;s++) {
+         for(int s = phi + sigma + 2;s <= phi + sigma + 5;s++) {
             Fraction<Univariate> frac = get_fraction(phi, sigma, s);
             string name = "L(Phi^" + to_string(phi) + " * Sigma^" + to_string(sigma)
              + ", " + to_string(s) + ")";
-            
+            //decompose(frac.getNumerator(), p, inv);
+            //decompose(frac.getDenominator(), p, inv);
             cout << name << endl;
             cout << toString(frac.getNumerator(), "X") << "/" << toString(frac.getDenominator(), "X") << endl;
             
-            manager.addFraction(name, frac);            
+            //manager.addFraction(name, frac);            
+            manager.addFraction2(name, frac);            
          }
       }
    }
    
    cerr << "Data generated" << endl;
    
-   manager.printRelations();
+   manager.printRelations2();
    return 0;
 }

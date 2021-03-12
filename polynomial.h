@@ -139,8 +139,12 @@ Rational leading(const Rational& a) {
   return a;
 }
 
+Modular leading(const Modular& a) {
+  return a;
+}
+
 template<typename T>
-Rational leading(const Polynomial<T>& a) {
+T leading(const Polynomial<T>& a) {
   return leading(a.getCoeff(a.size() - 1));
 }
 
@@ -166,6 +170,44 @@ string toString(const Polynomial<T>& poly, string variable, Args... args) {
   }
   
   return "(" + result + ")";
+}
+
+template<typename T>
+Polynomial<T> quotient(Polynomial<T> num, Polynomial<T> div) {
+  vector<T>vect;
+  if (num.size() < div.size()) return vect;
+  //cout << "quotient : " << toString(num, "X") << "/" << toString(div, "X") << " ->";
+  while (vect.size() <= num.size() - div.size()) {
+    vect.push_back(0);
+  }
+  while (num.size() >= div.size()) {
+    T lead = num.getCoeff(num.size() - 1) / div.getCoeff(div.size() - 1);
+    vect[num.size() - div.size()] = lead;
+    //cout << "(" << num.size() - div.size() << "," << lead.value << ") ";
+    num = num - (lead * div << (num.size() - div.size()));
+  }
+  //cout << endl;
+
+  Polynomial<T> p(vect);
+  //cout << " " << toString(p, "Y") << endl;;
+  p.reduce();
+  //cout << " " << toString(p, "Y") << " " << vect.size() << endl;
+  if (num.size() != 0) {
+    vector<T> vect2;
+    return vect2;
+  } else {
+    return p;
+  }
+}
+
+template<typename T>
+Polynomial<T> remainder(Polynomial<T> num, Polynomial<T> div) {
+  while (num.size() >= div.size()) {
+    T lead = num.getCoeff(num.size() - 1) / div.getCoeff(div.size() - 1);
+    num = num - (lead * div << (num.size() - div.size()));
+  }
+
+  return num;
 }
 
 typedef Polynomial<Rational> Univariate;
@@ -235,6 +277,72 @@ Polynomial<T> univariate_gcd(Polynomial<T> a, Polynomial<T> b) {
 }
 
 template<typename T>
+Polynomial<T> modular_gcd(Polynomial<T> a, Polynomial<T> b) {
+  //cout << "gcd1 of " << toString(a, "X") << " "  << toString(b, "X") << endl;
+  a = a / a.getCoeff(a.size() - 1);
+  b = b / b.getCoeff(b.size() - 1);
+  //cout << "gcd2 of " << toString(a, "X") << " "  << toString(b, "X") << endl;
+  if(a.size() > b.size()) {
+    return univariate_gcd(b, a);
+  }
+  
+  //cout << "gcd3 of " << toString(a, "X") << " "  << toString(b, "X") << endl;
+  if(a.size() == 0) {
+    return b;
+  }
+
+  T factor = b.getCoeff(b.size() - 1);
+  b = a.getCoeff(a.size() - 1) * b;
+  return modular_gcd(b - ((factor * a) << (b.size() - a.size())), a);
+}
+
+template<typename T>
+Polynomial<T> integrals_gcd(Polynomial<T> a, Polynomial<T> b, BigInt p, BigInt invertTable[]) {
+  //cout << "level x of gcd" << endl;
+  //cout << "gcd of :" << (p + a.getCoeff(a.size() - 1)%p)%p << " : " << toString(a, "X") << "; " << (p + b.getCoeff(b.size() - 1)%p)%p << " : " << toString(b, "X") << endl;
+  int headA = static_cast<long>((p + a.getCoeff(a.size() - 1)%p)%p );
+  BigInt invA = invertTable[headA];
+  int headB = static_cast<long>((p + b.getCoeff(b.size() - 1)%p)%p );
+  BigInt invB = invertTable[headB];
+  //cout << "starts unitarizing" << endl;
+  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
+    a.setCoeff(iCoeff, (p + (a.getCoeff(iCoeff) * invA) % p) %p);
+  }
+  a.reduce();
+  for (int iCoeff = 0; iCoeff < (int)b.size(); iCoeff++) {
+    b.setCoeff(iCoeff, (p + (b.getCoeff(iCoeff) * invB) % p) %p);
+  }
+  b.reduce();
+  //cout << "unitarised of :" << (p + a.getCoeff(a.size() - 1)%p)%p << " : " << invA << " " << toString(a, "X") << "; " << (p + b.getCoeff(b.size() - 1)%p)%p << " : " << invB << " " << toString(b, "X") << endl;
+
+  if(a.size() > b.size()) {
+    //cout << "restart" << endl;
+    return integrals_gcd(b, a, p, invertTable);
+  }
+  //cout << a.size() << endl;
+  if(a.size() == 0) {
+    //return b;
+    long commonFactor = (long)((p + b.getCoeff(b.size() - 1)%p )%p);
+    //cout << "common factor " << commonFactor << " " << b.size() << endl;
+    for(int iCoeff = 0;iCoeff < (int)b.size();iCoeff++) {
+      //cout << "here  " << iCoeff << endl;
+      b.setCoeff(iCoeff, (p + (b.getCoeff(iCoeff) * invertTable[commonFactor]) % p)%p);
+      //cout << "there " << iCoeff << endl;
+    }
+    //cout << "left" << endl;
+    b.reduce();
+    return b;//toMonic(b / commonFactor);
+  }
+  /*T commonFactor = gcd(a.getCoeff(a.size() - 1), b.getCoeff(b.size() - 1));
+  
+  T factor = b.getCoeff(b.size() - 1) / commonFactor;
+  b = (a.getCoeff(a.size() - 1) / commonFactor) * b;*/
+  //cout << toString(a, "X") << " " << toString(a << (b.size() - a.size()), "X") << " " << toString(b - (a << (b.size() - a.size())), "X") << endl;
+  //cout << "next level" << endl;
+  return integrals_gcd(b - (a << (b.size() - a.size())), a, p, invertTable);
+}
+
+template<typename T>
 Polynomial<T> gcd(Polynomial<T> a, Polynomial<T> b) {
   T auxiliary = a.getCoeff(a.size() - 1);
   
@@ -254,3 +362,66 @@ Polynomial<T> normalFactor(const Polynomial<T>& a, const Polynomial<T>& b) {
    return gcd(a, b);
 }
 
+typedef Polynomial<BigInt> IntegralsP;
+typedef Polynomial<Modular> ModularP;
+
+
+ModularP toModular(Univariate a) {
+  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
+    a = Rational(a.getCoeff(iCoeff).getDenominator()) * a;
+  }
+  vector<Modular> p;
+  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
+    p.push_back(Modular( (a.getCoeff(iCoeff).getNumerator() % modulo.value + modulo.value) % modulo.value));
+  }
+  return ModularP(p);
+}
+
+
+IntegralsP toBigInt(Univariate a) {
+  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
+    a = Rational(a.getCoeff(iCoeff).getDenominator()) * a;
+  }
+  vector<BigInt> p;
+  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
+    p.push_back(a.getCoeff(iCoeff).getNumerator());
+  }
+  return IntegralsP(p);
+}
+
+IntegralsP toBigInt(Univariate a, BigInt modulo) {
+  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
+    a = Rational(a.getCoeff(iCoeff).getDenominator()) * a;
+  }
+  vector<BigInt> p;
+  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
+    p.push_back((modulo + a.getCoeff(iCoeff).getNumerator() % modulo) % modulo);
+  }
+  return IntegralsP(p);
+}
+
+Univariate toUnivariate(IntegralsP poly) {
+  vector<Rational> v;
+  for (int iCoeff = 0; iCoeff < (int)poly.size(); iCoeff++) {
+    v.push_back(Rational(poly.getCoeff(iCoeff)));
+  }
+  return Univariate(v);
+}
+
+template<typename T>
+Polynomial<T> derive(Polynomial<T> a) {
+  vector<T> p;
+  for (int iCoeff = 1; iCoeff < (int)a.size(); iCoeff++) {
+    p.push_back(T(iCoeff) * a.getCoeff(iCoeff));
+  }
+  return Polynomial<T>(p);
+}
+
+template<typename T>
+Polynomial<T> derive(Polynomial<T> a, T modulo) {
+  vector<T> p;
+  for (int iCoeff = 1; iCoeff < (int)a.size(); iCoeff++) {
+    p.push_back((T(iCoeff) * a.getCoeff(iCoeff)) % modulo);
+  }
+  return Polynomial<T>(p);
+}

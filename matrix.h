@@ -53,7 +53,7 @@ class Matrix {
 public:
    size_t nbRows() const;
    size_t nbCols() const;
-   Matrix(size_t nbRows, size_t nbCols, size_t value = 0);
+   Matrix(size_t nbRows, size_t nbCols, T value = 0);
    Matrix(vector<vector<T>> _coeffs);
    vector<vector<T>> coeffs;
 };
@@ -69,7 +69,7 @@ size_t Matrix<T>::nbCols() const {
 }
 
 template<typename T>
-Matrix<T>::Matrix(size_t nbRows, size_t nbCols, size_t value) {
+Matrix<T>::Matrix(size_t nbRows, size_t nbCols, T value) {
    coeffs = vector<vector<T>>(nbRows, vector<T>(nbCols, value));
 }
 
@@ -171,6 +171,67 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
    
    return basis;
 }
+
+template<typename T>
+Matrix<T> kernel_basis_finite_set(Matrix<T> mat, T modulo, T inverseTable[]) {
+   Matrix<T> id = identity<T>(mat.nbRows());
+   
+   for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
+      size_t non_zero = iCol;
+      for(size_t iRow = iCol;iRow < mat.nbRows();iRow++) {
+         if(!(mat.coeffs[iRow][iCol] == T(0))) {
+            non_zero = iRow;
+         }
+      }
+      
+      if(iCol >= mat.nbRows()) break;
+      
+      swap(mat.coeffs[iCol], mat.coeffs[non_zero]);
+      swap(id.coeffs[iCol], id.coeffs[non_zero]);
+      
+      if(mat.coeffs[iCol][iCol] == T(0)) continue;
+      
+      id.coeffs[iCol] = inverseTable[(long)(mat.coeffs[iCol][iCol] % modulo)] * id.coeffs[iCol];
+      for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
+         id.coeffs[iCol][iRow] = id.coeffs[iCol][iRow] % modulo;
+      }  
+      mat.coeffs[iCol] = inverseTable[(long)(mat.coeffs[iCol][iCol] % modulo)] * mat.coeffs[iCol];
+      for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
+         mat.coeffs[iCol][iRow] = mat.coeffs[iCol][iRow] % modulo;
+      }
+
+      for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
+         mat.coeffs[iRow][iCol] = mat.coeffs[iRow][iCol] % modulo;
+         if(iRow == iCol) continue;
+         if(!(mat.coeffs[iRow][iCol] == T(0))) {
+            id.coeffs[iRow] = id.coeffs[iRow] - mat.coeffs[iRow][iCol] * id.coeffs[iCol];
+            mat.coeffs[iRow] = mat.coeffs[iRow] - mat.coeffs[iRow][iCol] * mat.coeffs[iCol];
+            for(size_t iCol2 = 0;iCol2 < mat.nbRows();iCol2++) {
+               id.coeffs[iRow][iCol2] = (modulo + id.coeffs[iRow][iCol2]%modulo) % modulo;
+               mat.coeffs[iRow][iCol2] = (modulo + mat.coeffs[iRow][iCol2]%modulo) % modulo;
+            }
+         }
+
+      }
+   }
+   
+   Matrix<T> basis(0, 0);
+   
+   for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
+      bool is_zero = true;
+      
+      for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
+         is_zero &= (mat.coeffs[iRow][iCol]%modulo) == T(0);
+      }
+      
+      if(is_zero) {
+         basis.coeffs.push_back(id.coeffs[iRow]);
+      }
+   }
+   
+   return basis;
+}
+
 template<typename T>
 void debug(const Matrix<T>& mat) {
    for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
