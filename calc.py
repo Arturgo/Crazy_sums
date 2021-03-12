@@ -31,7 +31,7 @@ def phi(n):
    
    return p
 
-def sigma(n):
+def sigma_1(n):
    p = 1
    
    while n != 1:
@@ -46,8 +46,21 @@ def sigma(n):
    
    return p
 
-def L(a, b, s):
-   return np.sum([puis(phi(i), a) * puis(sigma(i), b) / puis(i, s) for i in range(1, 1000000)])
+def sigma(n, x):
+   p = 1
+   
+   while n != 1:
+      k = 0
+      d = crible[n]
+      
+      while n % d == 0:
+         n = n // d
+         k += 1
+      
+      p *= (puis(d, (k + 1) * x) - 1) // (puis(d, x) - 1)
+   
+   return p
 
-print(L(0,2,4))
-print(L(0,0,2) * (L(0,0,3) ** 2) * L(0,0,4) / L(0,0,6))
+def L(a, b, c, s):
+   return np.sum([puis(phi(i), a) * puis(sigma(i, 1), b) * puis(sigma(i, 2), c) / puis(i, s) for i in range(1, 1000000)])
+

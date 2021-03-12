@@ -1,3 +1,6 @@
+#ifndef POLYNOMIAL_H
+#define POLYNOMIAL_H
+
 #include "fraction.h"
 using namespace std;
 
@@ -362,6 +365,7 @@ Polynomial<T> normalFactor(const Polynomial<T>& a, const Polynomial<T>& b) {
    return gcd(a, b);
 }
 
+
 typedef Polynomial<BigInt> IntegralsP;
 typedef Polynomial<Modular> ModularP;
 
@@ -425,3 +429,5 @@ Polynomial<T> derive(Polynomial<T> a, T modulo) {
   }
   return Polynomial<T>(p);
 }
+
+#endif
