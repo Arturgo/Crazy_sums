@@ -3,51 +3,20 @@
 #include "arith_f.h"
 using namespace std;
 
-Bivariate x, y, u;
-
-void readRelations(RelationGenerator& manager) {
-   int nbFractions;
-   cin >> nbFractions;
-   
-   for(int iFraction = 0;iFraction < nbFractions;iFraction++) {
-      string name;
-      cin >> name;
-      
-      int degHaut, degBas;
-      cin >> degHaut >> degBas;
-      
-      Univariate haut(0), bas(0);
-      
-      for(int iDeg = 0;iDeg <= degHaut;iDeg++) {
-         int coeff;
-         cin >> coeff;
-         haut.setCoeff(iDeg, coeff);
-      }
-      
-      for(int iDeg = 0;iDeg <= degBas;iDeg++) {
-         int coeff;
-         cin >> coeff;
-         bas.setCoeff(iDeg, coeff);
-      }
-      
-      manager.addFraction(name, Fraction<Univariate>(haut, bas));
-   }
-}
+const int PRIME = 53;
 
 int main() {
    X.setCoeff(1, 1);
    U.setCoeff(0, 1);
    
-   u.setCoeff(0, U);
-   x.setCoeff(0, X);
-   y.setCoeff(1, U);
-  	
+   precomputeInverses(PRIME);
+   
    RelationGenerator manager;
    for(int i_phi = 0;i_phi <= 2;i_phi++) {
       for(int i_sigma_1 = 0;i_sigma_1 <= 2;i_sigma_1++) {
-      	for(int i_sigma_2 = 0;i_sigma_2 <= 2;i_sigma_2++) {
+      	for(int i_sigma_2 = 0;i_sigma_2 <= 0;i_sigma_2++) {
       		int sum = i_phi + i_sigma_1 + 2 * i_sigma_2;
-		      for(int s = sum + 2;s <= sum + 6;s++) {
+		      for(int s = sum + 2;s <= sum + 8;s++) {
 		         Fraction<Univariate> frac = 
 		         	(pow(phi(), i_phi)
 		          * pow(sigma_k(1), i_sigma_1)
