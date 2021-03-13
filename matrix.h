@@ -1,6 +1,4 @@
-#ifndef MATRIX_H
-#define MATRIX_H
-
+#pragma once
 #include <vector>
 using namespace std;
 
@@ -68,6 +66,9 @@ size_t Matrix<T>::nbRows() const {
 
 template<typename T>
 size_t Matrix<T>::nbCols() const {
+   if (coeffs.size() == 0) {
+      return 0;
+   }
    return coeffs[0].size();
 }
 
@@ -283,5 +284,3 @@ Matrix<T> LLL(Matrix<T> mat, T delta) {
    
    return mat;
 }
-
-#endif

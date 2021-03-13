@@ -1,7 +1,9 @@
-#include <vector>
+#pragma once
 #include <boost/multiprecision/gmp.hpp>
-#include <iostream>
+#include <string>
+#include <vector>
 using namespace boost::multiprecision;
+using namespace std;
 using BigInt = mpz_int;
 
 BigInt gcd(const BigInt& a, const BigInt& b) {

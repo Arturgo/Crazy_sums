@@ -1,7 +1,7 @@
-#ifndef POLYNOMIAL_H
-#define POLYNOMIAL_H
-
+#pragma once
 #include "fraction.h"
+#include "print.h"
+
 using namespace std;
 
 template<typename T>
@@ -178,7 +178,17 @@ string toString(const Polynomial<T>& poly, string variable, Args... args) {
       }
       first = false;
       
-     result += toString(poly.getCoeff(iCoeff), args...) + variable + "^" + to_string(iCoeff);
+      result += toString(poly.getCoeff(iCoeff), args...);
+      switch(iCoeff) {
+        case 0:
+          break;
+        case 1:
+          result += KGRY + variable + KRST;
+          break;
+        default:
+          result += KGRY + variable + "^" + KRST + to_string(iCoeff);
+     }
+     
     }
   }
   
@@ -267,7 +277,8 @@ ModularP toModular(Univariate poly) {
 
 
 
-/*IntegralsP toBigInt(Univariate a) {
+#if 0
+IntegralsP toBigInt(Univariate a) {
   for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
     a = Rational(a.getCoeff(iCoeff).getDenominator()) * a;
   }
@@ -340,7 +351,6 @@ Polynomial<T> integrals_gcd(Polynomial<T> a, Polynomial<T> b, BigInt p, vector<B
   //b = (a.getCoeff(a.size() - 1) / commonFactor) * b;
   //cout << toString(a, "X") << " " << toString(a << (b.size() - a.size()), "X") << " " << toString(b - (a << (b.size() - a.size())), "X") << endl;
   //cout << "next level" << endl;
-  /*return integrals_gcd(b - (a << (b.size() - a.size())), a, p, invertTable);
-}*/
-
+  return integrals_gcd(b - (a << (b.size() - a.size())), a, p, invertTable);
+}
 #endif

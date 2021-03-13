@@ -1,3 +1,5 @@
+#pragma once
+#include <chrono>
 #include "matrix.h"
 #include "polynomial.h"
 #include "berlekamp.h"
@@ -8,11 +10,11 @@ struct RelationGenerator {
    vector<Fraction<Univariate>> rational_fractions;
 
    vector<Univariate> polynomial_basis;
-   
+
    void addPolynomial(Univariate poly, int index = 0);
    vector<pair<int, int>> decompose(Univariate poly);
    void addFraction(string name, Fraction<Univariate> frac);
-   
+
    void printRelations();
 };
 
@@ -92,7 +94,7 @@ vector<pair<int, int>> RelationGenerator::decompose(Univariate poly) {
          poly = poly / polynomial_basis[iFactor];
          nb++;
       }
-      
+
       if(nb != 0) {
          decomposition.push_back({iFactor, nb});
       }
@@ -101,39 +103,46 @@ vector<pair<int, int>> RelationGenerator::decompose(Univariate poly) {
 }
 
 void RelationGenerator::printRelations() {
+   auto t1 = std::chrono::high_resolution_clock::now();
    Matrix<Rational> decompositions(0, 0);
    
    cerr << "Factoring fractions : " << rational_fractions.size() << endl;
    for(auto& fraction: rational_fractions) {
       vector<pair<int, int>> numerator = decompose(fraction.getNumerator());
       vector<pair<int, int>> denominator = decompose(fraction.getDenominator());
-      
+
       vector<Rational> decomposition(polynomial_basis.size(), Rational(0));
-      
+
       for(pair<int, int> poly : numerator) {
          decomposition[poly.first] = decomposition[poly.first] + Rational(poly.second);
       }
-      
+
       for(pair<int, int> poly : denominator) {
          decomposition[poly.first] = decomposition[poly.first] - Rational(poly.second);
       }
-      
+
       decompositions.coeffs.push_back(decomposition);
    }
    cerr << "Done" << endl;
-   
+
+   auto t2 = std::chrono::high_resolution_clock::now();
    //Matrix<Rational> relations = row_echelon_form(kernel_basis(decompositions));
    Matrix<Rational> rows = kernel_basis(decompositions);
+
+   auto t3 = std::chrono::high_resolution_clock::now();
    
-   cerr << "Relations computed. Size : " << endl;
-   cerr << rows.nbRows() << " " << rows.nbCols() << endl;
+   std::chrono::duration<float> e21 = t2 - t1;
+   std::chrono::duration<float> e32 = t3 - t2;
+   cerr << "Relations computed (" << e21.count() << "s+ " << e32.count() << "s). Size : "
+        << rows.nbRows() << " * " << rows.nbCols() << endl;
    cerr << "Simplifying.." << endl;
-   
-   // On vire les colonnes inutiles
+
+   /* On vire les colonnes inutiles */
+   auto t4 = std::chrono::high_resolution_clock::now();
    Matrix<Rational> cleaned_rows(rows.nbRows(), 0);
-   
+
    vector<size_t> iCol_in_rows;
-   
+
    for(size_t iCol = 0;iCol < rows.nbCols();iCol++) {
    	bool isNull = true;
    	for(size_t iRow = 0;iRow < rows.nbRows();iRow++) {
@@ -150,15 +159,17 @@ void RelationGenerator::printRelations() {
 			}
    	}
    }
-   
-   cerr << "Matrix simplified. Size : " << endl;
-   cerr << cleaned_rows.nbRows() << " " << cleaned_rows.nbCols() << endl;
+   auto t5 = std::chrono::high_resolution_clock::now();
+   std::chrono::duration<float> e54 = t5 - t4;
+
+   cerr << "Matrix simplified (" << e54.count() << "s). Size : "
+        << cleaned_rows.nbRows() << " * " << cleaned_rows.nbCols() << endl;
    cerr << "Simplifying.." << endl;
-   
+
    //Matrix<Rational> relations = LLL(cleaned_rows, Rational(3) / Rational(4));
    //Matrix<Rational> relations = row_echelon_form(cleaned_rows);
    Matrix<Rational> relations = cleaned_rows;
-   
+
    for(const vector<Rational>& relation : relations.coeffs) {
       for(size_t iCol = 0;iCol < relation.size();iCol++) {
          if(!(relation[iCol] == Rational(0))) {
