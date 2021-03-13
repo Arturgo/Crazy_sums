@@ -3,7 +3,7 @@
 #include "arith_f.h"
 using namespace std;
 
-Bivariate x, y, u;
+/*Bivariate x, y, u;
 
 void readRelations(RelationGenerator& manager) {
    int nbFractions;
@@ -33,14 +33,14 @@ void readRelations(RelationGenerator& manager) {
       manager.addFraction(name, Fraction<Univariate>(haut, bas));
    }
 }
-
+*/
 int main() {
    X.setCoeff(1, 1);
    U.setCoeff(0, 1);
    
-   u.setCoeff(0, U);
-   x.setCoeff(0, X);
-   y.setCoeff(1, U);
+  // u.setCoeff(0, U);
+   //x.setCoeff(0, X);
+   //y.setCoeff(1, U);
   	
    RelationGenerator manager;
    for(int i_phi = 0;i_phi <= 2;i_phi++) {
