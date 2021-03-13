@@ -34,20 +34,35 @@ void readRelations(RelationGenerator& manager) {
    }
 }
 */
-int main() {
+int main(int argc, char *argv[]) {
    X.setCoeff(1, 1);
    U.setCoeff(0, 1);
    
   // u.setCoeff(0, U);
    //x.setCoeff(0, X);
    //y.setCoeff(1, U);
+   int maxi_phi = 2;
+   int maxi_sigma_1 = 2;
+   int maxi_sigma_2 = 2;
+   int maxi_sum = 6;
+   if (argc > 1) {
+      if (argc == 5) {
+         maxi_phi = atoi(argv[1]);
+         maxi_sigma_1 = atoi(argv[2]);
+         maxi_sigma_2 = atoi(argv[3]);
+         maxi_sum = atoi(argv[4]);
+      } else {
+         cerr << "wrong number of argument you should give 0 (for default values) or 4 (phi, sigma_1, sigma_2, s) not " << argc - 1 << endl;
+         exit(-1);
+      }
+   }
   	
    RelationGenerator manager;
-   for(int i_phi = 0;i_phi <= 2;i_phi++) {
-      for(int i_sigma_1 = 0;i_sigma_1 <= 2;i_sigma_1++) {
-      	for(int i_sigma_2 = 0;i_sigma_2 <= 2;i_sigma_2++) {
+   for(int i_phi = 0;i_phi <= maxi_phi;i_phi++) {
+      for(int i_sigma_1 = 0;i_sigma_1 <= maxi_sigma_1;i_sigma_1++) {
+      	for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
       		int sum = i_phi + i_sigma_1 + 2 * i_sigma_2;
-		      for(int s = sum + 2;s <= sum + 6;s++) {
+		      for(int s = sum + 2;s <= sum + maxi_sum;s++) {
 		         Fraction<Univariate> frac = 
 		         	(pow(phi(), i_phi)
 		          * pow(sigma_k(1), i_sigma_1)
