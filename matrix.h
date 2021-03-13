@@ -1,3 +1,6 @@
+#ifndef MATRIX_H
+#define MATRIX_H
+
 #include <vector>
 using namespace std;
 
@@ -88,6 +91,36 @@ Matrix<T> identity(size_t size) {
 }
 
 template<typename T>
+Matrix<T> operator + (const Matrix<T>& a, const Matrix<T>& b) {
+   Matrix<T> res(a.nbCols(), a.nbRows());
+   
+   for(size_t iRow = 0;iRow < a.nbRows();iRow++) {
+      for(size_t iCol = 0;iCol < a.nbCols();iCol++) {
+         res.coeffs[iCol][iRow] = 
+         	a.coeffs[iRow][iCol]
+         	+ b.coeffs[iRow][iCol];
+      }
+   }
+   
+   return res;
+}
+
+template<typename T>
+Matrix<T> operator - (const Matrix<T>& a, const Matrix<T>& b) {
+   Matrix<T> res(a.nbCols(), a.nbRows());
+   
+   for(size_t iRow = 0;iRow < a.nbRows();iRow++) {
+      for(size_t iCol = 0;iCol < a.nbCols();iCol++) {
+         res.coeffs[iCol][iRow] = 
+         	a.coeffs[iRow][iCol]
+         	- b.coeffs[iRow][iCol];
+      }
+   }
+   
+   return res;
+}
+
+template<typename T>
 Matrix<T> transpose(Matrix<T> mat) {
    Matrix<T> res(mat.nbCols(), mat.nbRows());
    for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
@@ -171,6 +204,7 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
    
    return basis;
 }
+
 template<typename T>
 void debug(const Matrix<T>& mat) {
    for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
@@ -249,3 +283,5 @@ Matrix<T> LLL(Matrix<T> mat, T delta) {
    
    return mat;
 }
+
+#endif

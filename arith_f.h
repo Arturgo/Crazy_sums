@@ -1,4 +1,5 @@
 #include <iostream>
+#include <map>
 #include "polynomial.h"
 using namespace std;
 

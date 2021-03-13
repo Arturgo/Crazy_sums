@@ -1,5 +1,7 @@
 #include "matrix.h"
 #include "polynomial.h"
+#include "berlekamp.h"
+#include <iostream>
 
 struct RelationGenerator {
    vector<string> names;
@@ -13,6 +15,35 @@ struct RelationGenerator {
    
    void printRelations();
 };
+
+void readRelations(RelationGenerator& manager) {
+   int nbFractions;
+   cin >> nbFractions;
+   
+   for(int iFraction = 0;iFraction < nbFractions;iFraction++) {
+      string name;
+      cin >> name;
+      
+      int degHaut, degBas;
+      cin >> degHaut >> degBas;
+      
+      Univariate haut(0), bas(0);
+      
+      for(int iDeg = 0;iDeg <= degHaut;iDeg++) {
+         int coeff;
+         cin >> coeff;
+         haut.setCoeff(iDeg, coeff);
+      }
+      
+      for(int iDeg = 0;iDeg <= degBas;iDeg++) {
+         int coeff;
+         cin >> coeff;
+         bas.setCoeff(iDeg, coeff);
+      }
+      
+      manager.addFraction(name, Fraction<Univariate>(haut, bas));
+   }
+}
 
 void RelationGenerator::addFraction(string name, Fraction<Univariate> frac) {
    names.push_back(name);
@@ -30,7 +61,7 @@ void RelationGenerator::addPolynomial(Univariate poly, int index) {
    	
       Univariate element = polynomial_basis[iElement];
       
-      Univariate pgcd = univariate_gcd(poly, element);
+      Univariate pgcd = gcd(poly, element);
       
       if(pgcd.size() <= 1) continue;
       
@@ -71,6 +102,8 @@ vector<pair<int, int>> RelationGenerator::decompose(Univariate poly) {
 
 void RelationGenerator::printRelations() {
    Matrix<Rational> decompositions(0, 0);
+   
+   cerr << "Factoring fractions : " << rational_fractions.size() << endl;
    for(auto& fraction: rational_fractions) {
       vector<pair<int, int>> numerator = decompose(fraction.getNumerator());
       vector<pair<int, int>> denominator = decompose(fraction.getDenominator());
@@ -87,6 +120,7 @@ void RelationGenerator::printRelations() {
       
       decompositions.coeffs.push_back(decomposition);
    }
+   cerr << "Done" << endl;
    
    //Matrix<Rational> relations = row_echelon_form(kernel_basis(decompositions));
    Matrix<Rational> rows = kernel_basis(decompositions);
