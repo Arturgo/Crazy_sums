@@ -73,8 +73,6 @@ vector<ModularP> decompose(ModularP poly) {
 		
 		ModularP div = berlekamp(factor);
 		
-		cerr << toString(factor, "X") << " " << toString(div, "X") << endl;
-		
 		if(div == factor) {
 			decomp.push_back(factor);
 			continue;
