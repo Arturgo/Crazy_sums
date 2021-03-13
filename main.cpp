@@ -31,7 +31,6 @@ int main(int argc, char *argv[]) {
       	for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
       		int sum = i_phi + i_sigma_1 + 2 * i_sigma_2;
 		      for(int s = sum + 2;s <= sum + maxi_sum;s++) {
->>>>>>> e1fe0d2da84a2556c9e94889c962fd334dda9629
 		         Fraction<Univariate> frac = 
 		         	(pow(phi(), i_phi)
 		          * pow(sigma_k(1), i_sigma_1)
