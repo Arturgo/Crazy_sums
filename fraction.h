@@ -1,3 +1,4 @@
+#pragma once
 #include "bigint.h"
 
 template<typename T>

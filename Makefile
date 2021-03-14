@@ -1,17 +1,25 @@
-VERSION=17
-FLAG=-O2
-
+BIN := crazysums
+#GPROF := -pg
+OPT := -O3 -flto
+OPT := -O2
 
 all: build run
-	
 
-build:
-	g++ -o main main.cpp -Wall -std=c++$(VERSION) $(FLAG) -lgmp
+build: $(BIN)
+
+-include $(BIN).d
+
+$(BIN): main.cpp Makefile
+	g++ -o "$@" $< -Wall -Wextra -std=c++17 $(OPT) -march=native -lgmp -MMD -g \
+	    ${EXTRA} $(GPROF) -DHAS_COLOR \
 
 run:
-	./main
+	./$(BIN)
 
 timer: build runT
 
 runT:
-	time ./main
+	time ./$(BIN)
+	
+clean:
+	rm -f $(BIN)
