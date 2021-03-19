@@ -161,10 +161,10 @@ Polynomial<T> derive(Polynomial<T> a) {
 	return sum;
 }
 
-//TODO: faire mieux
+/*//TODO: faire mieux
 Rational leading(const Rational& a) {
 	return a;
-}
+}*/
 
 Mod leading(const Mod& a) {
 	return a;
@@ -209,7 +209,7 @@ string toString(const Polynomial<T>& poly, string variable, Args... args) {
   return "(" + result + ")";
 }
 
-typedef Polynomial<Rational> Univariate;
+typedef Polynomial<Mod> Univariate;
 
 template<typename T>
 Polynomial<T> operator % (Polynomial<T> a, Polynomial<T> b) {
@@ -269,20 +269,4 @@ Polynomial<T> gcd(Polynomial<T> a, Polynomial<T> b) {
 template<typename T>
 Polynomial<T> normalFactor(const Polynomial<T>& a, const Polynomial<T>& b) {
    return gcd(a, b);
-}
-
-
-typedef Polynomial<Mod> ModularP;
-
-ModularP toModular(Univariate poly) {
-  for(size_t iCoeff = 0;iCoeff < poly.size();iCoeff++) {
-    poly = Rational(poly.getCoeff(iCoeff).getDenominator()) * poly;
-  }
-  
-  vector<Mod> res;
-  for(size_t iCoeff = 0;iCoeff < poly.size();iCoeff++) {
-    res.push_back(Mod((int)(poly.getCoeff(iCoeff).getNumerator() % (BigInt)modulo)));
-  }
-  
-  return ModularP(res);
 }
