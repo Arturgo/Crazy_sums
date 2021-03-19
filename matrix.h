@@ -97,7 +97,7 @@ Matrix<T> operator + (const Matrix<T>& a, const Matrix<T>& b) {
    
    for(size_t iRow = 0;iRow < a.nbRows();iRow++) {
       for(size_t iCol = 0;iCol < a.nbCols();iCol++) {
-         res.coeffs[iCol][iRow] = 
+         res.coeffs[iRow][iCol] = 
          	a.coeffs[iRow][iCol]
          	+ b.coeffs[iRow][iCol];
       }
@@ -112,7 +112,7 @@ Matrix<T> operator - (const Matrix<T>& a, const Matrix<T>& b) {
    
    for(size_t iRow = 0;iRow < a.nbRows();iRow++) {
       for(size_t iCol = 0;iCol < a.nbCols();iCol++) {
-         res.coeffs[iCol][iRow] = 
+         res.coeffs[iRow][iCol] = 
          	a.coeffs[iRow][iCol]
          	- b.coeffs[iRow][iCol];
       }
