@@ -18,6 +18,20 @@ private:
 };
 
 template<typename T>
+bool operator < (const Polynomial<T>& a, const Polynomial<T>& b) {
+	if(a.size() != b.size())
+		return a.size() < b.size();
+	
+	for(size_t iCoeff = 0;iCoeff < a.size();iCoeff++) {
+		if(a.coeffs[iCoeff] == b.coeffs[iCoeff])
+			continue;
+		return a.coeffs[iCoeff] < b.coeffs[iCoeff];
+	}
+	
+	return false;
+}
+
+template<typename T>
 Polynomial<T>::Polynomial(vector<T> _coeffs) {
 	coeffs = _coeffs;
 	reduce();
@@ -158,7 +172,6 @@ Mod leading(const Mod& a) {
 
 template<typename T>
 T leading(const Polynomial<T>& a) {
-	a.reduce();
 	return leading(a.getCoeff(a.size() - 1));
 }
 
@@ -259,8 +272,6 @@ Polynomial<T> normalFactor(const Polynomial<T>& a, const Polynomial<T>& b) {
 }
 
 
-
-
 typedef Polynomial<Mod> ModularP;
 
 ModularP toModular(Univariate poly) {
@@ -275,83 +286,3 @@ ModularP toModular(Univariate poly) {
   
   return ModularP(res);
 }
-
-
-
-#if 0
-IntegralsP toBigInt(Univariate a) {
-  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
-    a = Rational(a.getCoeff(iCoeff).getDenominator()) * a;
-  }
-  vector<BigInt> p;
-  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
-    p.push_back(a.getCoeff(iCoeff).getNumerator());
-  }
-  return IntegralsP(p);
-}
-
-IntegralsP toBigInt(Univariate a, BigInt modulo) {
-  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
-    a = Rational(a.getCoeff(iCoeff).getDenominator()) * a;
-  }
-  vector<BigInt> p;
-  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
-    p.push_back((modulo + a.getCoeff(iCoeff).getNumerator() % modulo) % modulo);
-  }
-  return IntegralsP(p);
-}
-
-Univariate toUnivariate(IntegralsP poly) {
-  vector<Rational> v;
-  for (int iCoeff = 0; iCoeff < (int)poly.size(); iCoeff++) {
-    v.push_back(Rational(poly.getCoeff(iCoeff)));
-  }
-  return Univariate(v);
-}
-
-template<typename T>
-Polynomial<T> integrals_gcd(Polynomial<T> a, Polynomial<T> b, BigInt p, vector<BigInt> invertTable) {
-  //cout << "level x of gcd" << endl;
-  //cout << "gcd of :" << (p + a.getCoeff(a.size() - 1)%p)%p << " : " << toString(a, "X") << "; " << (p + b.getCoeff(b.size() - 1)%p)%p << " : " << toString(b, "X") << endl;
-  int headA = static_cast<long>((p + a.getCoeff(a.size() - 1)%p)%p );
-  BigInt invA = invertTable[headA];
-  int headB = static_cast<long>((p + b.getCoeff(b.size() - 1)%p)%p );
-  BigInt invB = invertTable[headB];
-  //cout << "starts unitarizing" << endl;
-  for (int iCoeff = 0; iCoeff < (int)a.size(); iCoeff++) {
-    a.setCoeff(iCoeff, (p + (a.getCoeff(iCoeff) * invA) % p) %p);
-  }
-  a.reduce();
-  for (int iCoeff = 0; iCoeff < (int)b.size(); iCoeff++) {
-    b.setCoeff(iCoeff, (p + (b.getCoeff(iCoeff) * invB) % p) %p);
-  }
-  b.reduce();
-  //cout << "unitarised of :" << (p + a.getCoeff(a.size() - 1)%p)%p << " : " << invA << " " << toString(a, "X") << "; " << (p + b.getCoeff(b.size() - 1)%p)%p << " : " << invB << " " << toString(b, "X") << endl;
-
-  if(a.size() > b.size()) {
-    //cout << "restart" << endl;
-    return integrals_gcd(b, a, p, invertTable);
-  }
-  //cout << a.size() << endl;
-  if(a.size() == 0) {
-    //return b;
-    long commonFactor = (long)((p + b.getCoeff(b.size() - 1)%p )%p);
-    //cout << "common factor " << commonFactor << " " << b.size() << endl;
-    for(int iCoeff = 0;iCoeff < (int)b.size();iCoeff++) {
-      //cout << "here  " << iCoeff << endl;
-      b.setCoeff(iCoeff, (p + (b.getCoeff(iCoeff) * invertTable[commonFactor]) % p)%p);
-      //cout << "there " << iCoeff << endl;
-    }
-    //cout << "left" << endl;
-    b.reduce();
-    return b;//toMonic(b / commonFactor);
-  }
-  //T commonFactor = gcd(a.getCoeff(a.size() - 1), b.getCoeff(b.size() - 1));
-  
-  //T factor = b.getCoeff(b.size() - 1) / commonFactor;
-  //b = (a.getCoeff(a.size() - 1) / commonFactor) * b;
-  //cout << toString(a, "X") << " " << toString(a << (b.size() - a.size()), "X") << " " << toString(b - (a << (b.size() - a.size())), "X") << endl;
-  //cout << "next level" << endl;
-  return integrals_gcd(b - (a << (b.size() - a.size())), a, p, invertTable);
-}
-#endif
