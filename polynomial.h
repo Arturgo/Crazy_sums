@@ -158,6 +158,7 @@ Mod leading(const Mod& a) {
 
 template<typename T>
 T leading(const Polynomial<T>& a) {
+	a.reduce();
 	return leading(a.getCoeff(a.size() - 1));
 }
 
