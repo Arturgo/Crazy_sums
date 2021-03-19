@@ -31,11 +31,6 @@ public:
   int value;
 };
 
-ostream& operator << (ostream& os, const Mod& mod) {
-	os << mod.value;
-	return os;
-}
-
 int modulo;
 vector<Mod> inverseTable;
 
@@ -82,6 +77,10 @@ Mod operator / (const Mod&a, const Mod& b) {
 
 bool operator == (const Mod& a, const Mod& b) {
 	return a.value == b.value;
+}
+ostream& operator << (ostream& out, const Mod &r) {
+   out << toString(r);
+   return out;
 }
 
 /*

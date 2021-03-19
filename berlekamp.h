@@ -1,15 +1,15 @@
 #include "polynomial.h"
 #include "matrix.h"
 
-ModularP berlekamp(ModularP poly) {
-	ModularP derivedP = derive(poly);
+Univariate berlekamp(Univariate poly) {
+	Univariate derivedP = derive(poly);
 
 	if(derivedP.size() == 0) {
 		cerr << "FATAL ERROR : a polynomial has an empty derivative in berlekamp." << endl;
 		exit(-1);
 	}
 	
-	ModularP pgcd = gcd(poly, derivedP);
+	Univariate pgcd = gcd(poly, derivedP);
 	
 	if(pgcd.size() > 1) {
 		return pgcd;
@@ -17,7 +17,7 @@ ModularP berlekamp(ModularP poly) {
 
 	Matrix<Mod> matrice(poly.size() - 1, poly.size() - 1, 0);
 	
-	ModularP x_pow_ip({1});
+	Univariate x_pow_ip({1});
 	
 	for (size_t i = 0;i + 1 < poly.size();i++) {
 		if(i != 0)
@@ -41,17 +41,17 @@ ModularP berlekamp(ModularP poly) {
 	}
 	
 	int index = 0;
-	ModularP g(basis.coeffs[0]);
+	Univariate g(basis.coeffs[0]);
 	
 	while(g.size() <= 1) {
 		index++;
-		g = ModularP(basis.coeffs[index]);
+		g = Univariate(basis.coeffs[index]);
 	}
 	
 	for (int i = 0;i < modulo;i++) {
 		g.setCoeff(0, i);
 		
-		ModularP pgcd = gcd(poly, g);
+		Univariate pgcd = gcd(poly, g);
 		
 		if(pgcd.size() > 1 && pgcd.size() != poly.size()) {
 			return pgcd;
@@ -62,16 +62,16 @@ ModularP berlekamp(ModularP poly) {
 	exit(-1);
 }
 
-vector<ModularP> decompose(ModularP poly) {
- 	vector<ModularP> decomp;
+vector<Univariate> decompose(Univariate poly) {
+ 	vector<Univariate> decomp;
  	
- 	vector<ModularP> factors = {poly};
+ 	vector<Univariate> factors = {poly};
 
 	while(!factors.empty()) {
-		ModularP factor = factors.back();
+		Univariate factor = factors.back();
 		factors.pop_back();
 		
-		ModularP div = berlekamp(factor);
+		Univariate div = berlekamp(factor);
 		
 		if(div == factor) {
 			decomp.push_back(factor);

@@ -57,6 +57,7 @@ static void add_relation(RelationGenerator &manager, int i_phi,
         << toString(frac.getDenominator(), "x") << endl;
 }
 int main(int argc, char *argv[]) {
+   precomputeInverses(53);
    X.setCoeff(1, 1);
    U.setCoeff(0, 1);
 
@@ -90,6 +91,6 @@ int main(int argc, char *argv[]) {
 
    cerr << "Data generated" << endl;
 
-   manager.printRelations();
+   //manager.printRelations();
    return 0;
 }
