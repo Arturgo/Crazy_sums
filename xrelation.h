@@ -69,7 +69,7 @@ private:
         }
 
         if (denom_size > 0) {
-            out << (latex ? "" : KGRN "/" KRST);
+            out << (latex ? "" : KGRN " / " KRST);
             if (denom_size > 1) {
                 out << (latex ? "" : KYLW "(" KRST);
             }
@@ -130,13 +130,13 @@ public:
         return r.print(out, false);
     }
 
-    bool check_D5(void) {
+    bool check_D5(string& out_name) {
         bool debug = false;
         if (debug) cerr << __func__ << " A" << endl;
         int Lphi_exponent = 0;
         int zetaA_number = 0;
         int zetaB_number = 0;
-        
+
         for(auto element: elements) {
             if (debug) cerr << __func__ << " L" << endl;
             const FormulaName* name = element.first;
@@ -176,23 +176,28 @@ public:
                 }
             }
         }
-        
+
         if ((Lphi_exponent == 0) || (zetaA_number == 0) || (zetaB_number == 0)) {
             if (debug) cerr << __func__ << " H" << endl;
             return false;
         }
         if (debug) cerr << __func__ << " Z" << Lphi_exponent << " " << zetaA_number << " " << zetaB_number << endl;
-        return (Lphi_exponent == zetaA_number) && (Lphi_exponent == zetaB_number+1);
+        bool good = (Lphi_exponent == zetaA_number) && (Lphi_exponent == zetaB_number+1);
+        if (!good) {
+            return false;
+        }
+        out_name = "D-5 ";
+        return true;
     }
 
-    bool check_D6(void) {
+    bool check_D6(string& out_name) {
         bool debug = false;
         if (debug) cerr << __func__ << " A" << endl;
         int Lsigma_exponent = 0;
         int sigma_k = 0;
         int zetaA_number = 0;
         int zetaB_number = 0;
-        
+
         for(auto element: elements) {
             if (debug) cerr << __func__ << " L" << endl;
             const FormulaName* name = element.first;
@@ -234,7 +239,7 @@ public:
                 }
             }
         }
-        
+
         if ((Lsigma_exponent == 0) || (zetaA_number == 0) || (zetaB_number == 0)) {
             if (debug) cerr << __func__ << " H" << endl;
             return false;
@@ -244,9 +249,171 @@ public:
             zetaA_number = zetaB_number;
             zetaB_number = tmp;
         }
-        
+
         if (debug) cerr << __func__ << " Z" << Lsigma_exponent << " " << zetaA_number << " " << zetaB_number << endl;
-        return (Lsigma_exponent == zetaA_number+sigma_k) && (Lsigma_exponent == zetaB_number);
+        bool good = (Lsigma_exponent == zetaA_number+sigma_k) && (Lsigma_exponent == zetaB_number);
+        if (!good) {
+            return false;
+        }
+        out_name = "D-6 ";
+        if (sigma_k == 1) {
+            out_name = "D-4 ";
+        }
+        return true;
+    }
+
+    bool check_D58(string& out_name) {
+        bool debug = false;
+        if (debug) cerr << __func__ << " A" << endl;
+        int Lsigma_exponent = 0;
+        int sigmaA_k = 0;
+        int sigmaB_k = 0;
+        vector<int> zeta_numbers_down;
+        int zeta_number_up = 0;
+
+        for(auto element: elements) {
+            if (debug) cerr << __func__ << " L" << endl;
+            const FormulaName* name = element.first;
+            Rational power = element.second;
+            if (name->isZeta()) {
+                int number = name->getZetaExponent();
+                if (!is_integer(power)) {
+                    if (debug) cerr << __func__ << " B" << endl;
+                    return false;
+                }
+                if (is_positive(power)) {
+                    if (zeta_number_up != 0) {
+                        if (debug) cerr << __func__ << " C" << endl;
+                        return false;
+                    }
+                    zeta_number_up = number;
+                    if (debug) cerr << __func__ << " zeta_number_up " << zeta_number_up << endl;
+                }
+                for (int i=0; i<-power.getNumerator(); i++) {
+                    if (zeta_numbers_down.size() < 4) {
+                        zeta_numbers_down.push_back(number);
+                        if (debug) cerr << __func__ << " zeta_number_down[] " << number << endl;
+                    } else {
+                        if (debug) cerr << __func__ << " D" << endl;
+                        return false;
+                    }
+                }
+            } else {
+                if (sigmaA_k != 0) {
+                    if (debug) cerr << __func__ << " E" << endl;
+                    return false;
+                }
+                if (power != Rational(1)) {
+                    if (debug) cerr << __func__ << " F" << endl;
+                    return false;
+                }
+                const FormulaName* infunc = name->getLFuncProduct();
+                if (infunc->getProductSize() == 1) {
+                    const FormulaName* inner = infunc->getProductElem(0);
+                    if (!inner->isSigma()) {
+                        if (debug) cerr << __func__ << " G" << endl;
+                        return false;
+                    } else if (inner->getPower() != 2) {
+                        if (debug) cerr << __func__ << " H" << endl;
+                        return false;
+                    } else {
+                        assert(sigmaA_k == 0);
+                        assert(Lsigma_exponent == 0);
+                        Lsigma_exponent = name->getLFuncExponent();
+                        sigmaA_k = inner->getSigmaK();
+                        sigmaB_k = inner->getSigmaK();
+                    }
+                } else if (infunc->getProductSize() == 2) {
+                    for (size_t idx=0; idx<2; idx++) {
+                        const FormulaName* inner = infunc->getProductElem(idx);
+                        if (!inner->isSigma()) {
+                            if (debug) cerr << __func__ << " I" << endl;
+                            return false;
+                        } else if (inner->getPower() != 1) {
+                            if (debug) cerr << __func__ << " J" << endl;
+                            return false;
+                        } else {
+                            if (sigmaA_k == 0) {
+                                Lsigma_exponent = name->getLFuncExponent();
+                                sigmaA_k = inner->getSigmaK();
+                            } else {
+                                assert(sigmaB_k == 0);
+                                if(Lsigma_exponent != name->getLFuncExponent()) {
+                                    if (debug) cerr << __func__ << " K" << endl;
+                                    return false;
+                                }
+                                sigmaB_k = inner->getSigmaK();
+                            }
+                        }
+                    }
+                } else {
+                    if (debug) cerr << __func__ << " L" << endl;
+                    return false;
+                }
+            }
+        }
+
+        if ((Lsigma_exponent == 0) || (sigmaA_k == 0) || (sigmaB_k == 0)) {
+            if (debug) cerr << __func__ << " M" << endl;
+            return false;
+        }
+        if (!(
+              ((zeta_numbers_down.size() == 3) && (zeta_number_up == 0))
+              ||
+              ((zeta_numbers_down.size() == 4) && (zeta_number_up != 0))
+              )) {
+            if (debug) cerr << __func__ << " N" << endl;
+            return false;
+        }
+        std::sort(zeta_numbers_down.begin(), zeta_numbers_down.end());
+
+        if (debug) cerr << __func__ << " Z " << Lsigma_exponent << " " << sigmaA_k << " " << sigmaB_k << endl;
+
+        /* Tandem, the final mathemagical check */
+        int a = sigmaA_k;
+        int b = sigmaB_k;
+        int s = Lsigma_exponent;
+        vector<int> to_find_down { s, s-a, s-b, s-a-b };
+        std::sort(to_find_down.begin(), to_find_down.end());
+        int to_find_up = 2*s-a-b;
+
+        if (to_find_up < 0) {
+            if (debug) cerr << __func__ << " P" << endl;
+            return false;
+        }
+        for(auto n: to_find_down) {
+            if (n < 0) {
+                if (debug) cerr << __func__ << " Q" << endl;
+                return false;
+            }
+        }
+        for (size_t idx=0; idx<to_find_down.size(); idx++) {
+            if (to_find_down[idx] == to_find_up) {
+                to_find_down.erase(to_find_down.begin() + idx);
+                to_find_up = 0;
+                break;
+            }
+        }
+
+        if (to_find_up != zeta_number_up) {
+            if (debug) cerr << __func__ << " R" << endl;
+            return false;
+        }
+
+        if (to_find_down.size() != zeta_numbers_down.size()) {
+            if (debug) cerr << __func__ << " S" << endl;
+            return false;
+        }
+        for (size_t idx=0; idx<to_find_down.size(); idx++) {
+            if (to_find_down[idx] != zeta_numbers_down[idx]) {
+                if (debug) cerr << __func__ << " T" << endl;
+            return false;
+            }
+        }
+
+        /* Incredible */
+        out_name = "D-58";
+        return true;
     }
 
     void classify() {
@@ -262,18 +429,21 @@ public:
                 zeta++;
             }
         }
-        
+
         if (zeta + 1 == nb) {
             /* Check for D-5 */
-            if (check_D5()) {
+            if (check_D5(known_formula)) {
                 known = true;
-                known_formula = "D-5 ";
                 return;
             }
             /* Check for D-6 */
-            if (check_D6()) {
+            if (check_D6(known_formula)) {
                 known = true;
-                known_formula = "D-6 ";
+                return;
+            }
+            /* Check for D-58 */
+            if (check_D58(known_formula)) {
+                known = true;
                 return;
             }
         }

@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
    int maxi_phi = 2;
    int maxi_sigma_1 = 2;
    int maxi_sigma_2 = 2;
-   int maxi_sum = 6;
+   int maxi_sum = 8;
    if (argc > 1) {
       if (argc == 5) {
          maxi_phi = atoi(argv[1]);
@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
       for(int i_sigma_1 = 0;i_sigma_1 <= maxi_sigma_1;i_sigma_1++) {
          for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
             int sum = i_phi + i_sigma_1 + 2 * i_sigma_2;
-            for(int s = sum + 2;s <= sum + 2 + maxi_sum;s++) {
+            for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum-sum);s++) {
                add_relation(manager, i_phi, i_sigma_1, i_sigma_2, s);
             }
          }
