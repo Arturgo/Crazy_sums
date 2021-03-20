@@ -29,7 +29,7 @@ namespace fs = std::filesystem;
 
 class FormulaName {
 public:
-    enum LeafType { LEAF_SIGMA, LEAF_PHI, LEAF_UNKNOWN };
+    enum LeafType { LEAF_MU, LEAF_SIGMA, LEAF_PHI, LEAF_UNKNOWN };
     typedef struct LeafExtraArg {
         int k;
         int l;
@@ -47,6 +47,9 @@ protected:
     string textify(LeafType in, bool latex) const {
         string ret;
         switch(in) {
+            case LEAF_MU:
+                ret = (latex ? "\\mu{}" : "µ");
+                break;
             case LEAF_SIGMA:
                 ret = (latex ? "\\sigma{}" : "σ");
                 if (leaf_extra.k != 1) {
@@ -87,14 +90,21 @@ protected:
                 out << (latex ? "\\right)" : ")");
                 break;
             }
-            case FORM_POWER:
+            case FORM_POWER: {
+                bool inner_is_mu = sub_formula[0]->isMu();
                 if (power != 0) {
+                   if (inner_is_mu && (power == 2)) {
+                      out << (latex ? "\\abs{" : "|");
+                   }
                    sub_formula[0]->print_inner(out, latex);
-                   if (power != 1) {
+                   if (inner_is_mu && (power == 2)) {
+                      out << (latex ? "}" : "|");
+                   } else if (power != 1) {
                       out << (latex ? "^{" : "^") << std::to_string(power) << (latex ? "}" : "");
                    }
                 }
                 break;
+            }
             case FORM_PRODUCT: {
                 bool first = true;
                 for (auto sub : sub_formula) {
@@ -110,6 +120,15 @@ protected:
                 out << "TODO";
         }
         return out;
+    }
+
+    bool isLeafOfType(LeafType requested_type) const {
+        assert(isPower() || isLeaf());
+        if (isPower()) {
+            assert(sub_formula[0]->isLeaf());
+            return sub_formula[0]->isLeafOfType(requested_type);
+        }
+        return leaf_type == requested_type;
     }
 
 public:
@@ -217,22 +236,16 @@ public:
         return getLFuncExponent();
     }
 
+    bool isMu() const {
+        return isLeafOfType(LEAF_MU);
+    }
+
     bool isPhi() const {
-        assert(isPower() || isLeaf());
-        if (isPower()) {
-            assert(sub_formula[0]->isLeaf());
-            return sub_formula[0]->isPhi();
-        }
-        return leaf_type == LEAF_PHI;
+        return isLeafOfType(LEAF_PHI);
     }
 
     bool isSigma() const {
-        assert(isPower() || isLeaf());
-        if (isPower()) {
-            assert(sub_formula[0]->isLeaf());
-            return sub_formula[0]->isSigma();
-        }
-        return (leaf_type == LEAF_SIGMA);
+        return isLeafOfType(LEAF_SIGMA);
     }
 
     int getSigmaK() const {
@@ -326,6 +339,12 @@ void latex_init(void) {
     latex << "\\documentclass{minimal}" << endl;
     latex << "\\usepackage[utf8]{inputenc}" << endl;
     latex << "\\usepackage{amssymb}" << endl;
+    latex << "\\usepackage{mathtools}" << endl;
+    latex << "\\DeclarePairedDelimiter\\abs{\\lvert}{\\rvert}%" << endl;
+    latex << "\\makeatletter" << endl;
+    latex << "\\let\\oldabs\\abs" << endl;
+    latex << "\\def\\abs{\\@ifstar{\\oldabs}{\\oldabs*}}" << endl;
+    latex << "%" << endl;
     latex << "\\begin{document}" << endl;
 }
 

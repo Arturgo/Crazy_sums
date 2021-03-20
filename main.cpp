@@ -23,13 +23,14 @@ static FormulaName* name_make_lfunc(const FormulaName *name, int exponent)
 }
 
 static void add_relation(RelationGenerator &manager, int i_phi,
-                         int i_sigma_1, int i_sigma_2, int s)
+                         int i_sigma_1, int i_sigma_2, int i_mu, int s)
 {
    auto t1 = std::chrono::high_resolution_clock::now();
    Fraction<Univariate> frac =
       (pow(phi(), i_phi)
     * pow(sigma_k(1), i_sigma_1)
     * pow(sigma_k(2), i_sigma_2)
+    * pow(mobius(), i_mu)
     * pow(inv_id(), s)).get_fraction();
 
    auto t2 = std::chrono::high_resolution_clock::now();
@@ -39,6 +40,7 @@ static void add_relation(RelationGenerator &manager, int i_phi,
    name = name_append_component(name, FormulaName::LEAF_PHI, i_phi);
    name = name_append_component(name, FormulaName::LEAF_SIGMA, 1, i_sigma_1);
    name = name_append_component(name, FormulaName::LEAF_SIGMA, 2, i_sigma_2);
+   name = name_append_component(name, FormulaName::LEAF_MU, i_mu);
 
    name = name_make_lfunc(name, s);
 
@@ -66,13 +68,15 @@ int main(int argc, char *argv[]) {
    int maxi_phi = 2;
    int maxi_sigma_1 = 2;
    int maxi_sigma_2 = 2;
+   int maxi_mu = 2;
    int maxi_sum = 8;
    if (argc > 1) {
       if (argc == 5) {
          maxi_phi = atoi(argv[1]);
          maxi_sigma_1 = atoi(argv[2]);
          maxi_sigma_2 = atoi(argv[3]);
-         maxi_sum = atoi(argv[4]);
+         maxi_mu = atoi(argv[4]);
+         maxi_sum = atoi(argv[5]);
       } else {
          cerr << "wrong number of argument you should give 0 (for default values) or 4 (phi, sigma_1, sigma_2, s) not " << argc - 1 << endl;
          exit(-1);
@@ -81,12 +85,20 @@ int main(int argc, char *argv[]) {
 
    RelationGenerator manager;
 
+    for(int s = 2;s <= 2+maxi_sum*3;s++) {
+        add_relation(manager, 0, 0, 0, 0, s);
+    }
+
    for(int i_phi = 0;i_phi <= maxi_phi;i_phi++) {
       for(int i_sigma_1 = 0;i_sigma_1 <= maxi_sigma_1;i_sigma_1++) {
          for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
-            int sum = i_phi + i_sigma_1 + 2 * i_sigma_2;
-            for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum-sum);s++) {
-               add_relation(manager, i_phi, i_sigma_1, i_sigma_2, s);
+            for(int i_mu = 0;i_mu <= maxi_mu;i_mu++) {
+               int sum = i_phi + i_sigma_1 + 2 * i_sigma_2;
+               for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum-sum);s++) {
+                  if(sum > 0) {
+                     add_relation(manager, i_phi, i_sigma_1, i_sigma_2, i_mu, s);
+                  }
+               }
             }
          }
       }
