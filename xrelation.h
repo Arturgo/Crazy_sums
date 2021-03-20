@@ -46,7 +46,7 @@ private:
         return side_size;
     }
 
-    void print_frac(std::ostream& out, bool latex, bool neg_power, print_condition condition) const {
+    void print_frac(std::ostream& out, bool latex, bool neg_power, print_condition condition, bool& is_simple) const {
         std::ostringstream num;
         std::ostringstream denom;
         size_t num_size = print_frac_side(num, latex, neg_power,
@@ -78,6 +78,11 @@ private:
                 out << (latex ? "" : KYLW ")" KRST);
             }
         }
+
+        is_simple = false;
+        if ((num_size == 1) && (denom_size == 0)) {
+            is_simple = true;
+        }
     }
 
 public:
@@ -91,6 +96,10 @@ public:
     }
 
     std::ostream& print(std::ostream& out, bool latex) const {
+        std::ostringstream left;
+        bool is_simple;
+        print_frac(left, latex, false, [](const Element& e){ return !e.first->isZeta(); }, is_simple);
+
         if (known) {
             if (latex) {
                 out << "\\texttt{[" << known_formula << "]}";
@@ -102,7 +111,7 @@ public:
             if (latex) {
                 out << "\\texttt{[****]}";
             } else {
-                out << KMAG << "[****]" KRST;
+                out << (is_simple ? KBLD KRED "[!!!!]" : KMAG "[****]" ) << KRST;
             }
         }
         out << "  ";
@@ -112,12 +121,12 @@ public:
         }
 
         /* Print all non-zeta */
-        print_frac(out, latex, false, [](const Element& e){ return !e.first->isZeta(); });
+        out << left.str();
 
         out << (latex ? "=" : KRED " = " KRST);
 
         /* Then print all zeta */
-        print_frac(out, latex, true , [](const Element& e){ return  e.first->isZeta(); });
+        print_frac(out, latex, true , [](const Element& e){ return  e.first->isZeta(); }, is_simple);
 
         if (latex) {
             out << "$" << endl << endl;
@@ -130,12 +139,11 @@ public:
         return r.print(out, false);
     }
 
-    bool check_D5(string& out_name) {
+    bool check_D2(string& out_name) {
         bool debug = false;
         if (debug) cerr << __func__ << " A" << endl;
-        int Lphi_exponent = 0;
-        int zetaA_number = 0;
-        int zetaB_number = 0;
+        int Lmu_exponent = 0;
+        int zeta_number = 0;
 
         for(auto element: elements) {
             if (debug) cerr << __func__ << " L" << endl;
@@ -143,10 +151,8 @@ public:
             Rational power = element.second;
             if (name->isZeta()) {
                 int number = name->getZetaExponent();
-                if ((zetaA_number == 0) && (power == Rational(1))) {
-                    zetaA_number = number;
-                } else if ((zetaB_number == 0) && (power == Rational(-1))) {
-                    zetaB_number = number;
+                if ((zeta_number == 0) && (power == Rational(1))) {
+                    zeta_number = number;
                 } else {
                     if (debug) cerr << __func__ << " B" << endl;
                     return false;
@@ -162,35 +168,35 @@ public:
                     return false;
                 }
                 const FormulaName* inner = infunc->getProductElem(0);
-                if (!inner->isPhi()) {
+                if (!inner->isMu()) {
                     if (debug) cerr << __func__ << " E" << endl;
                     return false;
                 } else if (inner->getPower() != 1) {
                     if (debug) cerr << __func__ << " F" << endl;
                     return false;
-                } else if (Lphi_exponent != 0) {
+                } else if (Lmu_exponent != 0) {
                     if (debug) cerr << __func__ << " G" << endl;
                     return false;
                 } else {
-                    Lphi_exponent = name->getLFuncExponent();
+                    Lmu_exponent = name->getLFuncExponent();
                 }
             }
         }
 
-        if ((Lphi_exponent == 0) || (zetaA_number == 0) || (zetaB_number == 0)) {
+        if ((Lmu_exponent == 0) || (zeta_number == 0)) {
             if (debug) cerr << __func__ << " H" << endl;
             return false;
         }
-        if (debug) cerr << __func__ << " Z" << Lphi_exponent << " " << zetaA_number << " " << zetaB_number << endl;
-        bool good = (Lphi_exponent == zetaA_number) && (Lphi_exponent == zetaB_number+1);
+        if (debug) cerr << __func__ << " Z " << Lmu_exponent << " " << zeta_number << endl;
+        bool good = (Lmu_exponent == zeta_number);
         if (!good) {
             return false;
         }
-        out_name = "D-5 ";
+        out_name = "D-2 ";
         return true;
     }
 
-    bool check_D6(string& out_name) {
+    bool check_D4_D6(string& out_name) {
         bool debug = false;
         if (debug) cerr << __func__ << " A" << endl;
         int Lsigma_exponent = 0;
@@ -259,6 +265,126 @@ public:
         if (sigma_k == 1) {
             out_name = "D-4 ";
         }
+        return true;
+    }
+
+    bool check_D5(string& out_name) {
+        bool debug = false;
+        if (debug) cerr << __func__ << " A" << endl;
+        int Lphi_exponent = 0;
+        int zetaA_number = 0;
+        int zetaB_number = 0;
+
+        for(auto element: elements) {
+            if (debug) cerr << __func__ << " L" << endl;
+            const FormulaName* name = element.first;
+            Rational power = element.second;
+            if (name->isZeta()) {
+                int number = name->getZetaExponent();
+                if ((zetaA_number == 0) && (power == Rational(1))) {
+                    zetaA_number = number;
+                } else if ((zetaB_number == 0) && (power == Rational(-1))) {
+                    zetaB_number = number;
+                } else {
+                    if (debug) cerr << __func__ << " B" << endl;
+                    return false;
+                }
+            } else {
+                if (power != Rational(1)) {
+                    if (debug) cerr << __func__ << " C" << endl;
+                    return false;
+                }
+                const FormulaName* infunc = name->getLFuncProduct();
+                if (infunc->getProductSize() != 1) {
+                    if (debug) cerr << __func__ << " D" << endl;
+                    return false;
+                }
+                const FormulaName* inner = infunc->getProductElem(0);
+                if (!inner->isPhi()) {
+                    if (debug) cerr << __func__ << " E" << endl;
+                    return false;
+                } else if (inner->getPower() != 1) {
+                    if (debug) cerr << __func__ << " F" << endl;
+                    return false;
+                } else if (Lphi_exponent != 0) {
+                    if (debug) cerr << __func__ << " G" << endl;
+                    return false;
+                } else {
+                    Lphi_exponent = name->getLFuncExponent();
+                }
+            }
+        }
+
+        if ((Lphi_exponent == 0) || (zetaA_number == 0) || (zetaB_number == 0)) {
+            if (debug) cerr << __func__ << " H" << endl;
+            return false;
+        }
+        if (debug) cerr << __func__ << " Z" << Lphi_exponent << " " << zetaA_number << " " << zetaB_number << endl;
+        bool good = (Lphi_exponent == zetaA_number) && (Lphi_exponent == zetaB_number+1);
+        if (!good) {
+            return false;
+        }
+        out_name = "D-5 ";
+        return true;
+    }
+
+    bool check_D10(string& out_name) {
+        bool debug = false;
+        if (debug) cerr << __func__ << " A" << endl;
+        int Lmu_exponent = 0;
+        int zetaA_number = 0;
+        int zetaB_number = 0;
+
+        for(auto element: elements) {
+            if (debug) cerr << __func__ << " L" << endl;
+            const FormulaName* name = element.first;
+            Rational power = element.second;
+            if (name->isZeta()) {
+                int number = name->getZetaExponent();
+                if ((zetaA_number == 0) && (power == Rational(1))) {
+                    zetaA_number = number;
+                } else if ((zetaB_number == 0) && (power == Rational(-1))) {
+                    zetaB_number = number;
+                } else {
+                    if (debug) cerr << __func__ << " B" << endl;
+                    return false;
+                }
+            } else {
+                if (power != Rational(1)) {
+                    if (debug) cerr << __func__ << " C" << endl;
+                    return false;
+                }
+                const FormulaName* infunc = name->getLFuncProduct();
+                if (infunc->getProductSize() != 1) {
+                    if (debug) cerr << __func__ << " D" << endl;
+                    return false;
+                }
+                const FormulaName* inner = infunc->getProductElem(0);
+                if (!inner->isMu()) {
+                    if (debug) cerr << __func__ << " E" << endl;
+                    return false;
+                } else if (inner->getPower() != 2) {
+                    if (debug) cerr << __func__ << " F" << endl;
+                    return false;
+                } else if (Lmu_exponent != 0) {
+                    if (debug) cerr << __func__ << " G" << endl;
+                    return false;
+                } else {
+                    Lmu_exponent = name->getLFuncExponent();
+                }
+            }
+        }
+
+        if ((Lmu_exponent == 0) || (zetaA_number == 0) || (zetaB_number == 0)) {
+            if (debug) cerr << __func__ << " H" << endl;
+            return false;
+        }
+        if (debug) cerr << __func__ << " Z" << Lmu_exponent << " " << zetaA_number << " " << zetaB_number << endl;
+        bool good = (2*Lmu_exponent == zetaA_number) && (Lmu_exponent == zetaB_number);
+        if (!good) {
+            return false;
+        }
+        out_name = "D-10";
         return true;
     }
 
@@ -407,7 +533,7 @@ public:
         for (size_t idx=0; idx<to_find_down.size(); idx++) {
             if (to_find_down[idx] != zeta_numbers_down[idx]) {
                 if (debug) cerr << __func__ << " T" << endl;
-            return false;
+                return false;
             }
         }
 
@@ -431,16 +557,36 @@ public:
         }
 
         if (zeta + 1 == nb) {
+            /* D-1 we won't find */
+            /* Check for D-2 */
+            if (check_D2(known_formula)) {
+                known = true;
+                return;
+            }
+            /* Check for D-3 */
+            ///TODO
+            /* Check for D-4 */
+            if (check_D4_D6(known_formula)) {
+                known = true;
+                return;
+            }
             /* Check for D-5 */
             if (check_D5(known_formula)) {
                 known = true;
                 return;
             }
-            /* Check for D-6 */
-            if (check_D6(known_formula)) {
+            /* Check for D-6: handled in D-4 */
+
+            /* ... */
+
+            /* Check for D-10 */
+            if (check_D10(known_formula)) {
                 known = true;
                 return;
             }
+
+            /* ... */
+
             /* Check for D-58 */
             if (check_D58(known_formula)) {
                 known = true;
