@@ -114,6 +114,11 @@ bool is_positive(const Fraction<T>& a) {
   return a.getNumerator() > T(0);
 }
 
+template<typename T>
+bool is_integer(const Fraction<T>& a) {
+  return a.getDenominator() == T(1);
+}
+
 typedef Fraction<BigInt> Rational;
 
 ostream& operator << (ostream& out, const Rational &r) {

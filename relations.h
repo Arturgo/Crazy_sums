@@ -4,124 +4,7 @@
 #include "berlekamp.h"
 #include "matrix.h"
 #include "polynomial.h"
-#include "print.h"
-
-class Relation {
-private:
-    typedef std::pair<const FormulaName*, Rational> Element;
-    std::vector<Element> elements;
-    bool known = false;
-    std::string known_formula;
-
-    std::ostream& print_element(std::ostream& out, bool latex, Element& element, bool neg_power) const {
-        Rational power = element.second;
-        if (neg_power) {
-            power = -power;
-        }
-
-        out << (latex ? "{" : "");
-        element.first->print_inside(out, latex);
-        out << (latex ? "}" : "");
-        if (power != Rational(1)) {
-            out << (latex ? "^{" : "^");
-            out << toString(power);
-            out << (latex ? "}" : "");
-        }
-        return out;
-    }
-
-    typedef std::function<bool (const Element&)> print_condition;
-    size_t print_frac_side(std::ostream& out, bool latex, bool neg_power, print_condition condition) const {
-        out << (latex ? "{" : "");
-        size_t side_size = 0;
-        for(auto element: elements) {
-            if (condition(element)) {
-                if (side_size>0) {
-                    out << (latex ? "\\cdot" : " ");
-                }
-                print_element(out, latex, element, neg_power);
-                side_size++;
-            }
-        }
-        if (side_size == 0) {
-            out << "1";
-        }
-        out << (latex ? "}" : "");
-        return side_size;
-    }
-
-    void print_frac(std::ostream& out, bool latex, bool neg_power, print_condition condition) const {
-        std::ostringstream num;
-        std::ostringstream denom;
-        size_t num_size = print_frac_side(num, latex, neg_power,
-            [condition, neg_power](const Element& e){ return condition(e) && (neg_power ^  is_positive(e.second));}
-        );
-        size_t denom_size = print_frac_side(denom, latex, neg_power ^ true,
-            [condition, neg_power](const Element& e){ return condition(e) && (neg_power ^ !is_positive(e.second));}
-        );
-
-        if (denom_size > 0) {
-            out << (latex ? "\\frac" : "");
-        }
-
-        if (num_size > 1) {
-            out << (latex ? "" : KYLW "(" KRST);
-        }
-        out << num.str();
-        if (num_size > 1) {
-            out << (latex ? "" : KYLW ")" KRST);
-        }
-
-        if (denom_size > 0) {
-            out << (latex ? "" : KGRN "/" KRST);
-            if (denom_size > 1) {
-                out << (latex ? "" : KYLW "(" KRST);
-            }
-            out << denom.str();
-            if (denom_size > 1) {
-                out << (latex ? "" : KYLW ")" KRST);
-            }
-        }
-    }
-
-public:
-    Relation(const vector<Rational>& relation_row, vector<const FormulaName*>& names,
-             const vector<size_t>& iCol_in_rows) {
-        for(size_t iCol = 0;iCol < relation_row.size();iCol++) {
-            if(!(relation_row[iCol] == Rational(0))) {
-                elements.push_back(make_pair(names[iCol_in_rows[iCol]], relation_row[iCol]));
-            }
-        }
-    }
-
-    std::ostream& print(std::ostream& out, bool latex) const {
-        if (latex) {
-            out << "$";
-        }
-
-        /* Print all non-zeta */
-        print_frac(out, latex, false, [](const Element& e){ return !e.first->isZeta(); });
-
-        out << (latex ? "=" : KRED " = " KRST);
-
-        /* Then print all zeta */
-        print_frac(out, latex, true , [](const Element& e){ return  e.first->isZeta(); });
-
-        if (latex) {
-            out << "$" << endl << endl;
-        }
-        out.flush(); /* Better for debug purposes */
-        return out;
-    }
-
-    friend std::ostream& operator << (std::ostream& out, const Relation &r) {
-        return r.print(out, false);
-    }
-
-    void classify() {
-        //TODO
-    }
-};
+#include "xrelation.h"
 
 struct RelationGenerator {
    vector<const FormulaName*> names;
@@ -266,8 +149,12 @@ void RelationGenerator::printRelations() {
       relations.push_back(Relation(relation_row, names, iCol_in_rows));
    }
 
-   for(auto relation: relations) {
+   for(auto& relation: relations) {
        relation.classify();
+   }
+   std::sort(relations.begin(), relations.end());
+
+   for(auto& relation: relations) {
        cout << relation << endl;
        relation.print(latex, 1);
    }
