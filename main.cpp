@@ -5,14 +5,21 @@
 #include "relations.h"
 using namespace std;
 
-static FormulaName* name_append_component(const FormulaName *name, std::string component, int power)
+static FormulaName* name_append_component(const FormulaName *name, FormulaName::LeafType component, int power)
 {
     return new FormulaNameProduct(name, new FormulaNamePower(new FormulaNameLeaf(component), power));
 }
 
+static FormulaName* name_append_component(const FormulaName *name, FormulaName::LeafType component,
+                                          int extra, int power)
+{
+    return new FormulaNameProduct(name, new FormulaNamePower(
+               new FormulaNameLeaf(component, (FormulaName::LeafExtraArg){.k = extra, .l = 0}), power));
+}
+
 static FormulaName* name_make_lfunc(const FormulaName *name, int exponent)
 {
-    return new FormulaNameLFunction(name, new FormulaNameLeaf(exponent));
+    return new FormulaNameLFunction(name, exponent);
 }
 
 static void add_relation(RelationGenerator &manager, int i_phi,
@@ -28,10 +35,10 @@ static void add_relation(RelationGenerator &manager, int i_phi,
    auto t2 = std::chrono::high_resolution_clock::now();
 
    FormulaName* name = new FormulaName();
-   name = name_append_component(name, "\\phi{}", 0);
-   name = name_append_component(name, "\\phi{}", i_phi);
-   name = name_append_component(name, "\\sigma{}_1", i_sigma_1);
-   name = name_append_component(name, "\\sigma{}_2", i_sigma_2);
+   name = name_append_component(name, FormulaName::LEAF_PHI, 0);
+   name = name_append_component(name, FormulaName::LEAF_PHI, i_phi);
+   name = name_append_component(name, FormulaName::LEAF_SIGMA, 1, i_sigma_1);
+   name = name_append_component(name, FormulaName::LEAF_SIGMA, 2, i_sigma_2);
 
    name = name_make_lfunc(name, s);
 
