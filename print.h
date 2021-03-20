@@ -345,6 +345,7 @@ void latex_init(void) {
     latex << "\\let\\oldabs\\abs" << endl;
     latex << "\\def\\abs{\\@ifstar{\\oldabs}{\\oldabs*}}" << endl;
     latex << "%" << endl;
+    latex << "\\usepackage[svgnames]{xcolor}" << endl;
     latex << "\\begin{document}" << endl;
 }
 

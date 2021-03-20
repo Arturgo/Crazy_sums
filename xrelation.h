@@ -102,19 +102,28 @@ public:
 
         if (known) {
             if (latex) {
-                out << "\\texttt{[" << known_formula << "]}";
+                out << "\\textcolor{DarkGreen}{\\texttt{[" << known_formula << "]}}";
             } else {
                 std::ostringstream ss;
                 out << KGRN << "[" << known_formula << "]" KRST;
             }
         } else {
-            if (latex) {
-                out << "\\texttt{[****]}";
+            if (is_simple) {
+                if (latex) {
+                    out << "\\textcolor{FireBrick}{\\texttt{[!!!!]}}";
+                } else {
+                    out << KBLD KRED "[!!!!]" KRST;
+                }
             } else {
-                out << (is_simple ? KBLD KRED "[!!!!]" : KMAG "[****]" ) << KRST;
+                if (latex) {
+                    out << "\\textcolor{Purple}{\\texttt{[****]}}";
+                } else {
+                    out << KMAG "[****]" KRST;
+                }
             }
+
         }
-        out << "  ";
+        out << (latex ? "~~ " : " ");
 
         if (latex) {
             out << "$";
