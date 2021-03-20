@@ -1,29 +1,18 @@
+#include <fstream>
 #include <iostream>
 #include "arith_f.h"
 #include "print.h"
 #include "relations.h"
 using namespace std;
 
-static void name_append_component(std::string &name, std::string component, int power)
+static FormulaName* name_append_component(const FormulaName *name, std::string component, int power)
 {
-   if (power != 0) {
-      if (name != "") {
-         name += " ";
-      }
-      name += component;
-      if (power != 1) {
-         name += "^" + std::to_string(power);
-      }
-   }
+    return new FormulaNameProduct(name, new FormulaNamePower(new FormulaNameLeaf(component), power));
 }
 
-static void name_make_lfunc(std::string &name, int exponent)
+static FormulaName* name_make_lfunc(const FormulaName *name, int exponent)
 {
-   if (name == "") {
-      name = KCYN "ζ(" + to_string(exponent) + ")" KRST;
-   } else {
-      name = KRED "L(" + name + ", " + to_string(exponent) + ")" KRST;
-   }
+    return new FormulaNameLFunction(name, new FormulaNameLeaf(exponent));
 }
 
 static void add_relation(RelationGenerator &manager, int i_phi,
@@ -35,31 +24,37 @@ static void add_relation(RelationGenerator &manager, int i_phi,
     * pow(sigma_k(1), i_sigma_1)
     * pow(sigma_k(2), i_sigma_2)
     * pow(inv_id(), s)).get_fraction();
-    
+
    auto t2 = std::chrono::high_resolution_clock::now();
 
-   string name;
-   name_append_component(name, "ϕ", i_phi);
-   name_append_component(name, "σ_1", i_sigma_1);
-   name_append_component(name, "σ_2", i_sigma_2);
+   FormulaName* name = new FormulaName();
+   name = name_append_component(name, "\\phi{}", 0);
+   name = name_append_component(name, "\\phi{}", i_phi);
+   name = name_append_component(name, "\\sigma{}_1", i_sigma_1);
+   name = name_append_component(name, "\\sigma{}_2", i_sigma_2);
 
-   name_make_lfunc(name, s);
-   
+   name = name_make_lfunc(name, s);
+
    auto t3 = std::chrono::high_resolution_clock::now();
    manager.addFraction(name, frac);
    auto t4 = std::chrono::high_resolution_clock::now();
 
    std::chrono::duration<float> e21 = t2 - t1;
    std::chrono::duration<float> e43 = t4 - t3;
-   cout << KBLD + name + KRST
+
+   cout << KBLD << *name << KRST
         << KGRY "   (" << e21.count() << "s + " << e43.count() << "s)" KRST << endl;
+#if 0
    cout << toString(frac.getNumerator(), "x") << KGRN "/" KRST
         << toString(frac.getDenominator(), "x") << endl;
+#endif
+   //name->print_full(latex, 1);
 }
 int main(int argc, char *argv[]) {
    precomputeInverses(53);
    X.setCoeff(1, 1);
    U.setCoeff(0, 1);
+   latex_init();
 
    int maxi_phi = 2;
    int maxi_sigma_1 = 2;
@@ -76,8 +71,9 @@ int main(int argc, char *argv[]) {
          exit(-1);
       }
    }
-  	
+
    RelationGenerator manager;
+
    for(int i_phi = 0;i_phi <= maxi_phi;i_phi++) {
       for(int i_sigma_1 = 0;i_sigma_1 <= maxi_sigma_1;i_sigma_1++) {
          for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
@@ -91,6 +87,7 @@ int main(int argc, char *argv[]) {
 
    cerr << "Data generated" << endl;
 
-   //manager.printRelations();
+   manager.printRelations();
+   latex_end();
    return 0;
 }

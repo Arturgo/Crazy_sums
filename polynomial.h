@@ -161,10 +161,12 @@ Polynomial<T> derive(Polynomial<T> a) {
 	return sum;
 }
 
-/*//TODO: faire mieux
+#if 0
+//TODO: faire mieux
 Rational leading(const Rational& a) {
 	return a;
-}*/
+}
+#endif
 
 Mod leading(const Mod& a) {
 	return a;
