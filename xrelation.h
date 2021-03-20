@@ -139,6 +139,21 @@ public:
         return r.print(out, false);
     }
 
+    bool operator < (const Relation& other) const
+    {
+        if (known != other.known) {
+            return known > other.known;
+        }
+        if (known && (known_formula != other.known_formula)) {
+            return known_formula < other.known_formula;
+        }
+        return false;
+        std::ostringstream ss, other_ss;
+        ss << this;
+        other_ss << other;
+        return ss.str() < other_ss.str();
+    }
+
     bool check_D2(string& out_name) {
         bool debug = false;
         if (debug) cerr << __func__ << " A" << endl;

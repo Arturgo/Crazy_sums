@@ -149,8 +149,12 @@ void RelationGenerator::printRelations() {
       relations.push_back(Relation(relation_row, names, iCol_in_rows));
    }
 
-   for(auto relation: relations) {
+   for(auto& relation: relations) {
        relation.classify();
+   }
+   std::sort(relations.begin(), relations.end());
+
+   for(auto& relation: relations) {
        cout << relation << endl;
        relation.print(latex, 1);
    }
