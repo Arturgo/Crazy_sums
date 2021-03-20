@@ -51,6 +51,11 @@ bool operator == (const Fraction<T>& a, const Fraction<T>& b) {
 }
 
 template<typename T>
+bool operator != (const Fraction<T>& a, const Fraction<T>& b) {
+  return !(a == b);
+}
+
+template<typename T>
 Fraction<T> operator + (const Fraction<T>& a, const Fraction<T>& b) {
   return Fraction<T>(
     a.getNumerator() * b.getDenominator() + a.getDenominator() * b.getNumerator(),
@@ -101,6 +106,12 @@ Fraction<T> gcd(const Fraction<T>& a, const Fraction<T>& b) {
     gcd(a.getNumerator(), b.getNumerator()),
     gcd(a.getDenominator(), b.getDenominator())
   );
+}
+
+template<typename T>
+bool is_positive(const Fraction<T>& a) {
+  assert(a.getDenominator() > T(0));
+  return a.getNumerator() > T(0);
 }
 
 typedef Fraction<BigInt> Rational;

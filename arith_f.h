@@ -261,5 +261,3 @@ FArith phi() {
 FArith sigma_k(size_t k) {
     return one() ^ pow(id(), k);
 }
-
-
