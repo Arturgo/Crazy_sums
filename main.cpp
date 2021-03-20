@@ -91,6 +91,6 @@ int main(int argc, char *argv[]) {
 
    cerr << "Data generated" << endl;
 
-   //manager.printRelations();
+   manager.printRelations();
    return 0;
 }

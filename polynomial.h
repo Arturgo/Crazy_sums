@@ -1,6 +1,7 @@
 #pragma once
 #include "fraction.h"
 #include "print.h"
+#include "matrix.h"
 
 using namespace std;
 
@@ -8,12 +9,13 @@ template<typename T>
 class Polynomial {
 public:
 	Polynomial(vector<T> _coeffs = vector<T>());
+	Polynomial(vector<pair<int, T>> sparse_vect);
+	Polynomial(MatrixRow<T> sparse_vect);
 	Polynomial(int64_t _constant);
 	size_t size() const;
 	T getCoeff(size_t pos) const;
 	void setCoeff(size_t pos, T coeff);
 	void reduce();
-private:
 	vector<T> coeffs;
 };
 
@@ -34,6 +36,24 @@ bool operator < (const Polynomial<T>& a, const Polynomial<T>& b) {
 template<typename T>
 Polynomial<T>::Polynomial(vector<T> _coeffs) {
 	coeffs = _coeffs;
+	reduce();
+}
+
+template<typename T>
+Polynomial<T>::Polynomial(vector<pair<int, T>> sparse_vect) {
+	coeffs = vector(sparse_vect[sparse_vect.size()-1][0]+1, 0);
+	for (auto& val : sparse_vect) {
+		coeffs[val[0]] = val[1];
+	}
+	reduce();
+}
+
+template<typename T>
+Polynomial<T>::Polynomial(MatrixRow<T> sparse_vect) {
+	coeffs = vector<T>(sparse_vect.coeffs[sparse_vect.size()-1][0]+1, 0);
+	for (auto& val : sparse_vect.coeffs) {
+		coeffs[val[0]] = val[1];
+	}
 	reduce();
 }
 

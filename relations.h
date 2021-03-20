@@ -122,6 +122,7 @@ void RelationGenerator::printRelations() {
       }
 
       decompositions.coeffs.push_back(decomposition);
+      cout << decompositions.coeffs[decompositions.coeffs.size() - 1].size() << endl;
    }
    cerr << "Done" << endl;
 
@@ -137,26 +138,35 @@ void RelationGenerator::printRelations() {
         << rows.nbRows() << " * " << rows.nbCols() << endl;
    cerr << "Simplifying.." << endl;
 
+   for (auto& row: rows.coeffs) {
+      cout << row.coeffs.size() << " -> ";
+      for (auto& pos : row.coeffs) {
+         cout << pos.first << "-" << pos.second << " ";
+      }
+      cerr << endl;
+   }
+
    /* On vire les colonnes inutiles */
    auto t4 = std::chrono::high_resolution_clock::now();
    Matrix<Rational> cleaned_rows(rows.nbRows(), 0);
 
    vector<size_t> iCol_in_rows;
 
+   size_t pos = 0;
    for(size_t iCol = 0;iCol < rows.nbCols();iCol++) {
    	bool isNull = true;
    	for(size_t iRow = 0;iRow < rows.nbRows();iRow++) {
-   		if(!(rows.coeffs[iRow][iCol] == Rational(0))) {
+   		if(!(rows.coeffs[iRow].getCoeff(iCol) == Rational(0))) {
    			isNull = false;
    		}
    	}
-   	
    	if(!isNull) {
    		iCol_in_rows.push_back(iCol);
    		
    		for(size_t iRow = 0;iRow < rows.nbRows();iRow++) {
-   			cleaned_rows.coeffs[iRow].push_back(rows.coeffs[iRow][iCol]);
+   			cleaned_rows.coeffs[iRow].setCoeff(pos, rows.coeffs[iRow].getCoeff(iCol));
 			}
+         pos++;
    	}
    }
    auto t5 = std::chrono::high_resolution_clock::now();
@@ -170,10 +180,10 @@ void RelationGenerator::printRelations() {
    //Matrix<Rational> relations = row_echelon_form(cleaned_rows);
    Matrix<Rational> relations = cleaned_rows;
 
-   for(const vector<Rational>& relation : relations.coeffs) {
+   for(const MatrixRow<Rational>& relation : relations.coeffs) {
       for(size_t iCol = 0;iCol < relation.size();iCol++) {
-         if(!(relation[iCol] == Rational(0))) {
-            cout << names[iCol_in_rows[iCol]] << "^" << toString(relation[iCol]) << " ";
+         if(!(relation.getCoeff(iCol) == Rational(0))) {
+            cout << names[iCol_in_rows[iCol]] << "^" << toString(relation.getCoeff(iCol)) << " ";
          }
       }
       cout << "= 1" << endl;

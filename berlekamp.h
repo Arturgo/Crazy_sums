@@ -1,6 +1,7 @@
 #include "polynomial.h"
 #include "matrix.h"
 
+/*
 Univariate berlekamp(Univariate poly) {
 	Univariate derivedP = derive(poly);
 
@@ -24,9 +25,7 @@ Univariate berlekamp(Univariate poly) {
 			x_pow_ip = x_pow_ip << modulo;
 		x_pow_ip = x_pow_ip % poly;
 		
-		for(size_t j = 0;j < x_pow_ip.size();j++) {
-			matrice.coeffs[i][j] = x_pow_ip.getCoeff(j);
-	 	}
+		matrice.coeffs[i] = MatrixRow<Mod>(x_pow_ip.coeffs);
 	}
 	
 	matrice = matrice - identity<Mod>(poly.size() - 1);
@@ -84,3 +83,4 @@ vector<Univariate> decompose(Univariate poly) {
 	
 	return decomp;
 }
+*/
