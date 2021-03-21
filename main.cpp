@@ -43,7 +43,7 @@ static void add_relation(RelationGenerator &manager, int i_phi,
    auto t2 = std::chrono::high_resolution_clock::now();
 
    FormulaName* name = new FormulaName();
-   name = name_append_component(name, FormulaName::LEAF_PHI, i_phi);
+   name = name_append_component(name, FormulaName::LEAF_JORDAN_T, 1, i_phi);
    name = name_append_component(name, FormulaName::LEAF_THETA, i_theta);
    name = name_append_component(name, FormulaName::LEAF_SIGMA, 1, i_sigma_1);
    name = name_append_component(name, FormulaName::LEAF_SIGMA, 2, i_sigma_2);

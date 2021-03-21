@@ -356,66 +356,6 @@ public:
         return true;
     }
 
-    bool check_D5(string& out_name) {
-        bool debug = false;
-        if (debug) cerr << __func__ << " A" << endl;
-        int Lphi_exponent = 0;
-        int zetaA_number = 0;
-        int zetaB_number = 0;
-
-        for(auto element: elements) {
-            if (debug) cerr << __func__ << " L" << endl;
-            const FormulaName* name = element.first;
-            Rational power = element.second;
-            if (name->isZeta()) {
-                int number = name->getZetaExponent();
-                if ((zetaA_number == 0) && (power == Rational(1))) {
-                    zetaA_number = number;
-                } else if ((zetaB_number == 0) && (power == Rational(-1))) {
-                    zetaB_number = number;
-                } else {
-                    if (debug) cerr << __func__ << " B" << endl;
-                    return false;
-                }
-            } else {
-                if (power != Rational(1)) {
-                    if (debug) cerr << __func__ << " C" << endl;
-                    return false;
-                }
-                const FormulaName* infunc = name->getLFuncProduct();
-                if (infunc->getProductSize() != 1) {
-                    if (debug) cerr << __func__ << " D" << endl;
-                    return false;
-                }
-                const FormulaName* inner = infunc->getProductElem(0);
-                if (!inner->isPhi()) {
-                    if (debug) cerr << __func__ << " E" << endl;
-                    return false;
-                } else if (inner->getPower() != 1) {
-                    if (debug) cerr << __func__ << " F" << endl;
-                    return false;
-                } else if (Lphi_exponent != 0) {
-                    if (debug) cerr << __func__ << " G" << endl;
-                    return false;
-                } else {
-                    Lphi_exponent = name->getLFuncExponent();
-                }
-            }
-        }
-
-        if ((Lphi_exponent == 0) || (zetaA_number == 0) || (zetaB_number == 0)) {
-            if (debug) cerr << __func__ << " H" << endl;
-            return false;
-        }
-        if (debug) cerr << __func__ << " Z" << Lphi_exponent << " " << zetaA_number << " " << zetaB_number << endl;
-        bool good = (Lphi_exponent == zetaA_number) && (Lphi_exponent == zetaB_number+1);
-        if (!good) {
-            return false;
-        }
-        out_name = "D-5 ";
-        return true;
-    }
-
     bool check_D10(string& out_name) {
         bool debug = false;
         if (debug) cerr << __func__ << " A" << endl;
@@ -533,6 +473,73 @@ public:
             return false;
         }
         out_name = "D-18";
+        return true;
+    }
+
+    bool check_D52(string& out_name) {
+        bool debug = false;
+        if (debug) cerr << __func__ << " A" << endl;
+        int L_exponent = 0;
+        int jordan_k = 0;
+        int zetaA_number = 0;
+        int zetaB_number = 0;
+
+        for(auto element: elements) {
+            if (debug) cerr << __func__ << " L" << endl;
+            const FormulaName* name = element.first;
+            Rational power = element.second;
+            if (name->isZeta()) {
+                int number = name->getZetaExponent();
+                if ((zetaA_number == 0) && (power == Rational(1))) {
+                    zetaA_number = number;
+                } else if ((zetaB_number == 0) && (power == Rational(-1))) {
+                    zetaB_number = number;
+                } else {
+                    if (debug) cerr << __func__ << " B" << endl;
+                    return false;
+                }
+            } else {
+                if (power != Rational(1)) {
+                    if (debug) cerr << __func__ << " C" << endl;
+                    return false;
+                }
+                const FormulaName* infunc = name->getLFuncProduct();
+                if (infunc->getProductSize() != 1) {
+                    if (debug) cerr << __func__ << " D" << endl;
+                    return false;
+                }
+                const FormulaName* inner = infunc->getProductElem(0);
+                if (!inner->isJordanT()) {
+                    if (debug) cerr << __func__ << " E" << endl;
+                    return false;
+                } else if (inner->getPower() != 1) {
+                    if (debug) cerr << __func__ << " F" << endl;
+                    return false;
+                } else if (L_exponent != 0) {
+                    if (debug) cerr << __func__ << " G" << endl;
+                    return false;
+                } else {
+                    L_exponent = name->getLFuncExponent();
+                    assert(jordan_k == 0);
+                    jordan_k = inner->getJordanTK();
+                }
+            }
+        }
+
+        if ((L_exponent == 0) || (zetaA_number == 0) || (zetaB_number == 0)) {
+            if (debug) cerr << __func__ << " H" << endl;
+            return false;
+        }
+        if (debug) cerr << __func__ << " Z" << L_exponent << " " << zetaA_number << " " << zetaB_number << endl;
+        bool good = (L_exponent == zetaA_number) && (L_exponent == zetaB_number+jordan_k);
+        if (!good) {
+            return false;
+        }
+
+        out_name = "D-52";
+        if (jordan_k == 1) {
+            out_name = "D-5 ";
+        }
         return true;
     }
 
@@ -718,11 +725,7 @@ public:
                 known = true;
                 return;
             }
-            /* Check for D-5 */
-            if (check_D5(known_formula)) {
-                known = true;
-                return;
-            }
+            /* Check for D-5: handled in D-52 */
             /* Check for D-6: handled in D-4 */
 
             /* ... */
@@ -738,6 +741,14 @@ public:
 
             /* Check for D-18 */
             if (check_D18(known_formula)) {
+                known = true;
+                return;
+            }
+
+            /* ... */
+
+            /* Check for D-52 */
+            if (check_D52(known_formula)) {
                 known = true;
                 return;
             }

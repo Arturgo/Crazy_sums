@@ -29,7 +29,7 @@ namespace fs = std::filesystem;
 
 class FormulaName {
 public:
-    enum LeafType { LEAF_MU, LEAF_SIGMA, LEAF_PHI, LEAF_THETA, LEAF_UNKNOWN };
+    enum LeafType { LEAF_MU, LEAF_SIGMA, LEAF_THETA, LEAF_JORDAN_T, LEAF_UNKNOWN };
     typedef struct LeafExtraArg {
         int k;
         int l;
@@ -56,12 +56,16 @@ protected:
             case LEAF_SIGMA:
                 ret = (latex ? "\\sigma{}" : "σ");
                 if (leaf_extra.k != 1) {
-                    ret += "_";
-                    ret += to_string(leaf_extra.k);
+                    ret += "_" + to_string(leaf_extra.k);
                 }
                 break;
-            case LEAF_PHI:
-                ret = (latex ? "\\phi{}" : "φ");
+            case LEAF_JORDAN_T:
+                if (leaf_extra.k == 1) {
+                    ret = (latex ? "\\phi{}" : "φ");
+                } else {
+                    ret = (latex ? "J" : "J");
+                    ret += "_" + to_string(leaf_extra.k);
+                }
                 break;
             default:
                 ret = (latex ? "?" : "?");
@@ -132,6 +136,15 @@ protected:
             return sub_formula[0]->isLeafOfType(requested_type);
         }
         return leaf_type == requested_type;
+    }
+
+    int getLeafK(LeafType requested_type) const {
+        assert(isLeafOfType(requested_type));
+        if (isPower()) {
+            assert(sub_formula[0]->isLeaf());
+            return sub_formula[0]->getLeafK(requested_type);
+        }
+        return leaf_extra.k;
     }
 
 public:
@@ -247,8 +260,12 @@ public:
         return isLeafOfType(LEAF_MU);
     }
 
-    bool isPhi() const {
-        return isLeafOfType(LEAF_PHI);
+    bool isJordanT() const {
+        return isLeafOfType(LEAF_JORDAN_T);
+    }
+
+    int getJordanTK() const {
+        return getLeafK(LEAF_JORDAN_T);
     }
 
     bool isSigma() const {
@@ -256,12 +273,7 @@ public:
     }
 
     int getSigmaK() const {
-        assert(isSigma());
-        if (isPower()) {
-            assert(sub_formula[0]->isLeaf());
-            return sub_formula[0]->getSigmaK();
-        }
-        return leaf_extra.k;
+        return getLeafK(LEAF_SIGMA);
     }
 
     vector<const FormulaName*> getSubFormula() const {
