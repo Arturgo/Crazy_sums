@@ -85,6 +85,71 @@ private:
         }
     }
 
+    size_t utf8_helper(const string& str, std::string::size_type idx) const {
+        size_t cplen = 1;
+        if ((str[idx] & 0xf8) == 0xf0) {
+            cplen = 4;
+        } else if ((str[idx] & 0xf0) == 0xe0) {
+            cplen = 3;
+        } else if ((str[idx] & 0xe0) == 0xc0) {
+            cplen = 2;
+        }
+        if ((idx + cplen) > str.length()) {
+            cplen = 1;
+        }
+        return cplen;
+    }
+
+    bool nat_cmp(const string& a, const string& b) const {
+        std::string::size_type ia = 0, ib = 0;
+        bool in_nb = false;
+
+        while((ia < a.size()) && (ib < b.size())) {
+            if (in_nb) {
+                uint64_t nata = 0, natb = 0;
+                while ((ia < a.size()) && (utf8_helper(a, ia) == 1) && isdigit(a[ia])) {
+                    nata = (10*nata) + (a[ia] - '0');
+                    ia++;
+                }
+                while ((ib < b.size()) && (utf8_helper(b, ib) == 1) && isdigit(b[ib])) {
+                    natb = (10*natb) + (b[ib] - '0');
+                    ib++;
+                }
+                if (nata != natb) {
+                    return nata < natb;
+                }
+                in_nb = false;
+            } else {
+                size_t wa = utf8_helper(a, ia);
+                size_t wb = utf8_helper(b, ib);
+
+                if ((wa == 1) && isdigit(a[ia]) && (wb == 1) && isdigit(b[ib])) {
+                    in_nb = true;
+                    continue;
+                }
+
+                if (wa != wb) {
+                    return wa < wb;
+                }
+                for(size_t i=0; i<min(wa,wb); i++) {
+                    if (a[ia+i] != b[ib+i]) {
+                        return a[ia+i] < b[ib+i];
+                    }
+                }
+
+                ia += wa;
+                ib += wb;
+            }
+        }
+
+        if (ia >= a.size()) {
+            return false;
+        } else if (ib >= b.size()) {
+            return true;
+        }
+        return false; /* Equal */
+    }
+
 public:
     Relation(const vector<Rational>& relation_row, vector<const FormulaName*>& names,
              const vector<size_t>& iCol_in_rows) {
@@ -154,13 +219,12 @@ public:
             return known > other.known;
         }
         if (known && (known_formula != other.known_formula)) {
-            return known_formula < other.known_formula;
+            return nat_cmp(known_formula, other.known_formula);
         }
-        return false;
         std::ostringstream ss, other_ss;
-        ss << this;
+        ss << *this;
         other_ss << other;
-        return ss.str() < other_ss.str();
+        return nat_cmp(ss.str(), other_ss.str());
     }
 
     bool check_D2(string& out_name) {

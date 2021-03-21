@@ -27,6 +27,9 @@ static void add_relation(RelationGenerator &manager, int i_phi,
                          int i_mu, int s)
 {
    auto t1 = std::chrono::high_resolution_clock::now();
+
+   assert(i_mu <= 2);
+
    Fraction<Univariate> frac =
       (pow(phi(), i_phi)
     * pow(sigma_k(1), i_sigma_1)
@@ -70,7 +73,7 @@ int main(int argc, char *argv[]) {
 
    int maxi_phi = 2;
    int maxi_sigma_1 = 2;
-   int maxi_sigma_2 = 2;
+   int maxi_sigma_2 = 1;
    int maxi_sigma_3 = 1;
    int maxi_mu = 2;
    int maxi_sum = 8;
@@ -99,9 +102,9 @@ int main(int argc, char *argv[]) {
          for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
             for(int i_sigma_3 = 0;i_sigma_3 <= maxi_sigma_3;i_sigma_3++) {
                for(int i_mu = 0;i_mu <= maxi_mu;i_mu++) {
-                  int sum = i_phi + i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 1*i_mu;
-                  for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum-sum/2);s++) {
-                     if(sum > 0) {
+                  int sum = i_phi + i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 0*i_mu;
+                  for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum);s++) {
+                     if(i_phi+i_sigma_1+i_sigma_2+i_sigma_3+i_mu > 0) {
                         add_relation(manager, i_phi, i_sigma_1, i_sigma_2, i_sigma_3, i_mu, s);
                      }
                   }
