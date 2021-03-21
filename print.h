@@ -29,7 +29,7 @@ namespace fs = std::filesystem;
 
 class FormulaName {
 public:
-    enum LeafType { LEAF_MU, LEAF_SIGMA, LEAF_PHI, LEAF_UNKNOWN };
+    enum LeafType { LEAF_MU, LEAF_SIGMA, LEAF_PHI, LEAF_THETA, LEAF_UNKNOWN };
     typedef struct LeafExtraArg {
         int k;
         int l;
@@ -47,6 +47,9 @@ protected:
     string textify(LeafType in, bool latex) const {
         string ret;
         switch(in) {
+            case LEAF_THETA:
+                ret = (latex ? "\\theta{}" : "θ");
+                break;
             case LEAF_MU:
                 ret = (latex ? "\\mu{}" : "µ");
                 break;
@@ -234,6 +237,10 @@ public:
     int getZetaExponent() const {
         assert(isZeta());
         return getLFuncExponent();
+    }
+
+    bool isTheta() const {
+        return isLeafOfType(LEAF_THETA);
     }
 
     bool isMu() const {

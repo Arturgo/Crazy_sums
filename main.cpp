@@ -24,7 +24,8 @@ static FormulaName* name_make_lfunc(const FormulaName *name, int exponent)
 
 static void add_relation(RelationGenerator &manager, int i_phi,
                          int i_sigma_1, int i_sigma_2, int i_sigma_3,
-                         int i_mu, int s)
+                         int i_mu, int i_theta,
+                         int s)
 {
    auto t1 = std::chrono::high_resolution_clock::now();
 
@@ -32,6 +33,7 @@ static void add_relation(RelationGenerator &manager, int i_phi,
 
    Fraction<Univariate> frac =
       (pow(phi(), i_phi)
+    * pow(theta(), i_theta)
     * pow(sigma_k(1), i_sigma_1)
     * pow(sigma_k(2), i_sigma_2)
     * pow(sigma_k(3), i_sigma_3)
@@ -41,8 +43,8 @@ static void add_relation(RelationGenerator &manager, int i_phi,
    auto t2 = std::chrono::high_resolution_clock::now();
 
    FormulaName* name = new FormulaName();
-   name = name_append_component(name, FormulaName::LEAF_PHI, 0);
    name = name_append_component(name, FormulaName::LEAF_PHI, i_phi);
+   name = name_append_component(name, FormulaName::LEAF_THETA, i_theta);
    name = name_append_component(name, FormulaName::LEAF_SIGMA, 1, i_sigma_1);
    name = name_append_component(name, FormulaName::LEAF_SIGMA, 2, i_sigma_2);
    name = name_append_component(name, FormulaName::LEAF_SIGMA, 3, i_sigma_3);
@@ -72,6 +74,7 @@ int main(int argc, char *argv[]) {
    latex_init();
 
    int maxi_phi = 2;
+   int maxi_theta = 0;
    int maxi_sigma_1 = 2;
    int maxi_sigma_2 = 1;
    int maxi_sigma_3 = 1;
@@ -84,7 +87,8 @@ int main(int argc, char *argv[]) {
          maxi_sigma_2 = atoi(argv[3]);
          maxi_sigma_3 = atoi(argv[4]);
          maxi_mu = atoi(argv[5]);
-         maxi_sum = atoi(argv[6]);
+         maxi_theta = atoi(argv[6]);
+         maxi_sum = atoi(argv[7]);
       } else {
          cerr << "wrong number of argument you should give 0 (for default values) or 4 (phi, sigma_1, sigma_2, s) not " << argc - 1 << endl;
          exit(-1);
@@ -94,18 +98,20 @@ int main(int argc, char *argv[]) {
    RelationGenerator manager;
 
     for(int s = 2;s <= 2+maxi_sum*3;s++) {
-        add_relation(manager, 0, 0, 0, 0, 0, s);
+        add_relation(manager, 0, 0, 0, 0, 0, 0, s);
     }
 
    for(int i_phi = 0;i_phi <= maxi_phi;i_phi++) {
-      for(int i_sigma_1 = 0;i_sigma_1 <= maxi_sigma_1;i_sigma_1++) {
-         for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
-            for(int i_sigma_3 = 0;i_sigma_3 <= maxi_sigma_3;i_sigma_3++) {
-               for(int i_mu = 0;i_mu <= maxi_mu;i_mu++) {
-                  int sum = i_phi + i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 0*i_mu;
-                  for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum);s++) {
-                     if(i_phi+i_sigma_1+i_sigma_2+i_sigma_3+i_mu > 0) {
-                        add_relation(manager, i_phi, i_sigma_1, i_sigma_2, i_sigma_3, i_mu, s);
+      for(int i_theta = 0;i_theta <= maxi_theta;i_theta++) {
+         for(int i_sigma_1 = 0;i_sigma_1 <= maxi_sigma_1;i_sigma_1++) {
+            for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
+               for(int i_sigma_3 = 0;i_sigma_3 <= maxi_sigma_3;i_sigma_3++) {
+                  for(int i_mu = 0;i_mu <= maxi_mu;i_mu++) {
+                     int sum = i_phi + 0*i_theta + i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 0*i_mu;
+                     for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum);s++) {
+                        if(i_phi+i_theta+i_sigma_1+i_sigma_2+i_sigma_3+i_mu > 0) {
+                           add_relation(manager, i_phi, i_sigma_1, i_sigma_2, i_sigma_3, i_mu, i_theta, s);
+                        }
                      }
                   }
                }

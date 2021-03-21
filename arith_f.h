@@ -262,3 +262,7 @@ FArith sigma_k(size_t k) {
     assert(k > 0);
     return one() ^ pow(id(), k);
 }
+
+FArith theta() {
+    return pow(mobius(), 2) ^ one();
+}

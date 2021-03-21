@@ -476,6 +476,66 @@ public:
         return true;
     }
 
+    bool check_D18(string& out_name) {
+        bool debug = false;
+        if (debug) cerr << __func__ << " A" << endl;
+        int L_exponent = 0;
+        int zetaA_number = 0;
+        int zetaB_number = 0;
+
+        for(auto element: elements) {
+            if (debug) cerr << __func__ << " L" << endl;
+            const FormulaName* name = element.first;
+            Rational power = element.second;
+            if (name->isZeta()) {
+                int number = name->getZetaExponent();
+                if ((zetaA_number == 0) && (power == Rational(1))) {
+                    zetaA_number = number;
+                } else if ((zetaB_number == 0) && (power == Rational(-2))) {
+                    zetaB_number = number;
+                } else {
+                    if (debug) cerr << __func__ << " B" << endl;
+                    return false;
+                }
+            } else {
+                if (power != Rational(1)) {
+                    if (debug) cerr << __func__ << " C" << endl;
+                    return false;
+                }
+                const FormulaName* infunc = name->getLFuncProduct();
+                if (infunc->getProductSize() != 1) {
+                    if (debug) cerr << __func__ << " D" << endl;
+                    return false;
+                }
+                const FormulaName* inner = infunc->getProductElem(0);
+                if (!inner->isTheta()) {
+                    if (debug) cerr << __func__ << " E" << endl;
+                    return false;
+                } else if (inner->getPower() != 1) {
+                    if (debug) cerr << __func__ << " F" << endl;
+                    return false;
+                } else if (L_exponent != 0) {
+                    if (debug) cerr << __func__ << " G" << endl;
+                    return false;
+                } else {
+                    L_exponent = name->getLFuncExponent();
+                }
+            }
+        }
+
+        if ((L_exponent == 0) || (zetaA_number == 0) || (zetaB_number == 0)) {
+            if (debug) cerr << __func__ << " H" << endl;
+            return false;
+        }
+        if (debug) cerr << __func__ << " Z" << L_exponent << " " << zetaA_number << " " << zetaB_number << endl;
+        bool good = (2*L_exponent == zetaA_number) && (L_exponent == zetaB_number);
+        if (!good) {
+            return false;
+        }
+        out_name = "D-18";
+        return true;
+    }
+
     bool check_D58(string& out_name) {
         bool debug = false;
         if (debug) cerr << __func__ << " A" << endl;
@@ -667,8 +727,17 @@ public:
 
             /* ... */
 
+            /* Check for D-9: this is D-18 */
             /* Check for D-10 */
             if (check_D10(known_formula)) {
+                known = true;
+                return;
+            }
+
+            /* ... */
+
+            /* Check for D-18 */
+            if (check_D18(known_formula)) {
                 known = true;
                 return;
             }
