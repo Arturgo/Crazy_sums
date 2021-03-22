@@ -22,13 +22,20 @@ static FormulaName* name_make_lfunc(const FormulaName *name, int exponent)
     return new FormulaNameLFunction(name, exponent);
 }
 
-static void add_relation(RelationGenerator &manager, int i_phi,
+static void add_relation(RelationGenerator &manager,
+                         int i_phi, int i_J_2,
                          int i_sigma_1, int i_sigma_2, int i_sigma_3,
-                         int i_mu, int s)
+                         int i_mu, int i_theta,
+                         int s)
 {
    auto t1 = std::chrono::high_resolution_clock::now();
+
+   assert(i_mu <= 2);
+
    Fraction<Univariate> frac =
       (pow(phi(), i_phi)
+    * pow(jordan_totient(2), i_J_2)
+    * pow(theta(), i_theta)
     * pow(sigma_k(1), i_sigma_1)
     * pow(sigma_k(2), i_sigma_2)
     * pow(sigma_k(3), i_sigma_3)
@@ -38,8 +45,9 @@ static void add_relation(RelationGenerator &manager, int i_phi,
    auto t2 = std::chrono::high_resolution_clock::now();
 
    FormulaName* name = new FormulaName();
-   name = name_append_component(name, FormulaName::LEAF_PHI, 0);
-   name = name_append_component(name, FormulaName::LEAF_PHI, i_phi);
+   name = name_append_component(name, FormulaName::LEAF_JORDAN_T, 1, i_phi);
+   name = name_append_component(name, FormulaName::LEAF_JORDAN_T, 2, i_J_2);
+   name = name_append_component(name, FormulaName::LEAF_THETA, i_theta);
    name = name_append_component(name, FormulaName::LEAF_SIGMA, 1, i_sigma_1);
    name = name_append_component(name, FormulaName::LEAF_SIGMA, 2, i_sigma_2);
    name = name_append_component(name, FormulaName::LEAF_SIGMA, 3, i_sigma_3);
@@ -62,54 +70,41 @@ static void add_relation(RelationGenerator &manager, int i_phi,
 #endif
    //name->print_full(latex, 1);
 }
-int main(int argc, char *argv[]) {
+int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    precomputeInverses(53);
    X.setCoeff(1, 1);
    U.setCoeff(0, 1);
    latex_init();
 
    int maxi_phi = 2;
+   int maxi_J_2 = 0;
+   int maxi_theta = 0;
    int maxi_sigma_1 = 2;
-   int maxi_sigma_2 = 2;
+   int maxi_sigma_2 = 1;
    int maxi_sigma_3 = 1;
    int maxi_mu = 2;
    int maxi_sum = 8;
-   if (argc > 1) {
-      if (argc == 5) {
-         maxi_phi = atoi(argv[1]);
-         maxi_sigma_1 = atoi(argv[2]);
-         maxi_sigma_2 = atoi(argv[3]);
-         maxi_sigma_3 = atoi(argv[4]);
-         maxi_mu = atoi(argv[5]);
-         maxi_sum = atoi(argv[6]);
-      } else {
-         cerr << "wrong number of argument you should give 0 (for default values) or 4 (phi, sigma_1, sigma_2, s) not " << argc - 1 << endl;
-         exit(-1);
-      }
-   }
 
    RelationGenerator manager;
 
     for(int s = 2;s <= 2+maxi_sum*3;s++) {
-        add_relation(manager, 0, 0, 0, 0, 0, s);
+        add_relation(manager, 0, 0, 0, 0, 0, 0, 0, s);
     }
 
    for(int i_phi = 0;i_phi <= maxi_phi;i_phi++) {
-      for(int i_sigma_1 = 0;i_sigma_1 <= maxi_sigma_1;i_sigma_1++) {
-         for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
-            for(int i_sigma_3 = 0;i_sigma_3 <= maxi_sigma_3;i_sigma_3++) {
-               for(int i_mu = 0;i_mu <= maxi_mu;i_mu++) {
-                  int sum = i_phi + i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 1*i_mu;
-                  for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum-sum/2);s++) {
-                     if(sum > 0) {
-                        add_relation(manager, i_phi, i_sigma_1, i_sigma_2, i_sigma_3, i_mu, s);
-                     }
-                  }
-               }
-            }
+   for(int i_J_2 = 0;i_J_2 <= maxi_J_2;i_J_2++) {
+   for(int i_theta = 0;i_theta <= maxi_theta;i_theta++) {
+   for(int i_sigma_1 = 0;i_sigma_1 <= maxi_sigma_1;i_sigma_1++) {
+   for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
+   for(int i_sigma_3 = 0;i_sigma_3 <= maxi_sigma_3;i_sigma_3++) {
+   for(int i_mu = 0;i_mu <= maxi_mu;i_mu++) {
+      int sum = i_phi + 2*i_J_2 + 0*i_theta + i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 0*i_mu;
+      for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum);s++) {
+         if(i_phi+i_J_2+i_theta+i_sigma_1+i_sigma_2+i_sigma_3+i_mu > 0) {
+            add_relation(manager, i_phi, i_J_2, i_sigma_1, i_sigma_2, i_sigma_3, i_mu, i_theta , s);
          }
       }
-   }
+   }}}}}}}
 
    cerr << "Data generated" << endl;
 

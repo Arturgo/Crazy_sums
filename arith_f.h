@@ -254,11 +254,20 @@ FArith pow(const FArith &a, size_t exp) {
     return res;
 }
 
+FArith jordan_totient(size_t k) {
+    assert(k > 0);
+    return pow(id(), k) ^ mobius();
+}
+
 FArith phi() {
-    return mobius() ^ id();
+    return jordan_totient(1);
 }
 
 FArith sigma_k(size_t k) {
     assert(k > 0);
     return one() ^ pow(id(), k);
+}
+
+FArith theta() {
+    return pow(mobius(), 2) ^ one();
 }
