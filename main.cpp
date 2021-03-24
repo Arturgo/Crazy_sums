@@ -99,6 +99,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    for(int i_sigma_3 = 0;i_sigma_3 <= maxi_sigma_3;i_sigma_3++) {
    for(int i_mu = 0;i_mu <= maxi_mu;i_mu++) {
       int sum = i_phi + 2*i_J_2 + 0*i_theta + i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 0*i_mu;
+      if ((i_J_2 > 0) && (i_mu > 0)) {
+         continue; /* Avoid generating C-8: J_2µ == φσµ */
+      }
       for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum);s++) {
          if(i_phi+i_J_2+i_theta+i_sigma_1+i_sigma_2+i_sigma_3+i_mu > 0) {
             add_relation(manager, i_phi, i_J_2, i_sigma_1, i_sigma_2, i_sigma_3, i_mu, i_theta , s);
