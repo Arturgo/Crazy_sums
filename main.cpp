@@ -71,7 +71,7 @@ static void add_relation(RelationGenerator &manager,
    //name->print_full(latex, 1);
 }
 int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
-   precomputeInverses(53);
+   precomputeInverses(211);
    X.setCoeff(1, 1);
    U.setCoeff(0, 1);
    latex_init();
