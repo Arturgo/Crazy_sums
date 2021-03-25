@@ -2,24 +2,119 @@
 #include <boost/multiprecision/gmp.hpp>
 #include <string>
 #include <vector>
-using namespace boost::multiprecision;
 using namespace std;
-using BigInt = mpz_int;
 
-BigInt gcd(const BigInt& a, const BigInt& b) {
-  if(b == 0)
+class SmallInt {
+    typedef int_fast64_t smallint;
+protected:
+    smallint n;
+
+public:
+    SmallInt() {
+        n = 0;
+    }
+
+    SmallInt(smallint val) {
+        n = val;
+    }
+
+    string str() const {
+        return std::to_string(n);
+    }
+
+    SmallInt operator ++ (void) {
+        return n++;
+    }
+
+    SmallInt operator ++ (int) {
+        return n++;
+    }
+
+    SmallInt operator -- (void) {
+        return n--;
+    }
+
+    SmallInt operator -- (int) {
+        return n--;
+    }
+
+    SmallInt operator + (const SmallInt& other) const {
+        return n + other.n;
+    }
+
+    SmallInt operator - (const SmallInt& other) const {
+        return n - other.n;
+    }
+
+    SmallInt operator - (void) const {
+        return -n;
+    }
+
+    SmallInt operator * (const SmallInt& other) const {
+        return n * other.n;
+    }
+
+    SmallInt operator / (const SmallInt& other) const {
+        return n / other.n;
+    }
+
+    SmallInt operator % (const SmallInt& other) const {
+        return n % other.n;
+    }
+
+    bool operator == (const SmallInt& other) const {
+        return n == other.n;
+    }
+
+    void operator += (const SmallInt& other) {
+        n += other.n;
+    }
+
+    void operator -= (const SmallInt& other) {
+        n -= other.n;
+    }
+
+    bool operator != (const SmallInt& other) const {
+        return n != other.n;
+    }
+
+    bool operator < (const SmallInt& other) const {
+        return n < other.n;
+    }
+
+    bool operator > (const SmallInt& other) const {
+        return n > other.n;
+    }
+
+    bool operator <= (const SmallInt& other) const {
+        return n <= other.n;
+    }
+
+    bool operator >= (const SmallInt& other) const {
+        return n >= other.n;
+    }
+};
+
+#if 0
+using SomeInt = boost::multiprecision::mpz_int;
+#else
+using SomeInt = SmallInt;
+#endif
+
+SomeInt gcd(const SomeInt& a, const SomeInt& b) {
+  if(b == SomeInt(0))
     return max(a, -a);
   return gcd(b, a % b);
 }
 
-BigInt normalFactor(const BigInt& a, const BigInt& b) {
-  if(b >= 0)
+SomeInt normalFactor(const SomeInt& a, const SomeInt& b) {
+  if(b >= SomeInt(0))
     return gcd(a, b);
   else
     return -gcd(a, b);;
 }
 
-string toString(const BigInt& a) {
+string toString(const SomeInt& a) {
   return a.str();
 }
 

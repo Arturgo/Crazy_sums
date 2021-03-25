@@ -596,7 +596,7 @@ public:
                     zeta_number_up = number;
                     if (debug) cerr << __func__ << " zeta_number_up " << zeta_number_up << endl;
                 }
-                for (int i=0; i<-power.getNumerator(); i++) {
+                for (SomeInt i=0; i<-power.getNumerator(); i++) {
                     if (zeta_numbers_down.size() < 4) {
                         zeta_numbers_down.push_back(number);
                         if (debug) cerr << __func__ << " zeta_number_down[] " << number << endl;

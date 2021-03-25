@@ -74,7 +74,7 @@ size_t Matrix<T>::nbCols() const {
 
 template<typename T>
 Matrix<T>::Matrix(size_t nbRows, size_t nbCols, size_t value) {
-   coeffs = vector<vector<T>>(nbRows, vector<T>(nbCols, value));
+   coeffs = vector<vector<T>>(nbRows, vector<T>(nbCols, T(value)));
 }
 
 template<typename T>
