@@ -9,6 +9,31 @@ private:
     bool known = false;
     std::string known_formula;
 
+    void normalize() {
+        /* To be called once at the end of the constructor. Improves printing and formula detection */
+        /* Try to normalize the L-side. We want the shortest product on bottom, then the bigger exponent on bottom. */
+        size_t l_top = 0, l_bottom = 0;
+        const FormulaName* top_n = NULL;
+        const FormulaName* bottom_n = NULL;
+        for (const Element& e: elements) {
+            if (e.first->isLFunc() && !e.first->isZeta()) {
+                if (is_positive(e.second)) {
+                    l_top++;
+                    top_n = e.first;
+                } else {
+                    l_bottom++;
+                    bottom_n = e.first;
+                }
+            }
+        }
+        if ((l_top < l_bottom) ||
+            ((l_top == 1) && (l_bottom == 1) && (top_n->getLFuncExponent() > bottom_n->getLFuncExponent()))) {
+            for (Element& e: elements) {
+                e.second = -e.second;
+            }
+        }
+    }
+
     std::ostream& print_element(std::ostream& out, bool latex, Element& element, bool neg_power) const {
         Rational power = element.second;
         if (neg_power) {
@@ -158,6 +183,7 @@ public:
                 elements.push_back(make_pair(names[iCol_in_rows[iCol]], relation_row[iCol]));
             }
         }
+        normalize();
     }
 
     std::ostream& print(std::ostream& out, bool latex) const {
@@ -570,7 +596,7 @@ public:
                     zeta_number_up = number;
                     if (debug) cerr << __func__ << " zeta_number_up " << zeta_number_up << endl;
                 }
-                for (int i=0; i<-power.getNumerator(); i++) {
+                for (SomeInt i=0; i<-power.getNumerator(); i++) {
                     if (zeta_numbers_down.size() < 4) {
                         zeta_numbers_down.push_back(number);
                         if (debug) cerr << __func__ << " zeta_number_down[] " << number << endl;
@@ -727,9 +753,7 @@ public:
             }
             /* Check for D-5: handled in D-52 */
             /* Check for D-6: handled in D-4 */
-
-            /* ... */
-
+            /* D-7 & D-8 we won't find */
             /* Check for D-9: this is D-18 */
             /* Check for D-10 */
             if (check_D10(known_formula)) {
