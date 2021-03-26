@@ -4,7 +4,7 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
-#include <list>
+#include <deque>
 #include "berlekamp.h"
 #include "matrix.h"
 #include "polynomial.h"
@@ -52,8 +52,8 @@ vector<pair<int, int>> decompose(Univariate poly, const vector<Univariate>& basi
 
 void factorisation_worker(
 	mutex* mtx,
-	list<Univariate>* waiting_queue,
-	list<atomic<Univariate*>>* basis,
+	deque<Univariate>* waiting_queue,
+	deque<atomic<Univariate*>>* basis,
 	atomic<size_t>* basis_size
 ) {
 	while(true) {
@@ -70,7 +70,6 @@ void factorisation_worker(
 		mtx->unlock();
 		
 		size_t iElement = 0;
-		auto itElement = basis->begin();
 		
 		while(poly.size() > 1) {
 			if(iElement == *basis_size) {
@@ -89,18 +88,10 @@ void factorisation_worker(
 				mtx->unlock();
 			}
 			
-			if(iElement != 0) {
-				//mtx->lock();
-				itElement++;
-				//mtx->unlock();
-			}
-			
-			iElement++;
-			
 			while(true) {
 				mtx->lock();
 				//Attention à la double déréférence !
-				Univariate element = **itElement;
+				Univariate element = *((*basis)[iElement]);
 				mtx->unlock();
 				
 				Univariate pgcd = gcd(poly, element);
@@ -113,7 +104,7 @@ void factorisation_worker(
 				}
 				
 				mtx->lock();
-				if(element == **itElement) {
+				if(element == *((*basis)[iElement])) {
 					if(simplified.size() > 1)
 						waiting_queue->push_back(simplified);
 					
@@ -121,8 +112,8 @@ void factorisation_worker(
 						Univariate* ptr = new Univariate();
 						*ptr = pgcd;
 						
-						Univariate* oldElement = *itElement;
-						*itElement = ptr;
+						Univariate* oldElement = (*basis)[iElement];
+						(*basis)[iElement] = ptr;
 						delete oldElement;
 					}
 					
@@ -135,6 +126,8 @@ void factorisation_worker(
 				}
 				mtx->unlock();
 			}
+			
+			iElement++;
 		}		
 	}
 }
@@ -150,10 +143,10 @@ void RelationGenerator::prepareBasis() {
    vector<thread> threads(nbThreads);
    mutex mtx;
    atomic<size_t> basis_size = 0;
-   list<Univariate> waiting_queue(polynomials.begin(), polynomials.end());
-   waiting_queue.reverse();
+   deque<Univariate> waiting_queue(polynomials.begin(), polynomials.end());
+   reverse(waiting_queue.begin(), waiting_queue.end());
    
-   list<atomic<Univariate*>> basis;
+   deque<atomic<Univariate*>> basis;
    
    for(size_t iThread = 0;iThread < nbThreads;iThread++) {
    	threads[iThread] = thread(
@@ -174,7 +167,7 @@ void RelationGenerator::prepareBasis() {
 
 void decomposition_worker(
 	mutex* mtx, 
-	list<Fraction<Univariate>>* waiting_queue,
+	deque<Fraction<Univariate>>* waiting_queue,
 	vector<Univariate>* basis,
 	Matrix<Rational>* decompositions) {
 	
@@ -226,7 +219,7 @@ void RelationGenerator::printRelations() {
 
    vector<thread> threads(nbThreads);
    mutex mtx;
-   list<Fraction<Univariate>> waiting_queue(rational_fractions.begin(), rational_fractions.end());
+   deque<Fraction<Univariate>> waiting_queue(rational_fractions.begin(), rational_fractions.end());
    
    for(size_t iThread = 0;iThread < nbThreads;iThread++) {
    	threads[iThread] = thread(
