@@ -96,7 +96,7 @@ size_t MatrixRow<T>::max_index() const {
    if (coeffs.size() == 0) {
       return 0;
    }
-   return coeffs[coeffs.size() - 1].first;
+   return 1 + coeffs[coeffs.size() - 1].first;
 }
 
 template<typename T>

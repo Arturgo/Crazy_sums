@@ -101,7 +101,16 @@ void RelationGenerator::printRelations() {
 
    auto t2 = std::chrono::high_resolution_clock::now();
    decompositions.actualizeNCols();
+/*
+   cerr << decompositions.nbCols() << " " << decompositions.nbRows() << endl;
 
+   for (size_t iRow = 0; iRow < decompositions.nbRows(); iRow++) {
+      for (auto& row: decompositions.coeffs[iRow].coeffs) {
+         cerr << row.first << "_" << row.second << " ";
+      }
+      cerr << endl;
+   }
+*/
    //Matrix<Rational> relations = row_echelon_form(kernel_basis(decompositions));
    Matrix<Rational> rows = kernel_basis(decompositions);
 
@@ -112,6 +121,15 @@ void RelationGenerator::printRelations() {
    cerr << "Relations computed (" << e21.count() << "s+ " << e32.count() << "s). Size : "
         << rows.nbRows() << " * " << rows.nbCols() << endl;
    cerr << "Simplifying.." << endl;
+/*
+   cerr << rows.nbCols() << " " << rows.nbRows() << endl;
+
+   for (size_t iRow = 0; iRow < rows.nbRows(); iRow++) {
+      for (auto& row: rows.coeffs[iRow].coeffs) {
+         cerr << row.first << "_" << row.second << " ";
+      }
+      cerr << endl;
+   }*/
 
    /* On vire les colonnes inutiles */
    auto t4 = std::chrono::high_resolution_clock::now();
@@ -143,6 +161,18 @@ void RelationGenerator::printRelations() {
    cerr << "Matrix simplified (" << e54.count() << "s). Size : "
         << cleaned_rows.nbRows() << " * " << cleaned_rows.nbCols() << endl;
    cerr << "Simplifying.." << endl;
+/*
+   for (auto& val: iCol_in_rows) {
+      cerr << val << " ";
+   }
+   cerr << endl;
+
+   for (size_t iRow = 0; iRow < cleaned_rows.nbRows(); iRow++) {
+      for (auto& row: cleaned_rows.coeffs[iRow].coeffs) {
+         cerr << row.first << "_" << row.second << " ";
+      }
+      cerr << endl;
+   }*/
 
    //Matrix<Rational> relations_matrix = LLL(cleaned_rows, Rational(3) / Rational(4));
    //Matrix<Rational> relations_matrix = row_echelon_form(cleaned_rows);
