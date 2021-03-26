@@ -28,4 +28,4 @@ runT:
 	time ./$(BIN)
 
 clean:
-	rm -f $(BIN) $(BIN).d tex
+	rm -fr $(BIN) $(BIN).d tex

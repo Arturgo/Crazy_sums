@@ -95,11 +95,13 @@ void RelationGenerator::printRelations() {
       }
 
       decompositions.coeffs.push_back(decomposition);
-      cout << decompositions.coeffs[decompositions.coeffs.size() - 1].size() << endl;
+      //cout << decompositions.coeffs[decompositions.coeffs.size() - 1].size() << endl;
    }
    cerr << "Done" << endl;
 
    auto t2 = std::chrono::high_resolution_clock::now();
+   decompositions.actualizeNCols();
+
    //Matrix<Rational> relations = row_echelon_form(kernel_basis(decompositions));
    Matrix<Rational> rows = kernel_basis(decompositions);
 
@@ -110,14 +112,6 @@ void RelationGenerator::printRelations() {
    cerr << "Relations computed (" << e21.count() << "s+ " << e32.count() << "s). Size : "
         << rows.nbRows() << " * " << rows.nbCols() << endl;
    cerr << "Simplifying.." << endl;
-
-   for (auto& row: rows.coeffs) {
-      cout << row.coeffs.size() << " -> ";
-      for (auto& pos : row.coeffs) {
-         cout << pos.first << "-" << pos.second << " ";
-      }
-      cerr << endl;
-   }
 
    /* On vire les colonnes inutiles */
    auto t4 = std::chrono::high_resolution_clock::now();
@@ -156,8 +150,8 @@ void RelationGenerator::printRelations() {
 
    vector<Relation> relations;
 
-   for(const vector<Rational>& relation_row : relations_matrix.coeffs) {
-      relations.push_back(Relation(relation_row, names, iCol_in_rows));
+   for(const auto& relation_row : relations_matrix.coeffs) {
+      relations.push_back(Relation(relation_row.coeffs, names, iCol_in_rows));
    }
 
    for(auto& relation: relations) {
