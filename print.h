@@ -1,7 +1,17 @@
 #pragma once
-#include <filesystem>
 #include <regex>
+
+#if __GNUC__ > 8
+
+#include <filesystem>
 namespace fs = std::filesystem;
+
+#else
+
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
+#endif
 
 #ifdef HAS_COLOR
 #define KBLD "\x1b[1m"
