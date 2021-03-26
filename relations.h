@@ -34,36 +34,6 @@ void RelationGenerator::addFraction(const FormulaName *name, Fraction<Univariate
    polynomials.push_back(frac.getDenominator());
 }
 
-/*void RelationGenerator::addPolynomial(Univariate poly, int index) {
-   for(int iElement = index;iElement < (int)polynomial_basis.size();iElement++) {
-   	if(poly.size() <= 1) {
-   		return;
-   	}
-
-      Univariate element = polynomial_basis[iElement];
-
-      Univariate pgcd = gcd(poly, element);
-
-      if(pgcd.size() <= 1) continue;
-
-      polynomial_basis[iElement] = pgcd;
-
-      while(element % pgcd == Univariate(0)) {
-      	element = element / pgcd;
-      }
-
-      addPolynomial(element, iElement);
-
-      while(poly % pgcd == Univariate(0))
-      	poly = poly / pgcd;
-      iElement--;
-   }
-
-   if(poly.size() > 1) {
-   	polynomial_basis.push_back(poly);
-   }
-}*/
-
 vector<pair<int, int>> decompose(Univariate poly, const vector<Univariate>& basis) {
    vector<pair<int, int>> decomposition;
    for(size_t iFactor = 0;iFactor < basis.size();iFactor++) {
