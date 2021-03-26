@@ -10,7 +10,11 @@
 #include "polynomial.h"
 #include "xrelation.h"
 
-struct RelationGenerator {
+class RelationGenerator {
+private:
+   size_t nbThreads;
+
+public:
    vector<const FormulaName*> names;
    vector<Fraction<Univariate>> rational_fractions;
 
@@ -24,6 +28,16 @@ struct RelationGenerator {
    void printRelations();
    
    void prepareBasis();
+
+   RelationGenerator() {
+      char* nbThreads_string = getenv("NB_THREADS");
+
+      nbThreads = std::thread::hardware_concurrency();
+      nbThreads = 1; /* Temporary, default to 1 until we fix concurrency issues */
+      if(nbThreads_string != NULL) {
+         nbThreads = stoi(string(nbThreads_string));
+      }
+   }
 };
 
 void RelationGenerator::addFraction(const FormulaName *name, Fraction<Univariate> frac) {
@@ -133,13 +147,6 @@ void factorisation_worker(
 }
 
 void RelationGenerator::prepareBasis() {
-	char* nbThreads_string = getenv("NB_THREADS");
-	
-	size_t nbThreads = 4;
-	if(nbThreads_string != NULL) {
-		nbThreads = stoi(string(nbThreads_string));
-	}
-
    vector<thread> threads(nbThreads);
    mutex mtx;
    atomic<size_t> basis_size = 0;
@@ -208,13 +215,6 @@ void RelationGenerator::printRelations() {
    auto t1 = std::chrono::high_resolution_clock::now();
    Matrix<Rational> decompositions(rational_fractions.size(), 0);
 
-	char* nbThreads_string = getenv("NB_THREADS");
-	
-	size_t nbThreads = 4;
-	if(nbThreads_string != NULL) {
-		nbThreads = stoi(string(nbThreads_string));
-	}
-	
    cerr << "Factoring fractions : " << rational_fractions.size() << endl;
 
    vector<thread> threads(nbThreads);
