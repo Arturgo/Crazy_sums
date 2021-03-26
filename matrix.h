@@ -330,33 +330,7 @@ Matrix<T> transpose(Matrix<T> mat) {
    }
    return res;
 }
-/*
-template<typename T>
-Matrix<T> row_echelon_form(Matrix<T> mat) {
-   for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
-      size_t non_zero = iCol;
-      for(size_t iRow = iCol;iRow < mat.nbRows();iRow++) {
-         if(!(mat.coeffs[iRow].getCoeff(iCol) == T(0))) {
-            non_zero = iRow;
-         }
-      }
-      
-      if(iCol >= mat.nbRows()) break;
-      swap(mat.coeffs[iCol], mat.coeffs[non_zero]);
-      if(mat.coeffs[iCol].getCoeff(iCol) == T(0)) continue;
-      
-      mat.coeffs[iCol] = (T(1) / mat.coeffs[iCol].getCoeff(iCol)) * mat.coeffs[iCol];
-      
-      for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
-         if(iRow == iCol) continue;
-         if(!(mat.coeffs[iRow][iCol] == T(0))) {
-            mat.coeffs[iRow] = mat.coeffs[iRow] - mat.coeffs[iRow].getCoeff(iCol) * mat.coeffs[iCol];
-         }
-      }
-   }
-   return mat;
-}
-*/
+
 template<typename T>
 Matrix<T> kernel_basis(Matrix<T> mat) {
    Matrix<T> id = identity<T>(mat.nbRows());
@@ -384,15 +358,12 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
       for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
          if(iRow == iCol) continue;
          if(!(mat.coeffs[iRow].getCoeff(iCol) == T(0))) {
-            //cerr << id.coeffs[iRow].size() << "-";
             id.coeffs[iRow] = id.coeffs[iRow] - mat.coeffs[iRow].getCoeff(iCol) * id.coeffs[iCol];
-            //cerr << id.coeffs[iRow].size() << " ";
             mat.coeffs[iRow] = mat.coeffs[iRow] - mat.coeffs[iRow].getCoeff(iCol) * mat.coeffs[iCol];
          }
       }
    }
    
-   //cerr << endl;
 
    Matrix<T> basis(0, 0);
    
@@ -410,7 +381,36 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
    
    return basis;
 }
+
 /*
+UNUSED BUT SHOULD KEEP
+
+template<typename T>
+Matrix<T> row_echelon_form(Matrix<T> mat) {
+   for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
+      size_t non_zero = iCol;
+      for(size_t iRow = iCol;iRow < mat.nbRows();iRow++) {
+         if(!(mat.coeffs[iRow].getCoeff(iCol) == T(0))) {
+            non_zero = iRow;
+         }
+      }
+      
+      if(iCol >= mat.nbRows()) break;
+      swap(mat.coeffs[iCol], mat.coeffs[non_zero]);
+      if(mat.coeffs[iCol].getCoeff(iCol) == T(0)) continue;
+      
+      mat.coeffs[iCol] = (T(1) / mat.coeffs[iCol].getCoeff(iCol)) * mat.coeffs[iCol];
+      
+      for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
+         if(iRow == iCol) continue;
+         if(!(mat.coeffs[iRow][iCol] == T(0))) {
+            mat.coeffs[iRow] = mat.coeffs[iRow] - mat.coeffs[iRow].getCoeff(iCol) * mat.coeffs[iCol];
+         }
+      }
+   }
+   return mat;
+}
+
 template<typename T>
 void debug(const Matrix<T>& mat) {
    for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
@@ -489,4 +489,6 @@ Matrix<T> LLL(Matrix<T> mat, T delta) {
    
    return mat;
 }
+
+UNUSED BUT SHOULD KEEP
 */

@@ -176,11 +176,10 @@ private:
     }
 
 public:
-    Relation(const vector<pair<size_t, Rational>>& relation_row, vector<const FormulaName*>& names,
-             const vector<size_t>& iCol_in_rows) {
+    Relation(const vector<pair<size_t, Rational>>& relation_row, vector<const FormulaName*>& names) {
         for(const pair<size_t, Rational>& coeff: relation_row) {
             if(!(coeff.second == Rational(0))) {
-                elements.push_back(make_pair(names[iCol_in_rows[coeff.first]], coeff.second));
+                elements.push_back(make_pair(names[coeff.first], coeff.second));
             }
         }
         normalize();

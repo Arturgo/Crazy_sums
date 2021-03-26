@@ -95,22 +95,12 @@ void RelationGenerator::printRelations() {
       }
 
       decompositions.coeffs.push_back(decomposition);
-      //cout << decompositions.coeffs[decompositions.coeffs.size() - 1].size() << endl;
    }
    cerr << "Done" << endl;
 
    auto t2 = std::chrono::high_resolution_clock::now();
    decompositions.actualizeNCols();
-/*
-   cerr << decompositions.nbCols() << " " << decompositions.nbRows() << endl;
 
-   for (size_t iRow = 0; iRow < decompositions.nbRows(); iRow++) {
-      for (auto& row: decompositions.coeffs[iRow].coeffs) {
-         cerr << row.first << "_" << row.second << " ";
-      }
-      cerr << endl;
-   }
-*/
    //Matrix<Rational> relations = row_echelon_form(kernel_basis(decompositions));
    Matrix<Rational> rows = kernel_basis(decompositions);
 
@@ -121,67 +111,16 @@ void RelationGenerator::printRelations() {
    cerr << "Relations computed (" << e21.count() << "s+ " << e32.count() << "s). Size : "
         << rows.nbRows() << " * " << rows.nbCols() << endl;
    cerr << "Simplifying.." << endl;
-/*
-   cerr << rows.nbCols() << " " << rows.nbRows() << endl;
 
-   for (size_t iRow = 0; iRow < rows.nbRows(); iRow++) {
-      for (auto& row: rows.coeffs[iRow].coeffs) {
-         cerr << row.first << "_" << row.second << " ";
-      }
-      cerr << endl;
-   }*/
-
-   /* On vire les colonnes inutiles */
-   auto t4 = std::chrono::high_resolution_clock::now();
-   Matrix<Rational> cleaned_rows(rows.nbRows(), 0);
-
-   vector<size_t> iCol_in_rows;
-
-   size_t pos = 0;
-   for(size_t iCol = 0;iCol < rows.nbCols();iCol++) {
-   	bool isNull = true;
-   	for(size_t iRow = 0;iRow < rows.nbRows();iRow++) {
-   		if(!(rows.coeffs[iRow].getCoeff(iCol) == Rational(0))) {
-   			isNull = false;
-   		}
-   	}
-
-   	if(!isNull) {
-   		iCol_in_rows.push_back(iCol);
-
-   		for(size_t iRow = 0;iRow < rows.nbRows();iRow++) {
-   			cleaned_rows.coeffs[iRow].setCoeff(pos, rows.coeffs[iRow].getCoeff(iCol));
-			}
-         pos++;
-   	}
-   }
-   auto t5 = std::chrono::high_resolution_clock::now();
-   std::chrono::duration<float> e54 = t5 - t4;
-
-   cerr << "Matrix simplified (" << e54.count() << "s). Size : "
-        << cleaned_rows.nbRows() << " * " << cleaned_rows.nbCols() << endl;
-   cerr << "Simplifying.." << endl;
-/*
-   for (auto& val: iCol_in_rows) {
-      cerr << val << " ";
-   }
-   cerr << endl;
-
-   for (size_t iRow = 0; iRow < cleaned_rows.nbRows(); iRow++) {
-      for (auto& row: cleaned_rows.coeffs[iRow].coeffs) {
-         cerr << row.first << "_" << row.second << " ";
-      }
-      cerr << endl;
-   }*/
 
    //Matrix<Rational> relations_matrix = LLL(cleaned_rows, Rational(3) / Rational(4));
    //Matrix<Rational> relations_matrix = row_echelon_form(cleaned_rows);
-   Matrix<Rational> relations_matrix = cleaned_rows;
+   Matrix<Rational> relations_matrix = rows;
 
    vector<Relation> relations;
 
    for(const auto& relation_row : relations_matrix.coeffs) {
-      relations.push_back(Relation(relation_row.coeffs, names, iCol_in_rows));
+      relations.push_back(Relation(relation_row.coeffs, names));
    }
 
    for(auto& relation: relations) {
