@@ -69,11 +69,47 @@ public:
 	vector<Fraction<Univariate>> csts;
     vector<RecO1> recurrences;
     
-    FArith() {
-    	csts = {1};
+    FArith(Fraction<Univariate> cst = Fraction<Univariate>(0)) {
+    	csts = {cst};
+    }
+    
+    void reduce() {
+    	while(!csts.empty() && csts.back() == Fraction<Univariate>(0))
+			csts.pop_back();
     }
     
     void ajoute(RecO1 rec) {
+    	if(rec.ratio == Fraction<Univariate>(0)) {
+    		csts.resize(max(rec.first_id + 1, csts.size()), 0);
+    		csts[rec.first_id] = csts[rec.first_id] + rec.first_term;
+    		return;
+    	}
+    
+    	for(size_t iRec = 0;iRec < recurrences.size();iRec++) {
+    		RecO1 r = recurrences[iRec];
+    		if(r.ratio == rec.ratio && r.first_id == rec.first_id) {
+    			csts.resize(max(max(r.first_id, rec.first_id) + 1, csts.size()));
+    			
+    			while(r.first_id < rec.first_id) {
+					csts[r.first_id] = csts[r.first_id] + r.first_term;
+    				r.first_term = r.first_term * r.ratio;
+    				r.first_id++;
+    			}
+    			
+    			while(rec.first_id < r.first_id) {
+    				csts[rec.first_id] = csts[rec.first_id] + rec.first_term;
+    				rec.first_term = rec.first_term * rec.ratio;
+    				rec.first_id++;
+    			}
+    			
+    			r.first_term = r.first_term + rec.first_term;
+    			
+    			recurrences[iRec] = r;
+    			
+    			return;
+			}
+		}
+		
 		recurrences.push_back(rec);
     }
 
@@ -101,11 +137,34 @@ FArith operator * (const FArith &a, const FArith &b) {
             res.ajoute(p);
         }
     }
+    
+    res.csts.resize(max(res.csts.size(), max(a.csts.size(), b.csts.size())), 0);
+    
+    for(RecO1 recB : b.recurrences) {
+    	Fraction<Univariate> value = recB.first_term;
+    	for(size_t iCst = recB.first_id;iCst < a.csts.size();iCst++) {
+			res.csts[iCst] = res.csts[iCst] + a.csts[iCst] * value;
+			value = value * recB.ratio;
+		}
+	}
+	
+	for(RecO1 recA : a.recurrences) {
+    	Fraction<Univariate> value = recA.first_term;
+    	for(size_t iCst = recA.first_id;iCst < b.csts.size();iCst++) {
+			res.csts[iCst] = res.csts[iCst] + b.csts[iCst] * value;
+			value = value * recA.ratio;
+		}
+	}
+	
+	for(size_t iCst = 0;iCst < min(a.csts.size(), b.csts.size());iCst++) {
+		res.csts[iCst] = res.csts[iCst] + a.csts[iCst] * b.csts[iCst];
+	}
 
+	res.reduce();
     return res;
 }
 
-FArith operator ^ (const FArith &a, const FArith &b) {
+FArith operator ^ (const FArith &a, const FArith &b) {	
     FArith res;
 
     for(RecO1 recA : a.recurrences) {
@@ -133,21 +192,22 @@ FArith operator ^ (const FArith &a, const FArith &b) {
 		}
 	}
 	
-	res.csts.resize(a.csts.size() + b.csts.size() - 1);
+	res.csts.resize(max(res.csts.size(), a.csts.size() + b.csts.size()), 0);
 	
 	for(size_t iCstA = 0;iCstA < a.csts.size();iCstA++) {
 		for(size_t iCstB = 0;iCstB < b.csts.size();iCstB++) {
-			res.csts[iCstA + iCstB] = a.csts[iCstA] * b.csts[iCstB];
+			res.csts[iCstA + iCstB] = res.csts[iCstA + iCstB] + a.csts[iCstA] * b.csts[iCstB];
 		}
 	}
 
+	res.reduce();
     return res;
 }
 
 /* Génération de quelques fonctions classiques */
 
 FArith id() {
-    FArith res;
+    FArith res(U);
     res.ajoute(RecO1(1,
         X,
         X
@@ -156,7 +216,7 @@ FArith id() {
 }
 
 FArith inv_id() {
-    FArith res;
+    FArith res(U);
     res.ajoute(RecO1(1,
         Fraction<Univariate>(U, X),
         Fraction<Univariate>(U, X)
@@ -165,7 +225,7 @@ FArith inv_id() {
 }
 
 FArith mobius() {
-    FArith res;
+    FArith res(U);
     res.ajoute(RecO1(1,
         -U,
         0
@@ -174,7 +234,7 @@ FArith mobius() {
 }
 
 FArith one() {
-    FArith res;
+    FArith res(U);
     res.ajoute(RecO1(1,
         U,
         U
@@ -194,12 +254,20 @@ FArith pow(const FArith &a, size_t exp) {
     return res;
 }
 
+FArith jordan_totient(size_t k) {
+    assert(k > 0);
+    return pow(id(), k) ^ mobius();
+}
+
 FArith phi() {
-    return mobius() ^ id();
+    return jordan_totient(1);
 }
 
 FArith sigma_k(size_t k) {
+    assert(k > 0);
     return one() ^ pow(id(), k);
 }
 
-
+FArith theta() {
+    return pow(mobius(), 2) ^ one();
+}

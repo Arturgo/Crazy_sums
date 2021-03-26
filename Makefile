@@ -15,11 +15,17 @@ $(BIN): main.cpp Makefile
 
 run:
 	./$(BIN)
+	@@echo Generating pdf from LaTeX logs...
+	@(cd tex && pdflatex --interaction=batchmode -halt-on-error logs.tex \
+	    | { grep -v "This is pdfTeX, " || true; } \
+	    | { grep -v "restricted \\\\write18 enabled" || true; } \
+	    | { grep -v "entering extended mode" || true; } \
+	)
 
 timer: build runT
 
 runT:
 	time ./$(BIN)
-	
+
 clean:
-	rm -f $(BIN)
+	rm -f $(BIN) $(BIN).d tex
