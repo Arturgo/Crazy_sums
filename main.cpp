@@ -55,15 +55,11 @@ static void add_relation(RelationGenerator &manager,
 
    name = name_make_lfunc(name, s);
 
-   auto t3 = std::chrono::high_resolution_clock::now();
    manager.addFraction(name, frac);
-   auto t4 = std::chrono::high_resolution_clock::now();
 
    std::chrono::duration<float> e21 = t2 - t1;
-   std::chrono::duration<float> e43 = t4 - t3;
-
    cout << KBLD << *name << KRST
-        << KGRY "   (" << e21.count() << "s + " << e43.count() << "s)" KRST << endl;
+        << KGRY "   (" << e21.count() << "s)" KRST << endl;
 #if 0
    cout << toString(frac.getNumerator(), "x") << KGRN "/" KRST
         << toString(frac.getDenominator(), "x") << endl;
@@ -114,9 +110,13 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
 
    auto t2 = std::chrono::high_resolution_clock::now();
    std::chrono::duration<float> e21 = t2 - t1;
-   cerr << "Data generated" << KGRY << "   (" << e21.count() << "s)" KRST << endl;
+   cerr << "Data generated" << KGRY << " (" << e21.count() << "s)" KRST << endl;
 
+   auto t3 = std::chrono::high_resolution_clock::now();
    manager.prepareBasis();
+   auto t4 = std::chrono::high_resolution_clock::now();
+   std::chrono::duration<float> e43 = t4 - t3;
+   cerr << "Basis prepared" << KGRY << " (" << e43.count() << "s)" KRST << endl;
    manager.printRelations();
    latex_end();
    return 0;
