@@ -6,7 +6,6 @@ using namespace std;
 template<typename T>
 class MatrixRow{
 public:
-   int length;
    vector<pair<int, T>> coeffs;
    MatrixRow(vector<T> _coeffs);
    MatrixRow(vector<pair<int, T>> _coeffs);
@@ -22,7 +21,6 @@ public:
 
 template<typename T>
 MatrixRow<T>::MatrixRow(vector<T> _coeffs) {
-   length = _coeffs.size();
    for (int i = 0; i < length; i++) {
       if (!(_coeffs[i] == T(0))) {
          coeffs.push_back(make_pair(i, _coeffs[i]));
@@ -33,14 +31,12 @@ MatrixRow<T>::MatrixRow(vector<T> _coeffs) {
 template<typename T>
 MatrixRow<T>::MatrixRow(vector<pair<int, T>> _coeffs) {
    coeffs = _coeffs;
-   length = coeffs.size();
 }
 
 template<typename T>
 MatrixRow<T>::MatrixRow(size_t nbCols, size_t value) {
-   length = nbCols;
    if (value != 0) {
-      for (int i = 0; i < length; i++) {
+      for (int i = 0; i < nbCols; i++) {
          coeffs.push_back(make_pair(i, value));
       }
    }
@@ -139,7 +135,7 @@ MatrixRow<T> operator + (const MatrixRow<T>& a, const MatrixRow<T>& b) {
          result.push_back(b.coeffs[c_b++]);
       } else {
          int id = a.coeffs[c_a].first;
-         result.push_back(make_pair(id, a.coeff[c_a].second + b.coeff[c_b].second));
+         result.push_back(make_pair(id, a.coeff[c_a++].second + b.coeff[c_b++].second));
       }
    }
    for (int i = c_a; i < a.size(); i++) {
@@ -178,7 +174,7 @@ MatrixRow<T> operator - (const MatrixRow<T>& a, const MatrixRow<T>& b) {
    }
 
    for (int i = c_b; i < b.size(); i++) {
-      int val = - b.coeffs[c_b].first;
+      int val = - b.coeffs[c_b].second;
       result.push_back(make_pair(b.coeffs[i].first, val));
    }
 
