@@ -70,6 +70,7 @@ static void add_relation(RelationGenerator &manager,
 #endif
    //name->print_full(latex, 1);
 }
+
 int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    precomputeInverses(211);
    X.setCoeff(1, 1);
@@ -87,9 +88,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
 
    RelationGenerator manager;
 
-    for(int s = 2;s <= 2+maxi_sum*3;s++) {
-        add_relation(manager, 0, 0, 0, 0, 0, 0, 0, s);
-    }
+	auto t1 = std::chrono::high_resolution_clock::now();
+   
+	for(int s = 2;s <= 2+maxi_sum*3;s++) {
+		add_relation(manager, 0, 0, 0, 0, 0, 0, 0, s);
+	}
 
    for(int i_phi = 0;i_phi <= maxi_phi;i_phi++) {
    for(int i_J_2 = 0;i_J_2 <= maxi_J_2;i_J_2++) {
@@ -108,9 +111,12 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
          }
       }
    }}}}}}}
-
-   cerr << "Data generated" << endl;
-
+   
+   auto t2 = std::chrono::high_resolution_clock::now();
+   std::chrono::duration<float> e21 = t2 - t1;
+   cerr << "Data generated" << KGRY << "   (" << e21.count() << "s)" KRST << endl;
+	
+	manager.prepareBasis();
    manager.printRelations();
    latex_end();
    return 0;
