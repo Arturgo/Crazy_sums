@@ -186,7 +186,7 @@ MatrixRow<T> operator - (const MatrixRow<T>& a, const MatrixRow<T>& b) {
    return MatrixRow<T>(result);
 }
 
-/*
+#if 0
 template<typename T>
 vector<T> operator + (const vector<T>& a, const vector<T>& b) {
    vector<T> res(b.size(), T(0));
@@ -229,7 +229,7 @@ template<typename T>
 T squared_norm(const vector<T>& a) {
    return a * a;
 }
-*/
+#endif
 
 template<typename T>
 class Matrix {
@@ -387,8 +387,7 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
    return basis;
 }
 
-/*
-UNUSED BUT SHOULD KEEP
+#if 0 /* UNUSED BUT SHOULD KEEP */
 
 template<typename T>
 Matrix<T> row_echelon_form(Matrix<T> mat) {
@@ -495,5 +494,4 @@ Matrix<T> LLL(Matrix<T> mat, T delta) {
    return mat;
 }
 
-UNUSED BUT SHOULD KEEP
-*/
+#endif /* UNUSED BUT SHOULD KEEP */

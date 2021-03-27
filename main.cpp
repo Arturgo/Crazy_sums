@@ -118,7 +118,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    std::chrono::duration<float> e43 = t4 - t3;
    cerr << "Basis prepared" << KGRY << " (" << e43.count() << "s)" KRST << endl;
    manager.printRelations();
-  
+
    latex_end();
    return 0;
 }

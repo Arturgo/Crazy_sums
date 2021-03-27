@@ -16,6 +16,7 @@ public:
 	T getCoeff(size_t pos) const;
 	void setCoeff(size_t pos, T coeff);
 	void reduce();
+private:
 	vector<T> coeffs;
 };
 
@@ -23,13 +24,13 @@ template<typename T>
 bool operator < (const Polynomial<T>& a, const Polynomial<T>& b) {
 	if(a.size() != b.size())
 		return a.size() < b.size();
-	
-	for(size_t iCoeff = 0;iCoeff < a.size();iCoeff++) {
-		if(a.coeffs[iCoeff] == b.coeffs[iCoeff])
+
+	for(ssize_t iCoeff = a.size()-1;iCoeff >= 0;iCoeff--) {
+		if(a.getCoeff(iCoeff) == b.getCoeff(iCoeff))
 			continue;
-		return a.coeffs[iCoeff] < b.coeffs[iCoeff];
+		return a.getCoeff(iCoeff) < b.getCoeff(iCoeff);
 	}
-	
+
 	return false;
 }
 

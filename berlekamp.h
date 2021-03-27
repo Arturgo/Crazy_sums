@@ -1,7 +1,7 @@
 #include "polynomial.h"
 #include "matrix.h"
 
-/*
+#if 0
 Univariate berlekamp(Univariate poly) {
 	Univariate derivedP = derive(poly);
 
@@ -83,4 +83,4 @@ vector<Univariate> decompose(Univariate poly) {
 	
 	return decomp;
 }
-*/
+#endif

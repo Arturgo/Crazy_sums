@@ -28,9 +28,9 @@ public:
 
    void printRelation(const vector<Rational>& relation, const vector<size_t>& iCol_in_rows);
    void printRelations();
-   
-   void prepareBasis();
-   void shuffleBasis();
+
+   void prepareBasis(void);
+   void shuffleBasis(void);
 
    RelationGenerator() {
       char* nbThreads_string = getenv("NB_THREADS");
@@ -64,9 +64,9 @@ vector<pair<int, int>> decompose(Univariate poly, const vector<Univariate>& basi
          decomposition.push_back({iFactor, nb});
       }
    }
-   
+
    assert(poly.size() <= 1);
-   
+
    return decomposition;
 }
 
@@ -83,84 +83,84 @@ void factorisation_worker(
 	 */
 	while(true) {
 		waiting_queue_mtx->lock();
-		
+
 		if(waiting_queue->empty()) {
 			waiting_queue_mtx->unlock();
 			return;
 		}
-		
+
 		size_t iElement = waiting_queue->back().first;
 		Univariate poly = waiting_queue->back().second;
 		waiting_queue->pop_back();
-		
+
 		waiting_queue_mtx->unlock();
-		
+
 		while(poly.size() > 1) {
 			if(iElement == *basis_size) {
 				mtx->lock();
-				
+
 				if(iElement == *basis_size) {
 					Univariate* ptr = new Univariate();
 					*ptr = poly;
 					basis->emplace_back(ptr);
 					(*basis_size)++;
-					
+
 					mtx->unlock();
 					break;
 				}
-				
+
 				mtx->unlock();
 			}
-			
+
 			while(true) {
 				mtx->lock();
 				/* If we do not take the lock, the element we want to read
 				 * from `basis` might be deleted in the middle of the read */
 				Univariate element = *((*basis)[iElement]);
 				mtx->unlock();
-				
+
 				Univariate pgcd = gcd(poly, element);
-				
+
 				if(pgcd.size() <= 1) break;
-				
+
 				Univariate simplified = element;
 				while(simplified % pgcd == Univariate(0)) {
 					simplified = simplified / pgcd;
 				}
-				
+
 				mtx->lock();
 				if(element == *((*basis)[iElement])) {
 					if(pgcd.size() != element.size()) {
 						Univariate* ptr = new Univariate();
 						*ptr = pgcd;
-						
+
 						Univariate* oldElement = (*basis)[iElement];
 						(*basis)[iElement] = ptr;
 						delete oldElement;
 					}
-					
+
 					if(simplified.size() > 1) {
 						waiting_queue_mtx->lock();
 						waiting_queue->push_back({iElement, simplified});
 						waiting_queue_mtx->unlock();
 					}
-					
+
 					mtx->unlock();
-					
+
 					while(poly % pgcd == Univariate(0))
 						poly = poly / pgcd;
-						
+
 					continue;
 				}
 				mtx->unlock();
 			}
-			
+
 			iElement++;
 		}
 	}
 }
 
-void RelationGenerator::prepareBasis() {
+void RelationGenerator::prepareBasis(void) {
    vector<thread> threads(nbThreads);
    mutex mtx;
 
@@ -190,7 +190,7 @@ void RelationGenerator::prepareBasis() {
    }
 
 #if 0
-   cout << KCYN "BASIS: size:" << basis.size() << endl;
+   cout << KCYN "BASIS: size:" << polynomial_basis.size() << KRST << endl;
    for(auto poly : polynomial_basis) {
        cout << toString(poly, "x") << endl;
    }
@@ -199,7 +199,7 @@ void RelationGenerator::prepareBasis() {
 }
 
 /* This function is used to stress-test our setup, e.g. relations size should be independent of this */
-void RelationGenerator::shuffleBasis() {
+void RelationGenerator::shuffleBasis(void) {
    auto rng = std::default_random_engine {};
    std::shuffle(std::begin(polynomial_basis), std::end(polynomial_basis), rng);
 }
@@ -209,21 +209,21 @@ void decomposition_worker(
 	deque<Fraction<Univariate>>* waiting_queue,
 	const vector<Univariate>* basis,
 	Matrix<Rational>* decompositions) {
-	
+
 	while(true) {
 		mtx->lock();
-		
+
 		if(waiting_queue->empty()) {
 			mtx->unlock();
 			return;
 		}
-		
+
 		Fraction<Univariate> fraction = waiting_queue->back();
 		waiting_queue->pop_back();
 		size_t id = waiting_queue->size();
-		
+
 		mtx->unlock();
-		
+
 		vector<pair<int, int>> numerator = decompose(fraction.getNumerator(), *basis);
       vector<pair<int, int>> denominator = decompose(fraction.getDenominator(), *basis);
 
@@ -236,7 +236,7 @@ void decomposition_worker(
       for(pair<int, int> poly : denominator) {
          decomposition[poly.first] = decomposition[poly.first] - Rational(poly.second);
       }
-		
+
 		mtx->lock();
 		decompositions->coeffs[id] = decomposition;
 		mtx->unlock();
@@ -252,7 +252,7 @@ void RelationGenerator::printRelations() {
    vector<thread> threads(nbThreads);
    mutex mtx;
    deque<Fraction<Univariate>> waiting_queue(rational_fractions.begin(), rational_fractions.end());
-   
+
    for(auto& thread_i: threads) {
       thread_i = thread(
          decomposition_worker,
@@ -281,8 +281,8 @@ void RelationGenerator::printRelations() {
    cerr << "Simplifying.." << endl;
 
 
-   //Matrix<Rational> relations_matrix = LLL(cleaned_rows, Rational(3) / Rational(4));
-   //Matrix<Rational> relations_matrix = row_echelon_form(cleaned_rows);
+   //Matrix<Rational> relations_matrix = LLL(rows, Rational(3) / Rational(4));
+   //Matrix<Rational> relations_matrix = row_echelon_form(rows);
    Matrix<Rational> relations_matrix = rows;
 
    vector<Relation> relations;
