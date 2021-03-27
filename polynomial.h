@@ -34,6 +34,7 @@ bool operator < (const Polynomial<T>& a, const Polynomial<T>& b) {
 template<typename T>
 Polynomial<T>::Polynomial(vector<T> _coeffs) {
 	coeffs = _coeffs;
+	coeffs.reserve(64);
 	reduce();
 }
 
@@ -45,19 +46,19 @@ Polynomial<T>::Polynomial(int64_t _constant) {
 }
 
 template<typename T>
-size_t Polynomial<T>::size() const {
+inline size_t Polynomial<T>::size() const {
 	return coeffs.size();
 }
 
 template<typename T>
-T Polynomial<T>::getCoeff(size_t pos) const {
+inline T Polynomial<T>::getCoeff(size_t pos) const {
 	if(pos >= coeffs.size())
 		return T(0);
 	return coeffs[pos];
 }
 
 template<typename T>
-void Polynomial<T>::setCoeff(size_t pos, T coeff) {
+inline void Polynomial<T>::setCoeff(size_t pos, T coeff) {
 	while(pos >= coeffs.size()) {
 		coeffs.push_back(T(0));
 	}
@@ -89,7 +90,7 @@ template<typename T>
 Polynomial<T> operator << (const Polynomial<T>& a, size_t shift) {
 	Polynomial<T> sum;
 
-	for(size_t iCoeff = 0;iCoeff < a.size();iCoeff++) {
+	for(int iCoeff = (int)a.size() - 1;iCoeff >= 0;iCoeff--) {
 		sum.setCoeff(iCoeff + shift, a.getCoeff(iCoeff));
 	}
 
@@ -100,7 +101,7 @@ Polynomial<T> operator << (const Polynomial<T>& a, size_t shift) {
 template<typename T>
 Polynomial<T> operator + (const Polynomial<T>& a, const Polynomial<T>& b) {
 	Polynomial<T> sum;
-	for(size_t iCoeff = 0;iCoeff < max(a.size(), b.size());iCoeff++) {
+	for(int iCoeff = max<int>(a.size(), b.size()) - 1;iCoeff >= 0;iCoeff--) {
 		sum.setCoeff(iCoeff, a.getCoeff(iCoeff) + b.getCoeff(iCoeff));
 	}
 	sum.reduce();
@@ -110,7 +111,7 @@ Polynomial<T> operator + (const Polynomial<T>& a, const Polynomial<T>& b) {
 template<typename V, typename T>
 Polynomial<T> operator * (const V& a, const Polynomial<T>& b) {
 	Polynomial<T> sum;
-	for(size_t iCoeff = 0;iCoeff < b.size();iCoeff++) {
+	for(int iCoeff = (int)b.size() - 1;iCoeff >= 0;iCoeff--) {
 		sum.setCoeff(iCoeff, a * b.getCoeff(iCoeff));
 	}
 	sum.reduce();
@@ -120,7 +121,7 @@ Polynomial<T> operator * (const V& a, const Polynomial<T>& b) {
 template<typename V, typename T>
 Polynomial<T> operator / (const Polynomial<T>& a, const V& b) {
 	Polynomial<T> sum;
-	for(size_t iCoeff = 0;iCoeff < a.size();iCoeff++) {
+	for(int iCoeff = (int)a.size() - 1;iCoeff >= 0;iCoeff--) {
 		sum.setCoeff(iCoeff, a.getCoeff(iCoeff) / b);
 	}
 	sum.reduce();
@@ -141,8 +142,8 @@ Polynomial<T> operator - (const Polynomial<T>& a, const Polynomial<T>& b) {
 template<typename T>
 Polynomial<T> operator * (const Polynomial<T>& a, const Polynomial<T>& b) {
 	Polynomial<T> sum;
-	for(size_t iCoeffA = 0;iCoeffA < a.size();iCoeffA++) {
-		for(size_t iCoeffB = 0;iCoeffB < b.size();iCoeffB++) {
+	for(int iCoeffA = (int)a.size() - 1;iCoeffA >= 0;iCoeffA--) {
+		for(int iCoeffB = (int)b.size() - 1;iCoeffB >= 0;iCoeffB--) {
 			sum.setCoeff(iCoeffA + iCoeffB, sum.getCoeff(iCoeffA + iCoeffB) + a.getCoeff(iCoeffA) * b.getCoeff(iCoeffB));
 		}
 	}
@@ -257,15 +258,16 @@ Polynomial<T> gcd(Polynomial<T> a, Polynomial<T> b) {
 	a = toMonic(a);
 	b = toMonic(b);
 	
-	if(a.size() > b.size()) {
-		return gcd(b, a);
-	}
-
-	if(a.size() == 0) {
-		return b;
+	while(a.size() != 0) {
+		if(a.size() > b.size())
+			swap(a, b);
+		
+		Polynomial<T> res = b - (a << (b.size() - a.size()));
+		b = a;
+		a = toMonic(res);
 	}
 	
-	return gcd(b - (a << (b.size() - a.size())), a);
+	return b;
 }
 
 template<typename T>

@@ -52,7 +52,7 @@ vector<pair<int, int>> decompose(Univariate poly, const vector<Univariate>& basi
 
 void factorisation_worker(
 	mutex* mtx,
-	deque<Univariate>* waiting_queue,
+	deque<pair<size_t, Univariate>>* waiting_queue,
 	deque<atomic<Univariate*>>* basis,
 	atomic<size_t>* basis_size
 ) {
@@ -64,12 +64,11 @@ void factorisation_worker(
 			return;
 		}
 		
-		Univariate poly = waiting_queue->back();
+		size_t iElement = waiting_queue->back().first;
+		Univariate poly = waiting_queue->back().second;
 		waiting_queue->pop_back();
 		
 		mtx->unlock();
-		
-		size_t iElement = 0;
 		
 		while(poly.size() > 1) {
 			if(iElement == *basis_size) {
@@ -105,9 +104,6 @@ void factorisation_worker(
 				
 				mtx->lock();
 				if(element == *((*basis)[iElement])) {
-					if(simplified.size() > 1)
-						waiting_queue->push_back(simplified);
-					
 					if(pgcd.size() != element.size()) {
 						Univariate* ptr = new Univariate();
 						*ptr = pgcd;
@@ -115,6 +111,10 @@ void factorisation_worker(
 						Univariate* oldElement = (*basis)[iElement];
 						(*basis)[iElement] = ptr;
 						delete oldElement;
+					}
+					
+					if(simplified.size() > 1) {
+						waiting_queue->push_back({iElement, simplified});
 					}
 					
 					mtx->unlock();
@@ -143,8 +143,12 @@ void RelationGenerator::prepareBasis() {
    vector<thread> threads(nbThreads);
    mutex mtx;
    atomic<size_t> basis_size = 0;
-   deque<Univariate> waiting_queue(polynomials.begin(), polynomials.end());
-   reverse(waiting_queue.begin(), waiting_queue.end());
+   
+   deque<pair<size_t, Univariate>> waiting_queue;
+   
+   for(Univariate poly : polynomials) {
+   	waiting_queue.push_front({0, poly});
+   }
    
    deque<atomic<Univariate*>> basis;
    
