@@ -235,7 +235,7 @@ template<typename T>
 class Matrix {
 public:
    size_t nbRows() const;
-   size_t nbCols();
+   size_t nbCols() const;
    void actualizeNCols();
    Matrix(size_t nbRows, size_t nbCols, size_t value = 0);
    Matrix(vector<vector<T>> _coeffs);
@@ -251,27 +251,18 @@ size_t Matrix<T>::nbRows() const {
 
 template<typename T>
 void Matrix<T>::actualizeNCols() {
+   size_t new_nCol = 0;
    for (auto& row : coeffs) {
       size_t value = row.max_index();
-      if (value > nCol) {
-         nCol = value;
+      if (value > new_nCol) {
+         new_nCol = value;
       }
    }
+   nCol = new_nCol;
 }
 
 template<typename T>
-size_t Matrix<T>::nbCols() {
-   if (coeffs.size() == 0) {
-      return 0;
-   }
-   if (nCol == 0) {
-      for (auto& row : coeffs) {
-         size_t value = row.max_index();
-         if (value > nCol) {
-            nCol = value;
-         }
-      }
-   }
+size_t Matrix<T>::nbCols() const {
    return nCol;
 }
 
@@ -283,10 +274,10 @@ Matrix<T>::Matrix(size_t nbRows, size_t nbCols, size_t value) {
 
 template<typename T>
 Matrix<T>::Matrix(vector<vector<T>> _coeffs) {
-   nCol = _coeffs[0].size();
    for (auto& row : _coeffs) {
       coeffs.push_back(MatrixRow<T>(_coeffs));
    }
+   actualizeNCols();
 }
 
 template<typename T>
@@ -332,7 +323,22 @@ Matrix<T> transpose(Matrix<T> mat) {
 }
 
 template<typename T>
+void debug(const Matrix<T>& mat) {
+   for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
+      cout << ((iRow == 0) ? "[" : " ") << "[ ";
+      for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
+         T value = mat.coeffs[iRow].getCoeff(iCol);
+         cout << ((value == T(0)) ? KGRY : "") << std::setw(2) << value
+              << ((value == T(0)) ? KRST : "") << " ";
+      }
+      cout << "]" << ((iRow+1 == mat.nbRows()) ? "]" : "") << endl;
+   }
+}
+
+template<typename T>
 Matrix<T> kernel_basis(Matrix<T> mat) {
+   /* We use Gaussian Elimination */
+
    Matrix<T> id = identity<T>(mat.nbRows());
    
    size_t rowStart = 0;
@@ -356,8 +362,6 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
       id.coeffs[rowStart] = (T(1) / mat.coeffs[rowStart].getCoeff(iCol)) * id.coeffs[rowStart];
       mat.coeffs[rowStart] = (T(1) / mat.coeffs[rowStart].getCoeff(iCol)) * mat.coeffs[rowStart];
 
-      
-
       for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
          if(iRow == rowStart) continue;
          if(!(mat.coeffs[iRow].getCoeff(iCol) == T(0))) {
@@ -368,7 +372,6 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
       
       rowStart++;
    }
-   
 
    Matrix<T> basis(0, 0);
    
@@ -383,6 +386,7 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
          basis.coeffs.push_back(id.coeffs[iRow]);
       }
    }
+   basis.actualizeNCols();
    
    return basis;
 }

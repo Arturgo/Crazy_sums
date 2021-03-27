@@ -223,16 +223,6 @@ public:
         normalize();
     }
 
-    Relation(const vector<Rational>& relation_row, vector<const FormulaName*>& names,
-             const vector<size_t>& iCol_in_rows) {
-        for(size_t iCol = 0;iCol < relation_row.size();iCol++) {
-            if(!(relation_row[iCol] == Rational(0))) {
-                elements.push_back(make_pair(names[iCol_in_rows[iCol]], relation_row[iCol]));
-            }
-        }
-        normalize();
-    }
-
     std::ostream& print(std::ostream& out, bool latex) const {
         std::ostringstream left;
         bool is_simple;
@@ -330,7 +320,8 @@ private:
         return debug;
     }
 
-    bool try_instantiate(SomeInt value, FormulaName::MaybeSymbolic maybe_symbolic, SymbolicInstantiation& instantiation, int debug) const {
+    bool try_instantiate(SomeInt value, FormulaName::MaybeSymbolic maybe_symbolic, 
+                         SymbolicInstantiation& instantiation, int debug) const {
         if (debug>=0) { cerr << string(debug, ' ') << __func__ << " I " << value << " wrt " << maybe_symbolic << endl; }
         if (!maybe_symbolic.is_symbolic()) {
             return value == maybe_symbolic.extract_value();
