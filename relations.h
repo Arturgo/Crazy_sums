@@ -1,10 +1,12 @@
 #pragma once
-#include <chrono>
-#include <iostream>
-#include <thread>
-#include <mutex>
+#include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <deque>
+#include <iostream>
+#include <mutex>
+#include <random>
+#include <thread>
 #include "berlekamp.h"
 #include "matrix.h"
 #include "polynomial.h"
@@ -18,7 +20,7 @@ public:
    vector<const FormulaName*> names;
    vector<Fraction<Univariate>> rational_fractions;
 
-	vector<Univariate> polynomials;
+   vector<Univariate> polynomials;
    vector<Univariate> polynomial_basis;
 
    void addPolynomial(Univariate poly, int index = 0);
@@ -28,6 +30,7 @@ public:
    void printRelations();
    
    void prepareBasis();
+   void shuffleBasis();
 
    RelationGenerator() {
       char* nbThreads_string = getenv("NB_THREADS");
@@ -67,14 +70,19 @@ vector<pair<int, int>> decompose(Univariate poly, const vector<Univariate>& basi
 void factorisation_worker(
 	mutex* mtx,
 	deque<pair<size_t, Univariate>>* waiting_queue,
+	mutex* waiting_queue_mtx,
 	deque<atomic<Univariate*>>* basis,
 	atomic<size_t>* basis_size
 ) {
+	/*
+	 * Note: having `mtx` and `waiting_queue_mtx` does not seem to increase performances,
+	 *       but at least the future reader will not think there is a hidden dependency.
+	 */
 	while(true) {
-		mtx->lock();
+		waiting_queue_mtx->lock();
 		
 		if(waiting_queue->empty()) {
-			mtx->unlock();
+			waiting_queue_mtx->unlock();
 			return;
 		}
 		
@@ -82,7 +90,7 @@ void factorisation_worker(
 		Univariate poly = waiting_queue->back().second;
 		waiting_queue->pop_back();
 		
-		mtx->unlock();
+		waiting_queue_mtx->unlock();
 		
 		while(poly.size() > 1) {
 			if(iElement == *basis_size) {
@@ -95,7 +103,7 @@ void factorisation_worker(
 					(*basis_size)++;
 					
 					mtx->unlock();
-					break;	
+					break;
 				}
 				
 				mtx->unlock();
@@ -103,7 +111,8 @@ void factorisation_worker(
 			
 			while(true) {
 				mtx->lock();
-				//Attention à la double déréférence !
+				/* If we do not take the lock, the element we want to read
+				 * from `basis` might be deleted in the middle of the read */
 				Univariate element = *((*basis)[iElement]);
 				mtx->unlock();
 				
@@ -128,7 +137,9 @@ void factorisation_worker(
 					}
 					
 					if(simplified.size() > 1) {
+						waiting_queue_mtx->lock();
 						waiting_queue->push_back({iElement, simplified});
+						waiting_queue_mtx->unlock();
 					}
 					
 					mtx->unlock();
@@ -142,44 +153,58 @@ void factorisation_worker(
 			}
 			
 			iElement++;
-		}		
+		}
 	}
 }
 
 void RelationGenerator::prepareBasis() {
    vector<thread> threads(nbThreads);
    mutex mtx;
-   atomic<size_t> basis_size = 0;
-   
+
    deque<pair<size_t, Univariate>> waiting_queue;
-   
+   mutex waiting_queue_mtx;
    for(Univariate poly : polynomials) {
    	waiting_queue.push_front({0, poly});
    }
-   
+
    deque<atomic<Univariate*>> basis;
-   
-   for(size_t iThread = 0;iThread < nbThreads;iThread++) {
-   	threads[iThread] = thread(
-   		factorisation_worker, 
-   		&mtx, &waiting_queue, &basis, &basis_size
-   	);
+   atomic<size_t> basis_size = 0;
+
+   for(auto& thread_i: threads) {
+      thread_i = thread(
+         factorisation_worker,
+         &mtx, &waiting_queue, &waiting_queue_mtx, &basis, &basis_size
+      );
    }
-   
-   for(size_t iThread = 0;iThread < nbThreads;iThread++) {
-   	threads[iThread].join();
+
+   for(auto& thread_i: threads) {
+      thread_i.join();
    }
-   
+
    for(Univariate* poly : basis) {
-   	polynomial_basis.push_back(*poly);
-   	delete poly;
+      polynomial_basis.push_back(*poly);
+      delete poly;
    }
+
+#if 0
+   cout << KCYN "BASIS: size:" << basis.size() << endl;
+   for(auto poly : polynomial_basis) {
+       cout << toString(poly, "x") << endl;
+   }
+   cout << KCYN "============" KRST << endl;
+#endif
+}
+
+/* This function is used to stress-test our setup, e.g. relations size should be independent of this */
+void RelationGenerator::shuffleBasis() {
+   auto rng = std::default_random_engine {};
+   std::shuffle(std::begin(polynomial_basis), std::end(polynomial_basis), rng);
 }
 
 void decomposition_worker(
-	mutex* mtx, 
+	mutex* mtx,
 	deque<Fraction<Univariate>>* waiting_queue,
-	vector<Univariate>* basis,
+	const vector<Univariate>* basis,
 	Matrix<Rational>* decompositions) {
 	
 	while(true) {
@@ -225,17 +250,17 @@ void RelationGenerator::printRelations() {
    mutex mtx;
    deque<Fraction<Univariate>> waiting_queue(rational_fractions.begin(), rational_fractions.end());
    
-   for(size_t iThread = 0;iThread < nbThreads;iThread++) {
-   	threads[iThread] = thread(
-   		decomposition_worker, 
-   		&mtx, &waiting_queue, &polynomial_basis, &decompositions
-   	);
+   for(auto& thread_i: threads) {
+      thread_i = thread(
+         decomposition_worker,
+         &mtx, &waiting_queue, &polynomial_basis, &decompositions
+      );
    }
-   
-   for(size_t iThread = 0;iThread < nbThreads;iThread++) {
-   	threads[iThread].join();
+
+   for(auto& thread_i: threads) {
+      thread_i.join();
    }
-   
+
    cerr << "Done" << endl;
 
    auto t2 = std::chrono::high_resolution_clock::now();
@@ -246,8 +271,8 @@ void RelationGenerator::printRelations() {
 
    std::chrono::duration<float> e21 = t2 - t1;
    std::chrono::duration<float> e32 = t3 - t2;
-   cerr << "Relations computed (" << e21.count() << "s+ " << e32.count() << "s). Size : "
-        << rows.nbRows() << " * " << rows.nbCols() << endl;
+   cerr << "Relations computed (" << e21.count() << "s+ " << e32.count() << "s). "
+        << "Size : " << rows.nbRows() << " * " << rows.nbCols() << endl;
    cerr << "Simplifying.." << endl;
 
    /* On vire les colonnes inutiles */
