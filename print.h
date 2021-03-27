@@ -1,16 +1,11 @@
 #pragma once
 #include <regex>
-
-#if __GNUC__ > 8
-
-#include <filesystem>
-namespace fs = std::filesystem;
-
+#if defined(__GNUC__) && !defined(__llvm__) && (__GNUC__ < 8)
+    #include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
 #else
-
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-
+    #include <filesystem>
+    namespace fs = std::filesystem;
 #endif
 
 #ifdef HAS_COLOR
@@ -39,10 +34,74 @@ namespace fs = std::experimental::filesystem;
 
 class FormulaName {
 public:
+    class Symbolic {
+    public:
+        std::string str;
+
+        Symbolic() {
+            /* Nothing to do */
+        }
+
+        Symbolic(std::string value) {
+            str = value;
+        }
+
+        friend std::ostream& operator << (std::ostream& out, const Symbolic &s) {
+            out << s.str;
+            return out;
+        }
+    };
+
+    class MaybeSymbolic {
+    private:
+        bool _is_symbolic;
+        int value;
+        Symbolic symbolic;
+
+    public:
+        MaybeSymbolic() {
+            _is_symbolic = false;
+            value = 0;
+        }
+
+        MaybeSymbolic(int init_value) {
+            _is_symbolic = false;
+            value = init_value;
+        }
+
+        MaybeSymbolic(Symbolic init_value) {
+            _is_symbolic = true;
+            symbolic = init_value;
+        }
+
+        bool is_symbolic(void) const {
+            return _is_symbolic;
+        }
+
+        int extract_value(void) const {
+            assert(!is_symbolic());
+            return value;
+        }
+
+        Symbolic extract_symbol(void) const {
+            assert(is_symbolic());
+            return symbolic;
+        }
+
+        friend std::ostream& operator << (std::ostream& out, const MaybeSymbolic &s) {
+            if (s.is_symbolic()) {
+                out << s.extract_symbol();
+            } else {
+                out << s.extract_value();
+            }
+            return out;
+        }
+    };
+
     enum LeafType { LEAF_MU, LEAF_SIGMA, LEAF_THETA, LEAF_JORDAN_T, LEAF_UNKNOWN };
     typedef struct LeafExtraArg {
-        int k;
-        int l;
+        MaybeSymbolic k;
+        MaybeSymbolic l;
     } LeafExtraArg;
 
 protected:
@@ -50,8 +109,8 @@ protected:
     FormulaType formula_type = FORM_ONE;
     LeafType leaf_type;
     LeafExtraArg leaf_extra;
-    int power = 666;
-    int exponent = 777;
+    MaybeSymbolic power = MaybeSymbolic(0);
+    MaybeSymbolic exponent = MaybeSymbolic(0);
     vector<const FormulaName*> sub_formula;
 
     string textify(LeafType in, bool latex) const {
@@ -65,16 +124,27 @@ protected:
                 break;
             case LEAF_SIGMA:
                 ret = (latex ? "\\sigma{}" : "σ");
-                if (leaf_extra.k != 1) {
-                    ret += "_" + to_string(leaf_extra.k);
+                if (leaf_extra.k.is_symbolic()) {
+                    ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
+                } else {
+                    auto value = leaf_extra.k.extract_value();
+                    if (value != 1) {
+                        ret += "_" + std::to_string(value);
+                    }
                 }
                 break;
             case LEAF_JORDAN_T:
-                if (leaf_extra.k == 1) {
-                    ret = (latex ? "\\phi{}" : "φ");
-                } else {
+                if (leaf_extra.k.is_symbolic()) {
                     ret = (latex ? "J" : "J");
-                    ret += "_" + to_string(leaf_extra.k);
+                    ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
+                } else {
+                    auto value = leaf_extra.k.extract_value();
+                    if (value == 1) {
+                        ret = (latex ? "\\phi{}" : "φ");
+                    } else {
+                        ret = (latex ? "J" : "J");
+                        ret += "_" + std::to_string(value);
+                    }
                 }
                 break;
             default:
@@ -103,21 +173,26 @@ protected:
                     sub_func->print_inner(out, latex);
                     out << ", ";
                 }
-                out << std::to_string(exponent);
+                if (exponent.is_symbolic()) {
+                    out << exponent.extract_symbol();
+                } else {
+                    out << std::to_string(exponent.extract_value());
+                }
                 out << (latex ? "\\right)" : ")");
                 break;
             }
             case FORM_POWER: {
                 bool inner_is_mu = sub_formula[0]->isMu();
-                if (power != 0) {
-                   if (inner_is_mu && (power == 2)) {
+                int power_value = power.extract_value();
+                if (power_value != 0) {
+                   if (inner_is_mu && (power_value == 2)) {
                       out << (latex ? "\\abs{" : "|");
                    }
                    sub_formula[0]->print_inner(out, latex);
-                   if (inner_is_mu && (power == 2)) {
+                   if (inner_is_mu && (power_value == 2)) {
                       out << (latex ? "}" : "|");
-                   } else if (power != 1) {
-                      out << (latex ? "^{" : "^") << std::to_string(power) << (latex ? "}" : "");
+                   } else if (power_value != 1) {
+                      out << (latex ? "^{" : "^") << std::to_string(power_value) << (latex ? "}" : "");
                    }
                 }
                 break;
@@ -148,13 +223,17 @@ protected:
         return leaf_type == requested_type;
     }
 
-    int getLeafK(LeafType requested_type) const {
-        assert(isLeafOfType(requested_type));
+    int getLeafK(void) const {
         if (isPower()) {
             assert(sub_formula[0]->isLeaf());
-            return sub_formula[0]->getLeafK(requested_type);
+            return sub_formula[0]->getLeafK();
         }
-        return leaf_extra.k;
+        return leaf_extra.k.extract_value();
+    }
+
+    int getLeafK(LeafType requested_type) const {
+        assert(isLeafOfType(requested_type));
+        return getLeafK();
     }
 
 public:
@@ -226,7 +305,17 @@ public:
             return 1;
         }
         assert(isPower());
+        return power.extract_value();
+    }
+
+    MaybeSymbolic getPowerS() const {
+        assert(isPower());
         return power;
+    }
+
+    const FormulaName* getPowerInner() const {
+        assert(isPower());
+        return sub_formula[0];
     }
 
     size_t getProductSize() const {
@@ -248,18 +337,36 @@ public:
         return sub_formula[0];
     }
 
-    int getLFuncExponent() const {
+    MaybeSymbolic getLFuncExponentS() const {
         assert(isLFunc());
         return exponent;
+    }
+
+    int getLFuncExponent() const {
+        return getLFuncExponentS().extract_value();
     }
 
     bool isZeta() const {
         return isLFunc() && sub_formula[0]->isOne();
     }
 
-    int getZetaExponent() const {
+    bool isLFuncNonZeta() const {
+        return isLFunc() && !isZeta();
+    }
+
+    MaybeSymbolic getZetaExponentS() const {
         assert(isZeta());
-        return getLFuncExponent();
+        return getLFuncExponentS();
+    }
+
+    int getZetaExponent() const {
+        return getZetaExponentS().extract_value();
+    }
+
+    bool isLeafSameAs(const FormulaName* other) const {
+        assert(isLeaf());
+        assert(other->isLeaf());
+        return leaf_type == other->leaf_type;
     }
 
     bool isTheta() const {
@@ -286,6 +393,26 @@ public:
         return getLeafK(LEAF_SIGMA);
     }
 
+    int getLeafK_dangerous() const {
+        assert(isLeaf());
+        return leaf_extra.k.extract_value();
+    }
+
+    int getLeafL_dangerous() const {
+        assert(isLeaf());
+        return leaf_extra.l.extract_value();
+    }
+
+    MaybeSymbolic getLeafKS_dangerous() const {
+        assert(isLeaf());
+        return leaf_extra.k;
+    }
+
+    MaybeSymbolic getLeafLS_dangerous() const {
+        assert(isLeaf());
+        return leaf_extra.l;
+    }
+
     vector<const FormulaName*> getSubFormula() const {
         return sub_formula;
     }
@@ -295,11 +422,14 @@ class FormulaNameLeaf : public FormulaName
 {
 public:
     FormulaNameLeaf(LeafType type) {
+        assert(type==LEAF_MU || type==LEAF_THETA);
         formula_type = FORM_LEAF;
         leaf_type = type;
+        leaf_extra = (FormulaName::LeafExtraArg){.k = 0, .l = 0}; /* Force init to zero, helps comparison */
     }
 
     FormulaNameLeaf(LeafType type, LeafExtraArg extra) {
+        assert(type==LEAF_SIGMA || type==LEAF_JORDAN_T);
         formula_type = FORM_LEAF;
         leaf_type = type;
         leaf_extra = extra;
@@ -310,6 +440,11 @@ class FormulaNameLFunction : public FormulaName
 {
 public:
     FormulaNameLFunction(const FormulaName* sub_func, int sub_exponent) {
+        formula_type = FORM_LFUNC;
+        sub_formula.push_back(sub_func);
+        exponent = sub_exponent;
+    }
+    FormulaNameLFunction(const FormulaName* sub_func, Symbolic sub_exponent) {
         formula_type = FORM_LFUNC;
         sub_formula.push_back(sub_func);
         exponent = sub_exponent;
@@ -348,6 +483,15 @@ private:
     }
 
 public:
+    FormulaNameProduct(const FormulaName* unique) {
+        if (unique->isOne()) {
+            formula_type = FORM_ONE;
+        } else {
+            formula_type = FORM_PRODUCT;
+            add_subformula(unique);
+        }
+    }
+
     FormulaNameProduct(const FormulaName* left, const FormulaName* right) {
         if (left->isOne() && right->isOne()) {
             formula_type = FORM_ONE;
@@ -358,7 +502,6 @@ public:
         }
     }
 };
-
 
 std::ofstream latex;
 
