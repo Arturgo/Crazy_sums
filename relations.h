@@ -61,6 +61,9 @@ vector<pair<int, int>> decompose(Univariate poly, const vector<Univariate>& basi
          decomposition.push_back({iFactor, nb});
       }
    }
+   
+   assert(poly.size() <= 1);
+   
    return decomposition;
 }
 
