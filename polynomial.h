@@ -15,10 +15,12 @@ public:
 	size_t size() const;
 	T getCoeff(size_t pos) const;
 	void setCoeff(size_t pos, T coeff);
+	void setCoeff_unsafe(size_t pos, T coeff);
 	void toMonic();
 	void reduce();
 	void operator *= (const T& a);
 	void operator -= (const Polynomial<T>& a);
+	void substractShiftedForGCD(const Polynomial<T>& a, size_t shift);
 private:
 	vector<T> coeffs;
 };
@@ -82,11 +84,16 @@ inline T Polynomial<T>::getCoeff(size_t pos) const {
 }
 
 template<typename T>
-inline void Polynomial<T>::setCoeff(size_t pos, T coeff) {
+inline void Polynomial<T>::setCoeff_unsafe(size_t pos, T coeff) {
 	while(pos >= coeffs.size()) {
 		coeffs.push_back(T(0));
 	}
 	coeffs[pos] = coeff;
+}
+
+template<typename T>
+inline void Polynomial<T>::setCoeff(size_t pos, T coeff) {
+	setCoeff_unsafe(pos, coeff);
 	reduce();
 }
 
@@ -115,7 +122,7 @@ Polynomial<T> operator << (const Polynomial<T>& a, size_t shift) {
 	Polynomial<T> sum;
 
 	for(int iCoeff = (int)a.size() - 1;iCoeff >= 0;iCoeff--) {
-		sum.setCoeff(iCoeff + shift, a.getCoeff(iCoeff));
+		sum.setCoeff_unsafe(iCoeff + shift, a.getCoeff(iCoeff));
 	}
 
 	sum.reduce();
@@ -126,7 +133,7 @@ template<typename T>
 Polynomial<T> operator + (const Polynomial<T>& a, const Polynomial<T>& b) {
 	Polynomial<T> sum;
 	for(int iCoeff = max<int>(a.size(), b.size()) - 1;iCoeff >= 0;iCoeff--) {
-		sum.setCoeff(iCoeff, a.getCoeff(iCoeff) + b.getCoeff(iCoeff));
+		sum.setCoeff_unsafe(iCoeff, a.getCoeff(iCoeff) + b.getCoeff(iCoeff));
 	}
 	sum.reduce();
 	return sum;
@@ -135,7 +142,7 @@ Polynomial<T> operator + (const Polynomial<T>& a, const Polynomial<T>& b) {
 template<typename T>
 void Polynomial<T>::operator *= (const T& a) {
 	for(int iCoeff = (int)size() - 1;iCoeff >= 0;iCoeff--) {
-		setCoeff(iCoeff, a * getCoeff(iCoeff));
+		setCoeff_unsafe(iCoeff, a * getCoeff(iCoeff));
 	}
 	reduce();
 }
@@ -151,7 +158,7 @@ template<typename V, typename T>
 Polynomial<T> operator / (const Polynomial<T>& a, const V& b) {
 	Polynomial<T> sum;
 	for(int iCoeff = (int)a.size() - 1;iCoeff >= 0;iCoeff--) {
-		sum.setCoeff(iCoeff, a.getCoeff(iCoeff) / b);
+		sum.setCoeff_unsafe(iCoeff, a.getCoeff(iCoeff) / b);
 	}
 	sum.reduce();
 	return sum;
@@ -166,7 +173,7 @@ Polynomial<T> operator - (const Polynomial<T>& a) {
 template<typename T>
 void Polynomial<T>::operator -= (const Polynomial<T>& a) {
 	for(int iCoeff = max<int>(size(), a.size()) - 1;iCoeff >= 0;iCoeff--) {
-		setCoeff(iCoeff, getCoeff(iCoeff) - a.getCoeff(iCoeff));
+		setCoeff_unsafe(iCoeff, getCoeff(iCoeff) - a.getCoeff(iCoeff));
 	}
 	reduce();
 }
@@ -183,7 +190,7 @@ Polynomial<T> operator * (const Polynomial<T>& a, const Polynomial<T>& b) {
 	Polynomial<T> sum;
 	for(int iCoeffA = (int)a.size() - 1;iCoeffA >= 0;iCoeffA--) {
 		for(int iCoeffB = (int)b.size() - 1;iCoeffB >= 0;iCoeffB--) {
-			sum.setCoeff(iCoeffA + iCoeffB, sum.getCoeff(iCoeffA + iCoeffB) + a.getCoeff(iCoeffA) * b.getCoeff(iCoeffB));
+			sum.setCoeff_unsafe(iCoeffA + iCoeffB, sum.getCoeff(iCoeffA + iCoeffB) + a.getCoeff(iCoeffA) * b.getCoeff(iCoeffB));
 		}
 	}
 
@@ -195,7 +202,7 @@ template<typename T>
 Polynomial<T> derive(Polynomial<T> a) {
 	Polynomial<T> sum;
 	for (size_t iCoeff = 1;iCoeff < a.size();iCoeff++) {
-		sum.setCoeff(iCoeff - 1, T(iCoeff) * a.getCoeff(iCoeff));
+		sum.setCoeff_unsafe(iCoeff - 1, T(iCoeff) * a.getCoeff(iCoeff));
 	}
 	sum.reduce();
 	return sum;
@@ -273,7 +280,7 @@ Polynomial<T> operator / (Polynomial<T> a, Polynomial<T> b) {
 		Polynomial<T> shifted_b = b << shift;
 		size_t leading_index = a.size() - 1;
 
-		quotient.setCoeff(shift, (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)));
+		quotient.setCoeff_unsafe(shift, (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)));
 		a = a - (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)) * shifted_b;
 
 		a.reduce();
@@ -281,6 +288,17 @@ Polynomial<T> operator / (Polynomial<T> a, Polynomial<T> b) {
 
 	quotient.reduce();
 	return quotient;
+}
+
+/*
+ * Input condition: a.size() + shift <= size()
+ */
+template<typename T>
+void Polynomial<T>::substractShiftedForGCD (const Polynomial<T>& a, size_t shift) {
+	for(int iCoeff = size() - 1;iCoeff >= (int)shift;iCoeff--) {
+		setCoeff_unsafe(iCoeff, getCoeff(iCoeff) - a.getCoeff(iCoeff-shift));
+	}
+	reduce();
 }
 
 template<typename T>
@@ -292,7 +310,7 @@ Polynomial<T> gcd(Polynomial<T> a, Polynomial<T> b) {
 		if(a.size() > b.size())
 			swap(a, b);
 
-		b -= (a << (b.size() - a.size()));
+		b.substractShiftedForGCD(a, b.size() - a.size());
 		b.toMonic();
 		swap(a, b);
 	}
