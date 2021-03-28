@@ -582,26 +582,28 @@ std::ostream& operator << (std::ostream& out, const HFormula &h) {
 
 using FormulaNode = HFormula::Node;
 
+class Latex {
+public:
+    std::ofstream stream;
 
-std::ofstream latex;
+    Latex() {
+        fs::create_directory("tex");
+        stream.open ("tex/logs.tex", std::ofstream::out);
+        stream << "\\documentclass{minimal}" << endl;
+        stream << "\\usepackage[utf8]{inputenc}" << endl;
+        stream << "\\usepackage{amssymb}" << endl;
+        stream << "\\usepackage{mathtools}" << endl;
+        stream << "\\DeclarePairedDelimiter\\abs{\\lvert}{\\rvert}%" << endl;
+        stream << "\\makeatletter" << endl;
+        stream << "\\let\\oldabs\\abs" << endl;
+        stream << "\\def\\abs{\\@ifstar{\\oldabs}{\\oldabs*}}" << endl;
+        stream << "%" << endl;
+        stream << "\\usepackage[svgnames]{xcolor}" << endl;
+        stream << "\\begin{document}" << endl;
+    }
 
-void latex_init(void) {
-    fs::create_directory("tex");
-    latex.open ("tex/logs.tex", std::ofstream::out);
-    latex << "\\documentclass{minimal}" << endl;
-    latex << "\\usepackage[utf8]{inputenc}" << endl;
-    latex << "\\usepackage{amssymb}" << endl;
-    latex << "\\usepackage{mathtools}" << endl;
-    latex << "\\DeclarePairedDelimiter\\abs{\\lvert}{\\rvert}%" << endl;
-    latex << "\\makeatletter" << endl;
-    latex << "\\let\\oldabs\\abs" << endl;
-    latex << "\\def\\abs{\\@ifstar{\\oldabs}{\\oldabs*}}" << endl;
-    latex << "%" << endl;
-    latex << "\\usepackage[svgnames]{xcolor}" << endl;
-    latex << "\\begin{document}" << endl;
-}
-
-void latex_end(void) {
-    latex << "\\end{document}" << endl;
-    latex.close();
-}
+    ~Latex() {
+        stream << "\\end{document}" << endl;
+        stream.close();
+    }
+};

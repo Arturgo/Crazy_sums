@@ -22,7 +22,7 @@ static HFormula name_make_lfunc(const HFormula& name, int exponent)
     return HFormulaLFunction(name, exponent);
 }
 
-static void add_relation(RelationGenerator &manager,
+static void add_relation(RelationGenerator &manager, Latex& latex,
                          int i_phi, int i_J_2,
                          int i_sigma_1, int i_sigma_2, int i_sigma_3,
                          int i_mu, int i_theta,
@@ -60,18 +60,18 @@ static void add_relation(RelationGenerator &manager,
    std::chrono::duration<float> e21 = t2 - t1;
    cout << KBLD << name << KRST
         << KGRY "   (" << e21.count() << "s)" KRST << endl;
-#if 0
-   cout << toString(frac.getNumerator(), "x") << KGRN "/" KRST
-        << toString(frac.getDenominator(), "x") << endl;
-#endif
-   //name->print_full(latex, 1);
+   if(0) {
+      cout << toString(frac.getNumerator(), "x") << KGRN "/" KRST
+           << toString(frac.getDenominator(), "x") << endl;
+      name.get()->print_full(latex.stream, 1);
+   }
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    precomputeInverses(211);
    X.setCoeff(1, 1);
    U.setCoeff(0, 1);
-   latex_init();
+   Latex latex;
 
    int maxi_phi = 2;
    int maxi_J_2 = 0;
@@ -84,10 +84,10 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
 
    auto t1 = std::chrono::high_resolution_clock::now();
 
-   RelationGenerator manager;
+   RelationGenerator manager(&latex);
 
    for(int s = 2;s <= 2+maxi_sum*3;s++) {
-      add_relation(manager, 0, 0, 0, 0, 0, 0, 0, s);
+      add_relation(manager, latex, 0, 0, 0, 0, 0, 0, 0, s);
    }
 
    for(int i_theta = 0;i_theta <= maxi_theta;i_theta++) {
@@ -103,7 +103,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
       }
       for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum);s++) {
          if(i_phi+i_J_2+i_theta+i_sigma_1+i_sigma_2+i_sigma_3+i_mu > 0) {
-            add_relation(manager, i_phi, i_J_2, i_sigma_1, i_sigma_2, i_sigma_3, i_mu, i_theta , s);
+            add_relation(manager, latex, i_phi, i_J_2, i_sigma_1, i_sigma_2, i_sigma_3, i_mu, i_theta , s);
          }
       }
    }}}}}}}
@@ -123,6 +123,5 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
 
    manager.printRelations();
 
-   latex_end();
    return 0;
 }

@@ -10,11 +10,13 @@
 #include "berlekamp.h"
 #include "matrix.h"
 #include "polynomial.h"
+#include "print.h"
 #include "xrelation.h"
 
 class RelationGenerator {
 private:
    size_t nbThreads;
+   Latex* latex;
 
 public:
    vector<HFormula> names;
@@ -32,7 +34,9 @@ public:
    void prepareBasis(void);
    void shuffleBasis(void);
 
-   RelationGenerator() {
+   RelationGenerator(Latex* _latex) {
+      latex = _latex;
+
       char* nbThreads_string = getenv("NB_THREADS");
 
       nbThreads = std::thread::hardware_concurrency();
@@ -298,6 +302,6 @@ void RelationGenerator::printRelations() {
 
    for(auto& relation: relations) {
        cout << relation << endl;
-       relation.print(latex, 1);
+       relation.print(latex->stream, 1);
    }
 }
