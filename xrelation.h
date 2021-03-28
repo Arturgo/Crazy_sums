@@ -6,7 +6,7 @@
 
 class Relation {
 private:
-    typedef std::pair<const FormulaName*, Rational> Element;
+    typedef std::pair<HFormula, Rational> Element;
     std::vector<Element> elements;
     bool known = false;
     std::string known_formula;
@@ -15,16 +15,17 @@ private:
         /* To be called once at the end of the constructor. Improves printing and formula detection */
         /* Try to normalize the L-side. We want the shortest product on bottom, then the bigger exponent on bottom. */
         size_t l_top = 0, l_bottom = 0;
-        const FormulaName* top_n = NULL;
-        const FormulaName* bottom_n = NULL;
+        const FormulaNode* top_n = NULL;
+        const FormulaNode* bottom_n = NULL;
         for (const Element& e: elements) {
-            if (e.first->isLFunc() && !e.first->isZeta()) {
+            const FormulaNode* inner = e.first.get();
+            if (inner->isLFunc() && !inner->isZeta()) {
                 if (is_positive(e.second)) {
                     l_top++;
-                    top_n = e.first;
+                    top_n = inner;
                 } else {
                     l_bottom++;
-                    bottom_n = e.first;
+                    bottom_n = inner;
                 }
             }
         }
@@ -43,7 +44,7 @@ private:
         }
 
         out << (latex ? "{" : "");
-        element.first->print_inside(out, latex);
+        element.first.get()->print_inside(out, latex);
         out << (latex ? "}" : "");
         if (power != Rational(1)) {
             out << (latex ? "^{" : "^");
@@ -207,7 +208,7 @@ private:
     };
 
 public:
-    Relation(const vector<pair<size_t, Rational>>& relation_row, vector<const FormulaName*>& names) {
+    Relation(const vector<pair<size_t, Rational>>& relation_row, vector<HFormula>& names) {
         for(const pair<size_t, Rational>& coeff: relation_row) {
             if(!(coeff.second == Rational(0))) {
                 elements.push_back(make_pair(names[coeff.first], coeff.second));
@@ -216,7 +217,7 @@ public:
         normalize();
     }
 
-    Relation(const vector<pair<const FormulaName*, Rational>>& relation_elements) {
+    Relation(const vector<pair<HFormula, Rational>>& relation_elements) {
         for(auto relation_element: relation_elements) {
             elements.push_back(relation_element);
         }
@@ -226,7 +227,7 @@ public:
     std::ostream& print(std::ostream& out, bool latex) const {
         std::ostringstream left;
         bool is_simple;
-        print_frac(left, latex, false, [](const Element& e){ return !e.first->isZeta(); }, is_simple);
+        print_frac(left, latex, false, [](const Element& e){ return !e.first.get()->isZeta(); }, is_simple);
 
         if (known) {
             if (latex) {
@@ -263,7 +264,7 @@ public:
         out << (latex ? "=" : KRED " = " KRST);
 
         /* Then print all zeta */
-        print_frac(out, latex, true , [](const Element& e){ return  e.first->isZeta(); }, is_simple);
+        print_frac(out, latex, true , [](const Element& e){ return  e.first.get()->isZeta(); }, is_simple);
 
         if (latex) {
             out << "$" << endl << endl;
@@ -320,13 +321,13 @@ private:
         return debug;
     }
 
-    bool try_instantiate(SomeInt value, FormulaName::MaybeSymbolic maybe_symbolic, 
+    bool try_instantiate(SomeInt value, FormulaNode::MaybeSymbolic maybe_symbolic,
                          SymbolicInstantiation& instantiation, int debug) const {
         if (debug>=0) { cerr << string(debug, ' ') << __func__ << " I " << value << " wrt " << maybe_symbolic << endl; }
         if (!maybe_symbolic.is_symbolic()) {
             return value == maybe_symbolic.extract_value();
         }
-        FormulaName::Symbolic symbolic = maybe_symbolic.extract_symbol();
+        FormulaNode::Symbolic symbolic = maybe_symbolic.extract_symbol();
         vector<string> n_symbols = instantiate_split_helper(symbolic.str, "+");
         int uninstanticated_var_cnt = 0;
         string uninstanticated_var_name;
@@ -382,9 +383,11 @@ private:
         return true; /* O RLY? */
     }
 
-    bool try_instantiate(const FormulaName* rel, const FormulaName* form, SymbolicInstantiation& instantiation, int debug) const {
-        if (debug>=0) { cerr << string(debug, ' ') << __func__ << " TX " << *rel << " wrt " << *form << endl; }
+    bool try_instantiate(const HFormula h_rel, const HFormula h_form, SymbolicInstantiation& instantiation, int debug) const {
+        if (debug>=0) { cerr << string(debug, ' ') << __func__ << " TX " << h_rel << " wrt " << h_form << endl; }
 
+        const FormulaNode* rel = h_rel.get();
+        const FormulaNode* form = h_form.get();
         if (rel->isLeaf() && form->isLeaf()) {
             if (debug>=0) { cerr << string(debug, ' ') << __func__ << " TX L<->L" << endl; }
             if (!rel->isLeafSameAs(form)) {
@@ -402,12 +405,12 @@ private:
         } else if (rel->isLeaf() && form->isPower()) {
             if (debug>=0) { cerr << string(debug, ' ') << __func__ << " TX L<->P" << endl; }
             if ((!form->getPowerS().is_symbolic()) && (form->getPowerS().extract_value() == 1)) {
-                return try_instantiate(rel, form->getPowerInner(), instantiation, iincr(debug));
+                return try_instantiate(h_rel, form->getPowerInner(), instantiation, iincr(debug));
             }
         } else if (rel->isPower() && form->isLeaf()) {
             if (debug>=0) { cerr << string(debug, ' ') << __func__ << " TX P<->L" << endl; }
             if (rel->getPower() == 1) {
-                return try_instantiate(rel->getPowerInner(), form, instantiation, iincr(debug));
+                return try_instantiate(rel->getPowerInner(), h_form, instantiation, iincr(debug));
             }
         } else if (rel->isPower() && form->isPower()) {
             SymbolicInstantiation new_instantiation = instantiation;
@@ -514,9 +517,9 @@ private:
 
     bool check_D2(const RelationSummary& summary, string& out_name) {
         std::string name = "D-2 ";
-        vector<pair<const FormulaName*, Rational>> vect{
-            {new FormulaNameLFunction(new FormulaNameProduct(new FormulaNameLeaf(FormulaName::LEAF_MU)), FormulaName::Symbolic("s")), Rational(1)},
-            {new FormulaNameLFunction(new FormulaName(), FormulaName::Symbolic("s")), Rational(1)},
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(FormulaNode::LEAF_MU)), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(1)},
         };
         Relation formula = Relation(vect);
         formula.classify_raw(name);
@@ -527,11 +530,11 @@ private:
 
     bool check_D4_D6(const RelationSummary& summary, string& out_name) {
         std::string name = "D-6 ";
-        vector<pair<const FormulaName*, Rational>> vect{
-            {new FormulaNameLFunction(new FormulaNameProduct(new FormulaNameLeaf(
-                FormulaName::LEAF_SIGMA, (FormulaName::LeafExtraArg){.k = FormulaName::Symbolic("1*k"), .l = 0})), FormulaName::Symbolic("s")), Rational(1)},
-            {new FormulaNameLFunction(new FormulaName(), FormulaName::Symbolic("1*s")), Rational(-1)},
-            {new FormulaNameLFunction(new FormulaName(), FormulaName::Symbolic("1*s+-1*k")), Rational(-1)},
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
+                FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("1*k"), .l = 0})), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("1*s")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("1*s+-1*k")), Rational(-1)},
         };
         Relation formula = Relation(vect);
         formula.classify_raw(name);
@@ -549,10 +552,10 @@ private:
 
     bool check_D10(const RelationSummary& summary, string& out_name) {
         std::string name = "D-10";
-        vector<pair<const FormulaName*, Rational>> vect{
-            {new FormulaNameLFunction(new FormulaNameProduct(new FormulaNamePower(new FormulaNameLeaf(FormulaName::LEAF_MU), 2)), FormulaName::Symbolic("s")), Rational(1)},
-            {new FormulaNameLFunction(new FormulaName(), FormulaName::Symbolic("2*s")), Rational(1)},
-            {new FormulaNameLFunction(new FormulaName(), FormulaName::Symbolic("1*s")), Rational(-1)},
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_MU), 2)), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("1*s")), Rational(-1)},
         };
         Relation formula = Relation(vect);
         formula.classify_raw(name);
@@ -563,10 +566,10 @@ private:
 
     bool check_D18(const RelationSummary& summary, string& out_name) {
         std::string name = "D-18";
-        vector<pair<const FormulaName*, Rational>> vect{
-            {new FormulaNameLFunction(new FormulaNameProduct(new FormulaNamePower(new FormulaNameLeaf(FormulaName::LEAF_THETA), 1)), FormulaName::Symbolic("s")), Rational(1)},
-            {new FormulaNameLFunction(new FormulaName(), FormulaName::Symbolic("2*s")), Rational(1)},
-            {new FormulaNameLFunction(new FormulaName(), FormulaName::Symbolic("1*s")), Rational(-2)},
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_THETA), 1)), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("1*s")), Rational(-2)},
         };
         Relation formula = Relation(vect);
         formula.classify_raw(name);
@@ -577,11 +580,11 @@ private:
 
     bool check_D52(const RelationSummary& summary, string& out_name) {
         std::string name = "D-52";
-        vector<pair<const FormulaName*, Rational>> vect{
-            {new FormulaNameLFunction(new FormulaNameProduct(new FormulaNameLeaf(
-                FormulaName::LEAF_JORDAN_T, (FormulaName::LeafExtraArg){.k = FormulaName::Symbolic("1*k"), .l = 0})), FormulaName::Symbolic("s")), Rational(1)},
-            {new FormulaNameLFunction(new FormulaName(), FormulaName::Symbolic("1*s+-1*k")), Rational(-1)},
-            {new FormulaNameLFunction(new FormulaName(), FormulaName::Symbolic("1*s")), Rational(1)},
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
+                FormulaNode::LEAF_JORDAN_T, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("1*k"), .l = 0})), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("1*s+-1*k")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("1*s")), Rational(1)},
         };
         Relation formula = Relation(vect);
         formula.classify_raw(name);
@@ -608,7 +611,7 @@ private:
 
         for(auto element: elements) {
             if (debug) cerr << __func__ << " L" << endl;
-            const FormulaName* name = element.first;
+            const FormulaNode* name = element.first.get();
             Rational power = element.second;
             if (name->isZeta()) {
                 int number = name->getZetaExponent();
@@ -642,9 +645,9 @@ private:
                     if (debug) cerr << __func__ << " F" << endl;
                     return false;
                 }
-                const FormulaName* infunc = name->getLFuncProduct();
+                const FormulaNode* infunc = name->getLFuncProduct().get();
                 if (infunc->getProductSize() == 1) {
-                    const FormulaName* inner = infunc->getProductElem(0);
+                    const FormulaNode* inner = infunc->getProductElem(0).get();
                     if (!inner->isSigma()) {
                         if (debug) cerr << __func__ << " G" << endl;
                         return false;
@@ -660,7 +663,7 @@ private:
                     }
                 } else if (infunc->getProductSize() == 2) {
                     for (size_t idx=0; idx<2; idx++) {
-                        const FormulaName* inner = infunc->getProductElem(idx);
+                        const FormulaNode* inner = infunc->getProductElem(idx).get();
                         if (!inner->isSigma()) {
                             if (debug) cerr << __func__ << " I" << endl;
                             return false;
@@ -758,7 +761,7 @@ public:
         size_t nb = elements.size();
 
         for(auto element: elements) {
-            const FormulaName* name = element.first;
+            const FormulaNode* name = element.first.get();
             if (!name->isLFunc()) {
                 return; /* What is this??? */
             }

@@ -5,21 +5,21 @@
 #include "relations.h"
 using namespace std;
 
-static FormulaName* name_append_component(const FormulaName *name, FormulaName::LeafType component, int power)
+static HFormula name_append_component(const HFormula& name, FormulaNode::LeafType component, int power)
 {
-    return new FormulaNameProduct(name, new FormulaNamePower(new FormulaNameLeaf(component), power));
+    return HFormulaProduct(name, HFormulaPower(HFormulaLeaf(component), power));
 }
 
-static FormulaName* name_append_component(const FormulaName *name, FormulaName::LeafType component,
-                                          int extra, int power)
+static HFormula name_append_component(const HFormula& name, FormulaNode::LeafType component,
+                                      int extra, int power)
 {
-    return new FormulaNameProduct(name, new FormulaNamePower(
-               new FormulaNameLeaf(component, (FormulaName::LeafExtraArg){.k = extra, .l = 0}), power));
+    return HFormulaProduct(name, HFormulaPower(
+               HFormulaLeaf(component, (FormulaNode::LeafExtraArg){.k = extra, .l = 0}), power));
 }
 
-static FormulaName* name_make_lfunc(const FormulaName *name, int exponent)
+static HFormula name_make_lfunc(const HFormula& name, int exponent)
 {
-    return new FormulaNameLFunction(name, exponent);
+    return HFormulaLFunction(name, exponent);
 }
 
 static void add_relation(RelationGenerator &manager,
@@ -44,21 +44,21 @@ static void add_relation(RelationGenerator &manager,
 
    auto t2 = std::chrono::high_resolution_clock::now();
 
-   FormulaName* name = new FormulaName();
-   name = name_append_component(name, FormulaName::LEAF_JORDAN_T, 1, i_phi);
-   name = name_append_component(name, FormulaName::LEAF_JORDAN_T, 2, i_J_2);
-   name = name_append_component(name, FormulaName::LEAF_THETA, i_theta);
-   name = name_append_component(name, FormulaName::LEAF_SIGMA, 1, i_sigma_1);
-   name = name_append_component(name, FormulaName::LEAF_SIGMA, 2, i_sigma_2);
-   name = name_append_component(name, FormulaName::LEAF_SIGMA, 3, i_sigma_3);
-   name = name_append_component(name, FormulaName::LEAF_MU, i_mu);
+   HFormula name = HFormulaOne();
+   name = name_append_component(name, FormulaNode::LEAF_JORDAN_T, 1, i_phi);
+   name = name_append_component(name, FormulaNode::LEAF_JORDAN_T, 2, i_J_2);
+   name = name_append_component(name, FormulaNode::LEAF_THETA, i_theta);
+   name = name_append_component(name, FormulaNode::LEAF_SIGMA, 1, i_sigma_1);
+   name = name_append_component(name, FormulaNode::LEAF_SIGMA, 2, i_sigma_2);
+   name = name_append_component(name, FormulaNode::LEAF_SIGMA, 3, i_sigma_3);
+   name = name_append_component(name, FormulaNode::LEAF_MU, i_mu);
 
    name = name_make_lfunc(name, s);
 
    manager.addFraction(name, frac);
 
    std::chrono::duration<float> e21 = t2 - t1;
-   cout << KBLD << *name << KRST
+   cout << KBLD << name << KRST
         << KGRY "   (" << e21.count() << "s)" KRST << endl;
 #if 0
    cout << toString(frac.getNumerator(), "x") << KGRN "/" KRST

@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include <regex>
 #if defined(__GNUC__) && !defined(__llvm__) && (__GNUC__ < 8)
     #include <experimental/filesystem>
@@ -32,7 +33,21 @@
 #define KRST ""
 #endif
 
-class FormulaName {
+class HFormula {
+public:
+    class Node;
+
+protected:
+    std::shared_ptr<const Node> formula;
+    HFormula() {}
+
+public:
+    const Node* get() const {
+        return formula.get();
+    }
+};
+
+class HFormula::Node {
 public:
     class Symbolic {
     public:
@@ -111,7 +126,7 @@ protected:
     LeafExtraArg leaf_extra;
     MaybeSymbolic power = MaybeSymbolic(0);
     MaybeSymbolic exponent = MaybeSymbolic(0);
-    vector<const FormulaName*> sub_formula;
+    vector<HFormula> sub_formula;
 
     string textify(LeafType in, bool latex) const {
         string ret;
@@ -162,7 +177,7 @@ protected:
                 out << textify(leaf_type, latex);
                 break;
             case FORM_LFUNC: {
-                const FormulaName* sub_func = sub_formula[0];
+                const Node* sub_func = sub_formula[0].get();
                 if (sub_func->isOne()) {
                     out << (latex ? "\\zeta" : "ζ");
                 } else {
@@ -182,13 +197,13 @@ protected:
                 break;
             }
             case FORM_POWER: {
-                bool inner_is_mu = sub_formula[0]->isMu();
+                bool inner_is_mu = sub_formula[0].get()->isMu();
                 int power_value = power.extract_value();
                 if (power_value != 0) {
                    if (inner_is_mu && (power_value == 2)) {
                       out << (latex ? "\\abs{" : "|");
                    }
-                   sub_formula[0]->print_inner(out, latex);
+                   sub_formula[0].get()->print_inner(out, latex);
                    if (inner_is_mu && (power_value == 2)) {
                       out << (latex ? "}" : "|");
                    } else if (power_value != 1) {
@@ -203,7 +218,7 @@ protected:
                     if (!first) {
                         out << " ";
                     }
-                    sub->print_inner(out, latex);
+                    sub.get()->print_inner(out, latex);
                     first = false;
                 }
                 break;
@@ -217,16 +232,16 @@ protected:
     bool isLeafOfType(LeafType requested_type) const {
         assert(isPower() || isLeaf());
         if (isPower()) {
-            assert(sub_formula[0]->isLeaf());
-            return sub_formula[0]->isLeafOfType(requested_type);
+            assert(sub_formula[0].get()->isLeaf());
+            return sub_formula[0].get()->isLeafOfType(requested_type);
         }
         return leaf_type == requested_type;
     }
 
     int getLeafK(void) const {
         if (isPower()) {
-            assert(sub_formula[0]->isLeaf());
-            return sub_formula[0]->getLeafK();
+            assert(sub_formula[0].get()->isLeaf());
+            return sub_formula[0].get()->getLeafK();
         }
         return leaf_extra.k.extract_value();
     }
@@ -236,11 +251,9 @@ protected:
         return getLeafK();
     }
 
-public:
-    FormulaName() {
-        formula_type = FORM_ONE;
-    }
+    Node() { }
 
+public:
     std::ostream& print_inside(std::ostream& out, bool latex) const {
         print_inner(out, latex);
         return out;
@@ -280,7 +293,7 @@ public:
         }
     }
 
-    friend std::ostream& operator << (std::ostream& out, const FormulaName &r) {
+    friend std::ostream& operator << (std::ostream& out, const Node &r) {
         return r.print_full(out, false);
     }
 
@@ -313,7 +326,7 @@ public:
         return power;
     }
 
-    const FormulaName* getPowerInner() const {
+    HFormula getPowerInner() const {
         assert(isPower());
         return sub_formula[0];
     }
@@ -323,7 +336,7 @@ public:
         return sub_formula.size();
     }
 
-    const FormulaName* getProductElem(size_t idx) const {
+    HFormula getProductElem(size_t idx) const {
         assert(isProduct() && (idx < sub_formula.size()));
         return sub_formula[idx];
     }
@@ -332,8 +345,8 @@ public:
         return formula_type == FORM_LFUNC;
     }
 
-    const FormulaName* getLFuncProduct() const {
-        assert(isLFunc() && sub_formula[0]->isProduct());
+    HFormula getLFuncProduct() const {
+        assert(isLFunc() && sub_formula[0].get()->isProduct());
         return sub_formula[0];
     }
 
@@ -347,7 +360,7 @@ public:
     }
 
     bool isZeta() const {
-        return isLFunc() && sub_formula[0]->isOne();
+        return isLFunc() && sub_formula[0].get()->isOne();
     }
 
     bool isLFuncNonZeta() const {
@@ -363,7 +376,7 @@ public:
         return getZetaExponentS().extract_value();
     }
 
-    bool isLeafSameAs(const FormulaName* other) const {
+    bool isLeafSameAs(const Node* other) const {
         assert(isLeaf());
         assert(other->isLeaf());
         return leaf_type == other->leaf_type;
@@ -413,22 +426,38 @@ public:
         return leaf_extra.l;
     }
 
-    vector<const FormulaName*> getSubFormula() const {
+    vector<HFormula> getSubFormula() const {
         return sub_formula;
     }
 };
 
-class FormulaNameLeaf : public FormulaName
+class NodeOne : public HFormula::Node
 {
 public:
-    FormulaNameLeaf(LeafType type) {
+    NodeOne() {
+        formula_type = FORM_ONE;
+    }
+};
+
+class HFormulaOne : public HFormula
+{
+public:
+    HFormulaOne() {
+        formula = std::make_shared<const Node>(NodeOne());
+    }
+};
+
+class NodeLeaf : public HFormula::Node
+{
+public:
+    NodeLeaf(LeafType type) {
         assert(type==LEAF_MU || type==LEAF_THETA);
         formula_type = FORM_LEAF;
         leaf_type = type;
-        leaf_extra = (FormulaName::LeafExtraArg){.k = 0, .l = 0}; /* Force init to zero, helps comparison */
+        leaf_extra = (Node::LeafExtraArg){.k = 0, .l = 0}; /* Force init to zero, helps comparison */
     }
 
-    FormulaNameLeaf(LeafType type, LeafExtraArg extra) {
+    NodeLeaf(LeafType type, LeafExtraArg extra) {
         assert(type==LEAF_SIGMA || type==LEAF_JORDAN_T);
         formula_type = FORM_LEAF;
         leaf_type = type;
@@ -436,26 +465,50 @@ public:
     }
 };
 
-class FormulaNameLFunction : public FormulaName
+class HFormulaLeaf : public HFormula
 {
 public:
-    FormulaNameLFunction(const FormulaName* sub_func, int sub_exponent) {
+    HFormulaLeaf(Node::LeafType type) {
+        formula = std::make_shared<const Node>(NodeLeaf(type));
+    }
+
+    HFormulaLeaf(Node::LeafType type, Node::LeafExtraArg extra) {
+        formula = std::make_shared<const Node>(NodeLeaf(type, extra));
+    }
+};
+
+class NodeLFunction : public HFormula::Node
+{
+public:
+    NodeLFunction(const HFormula& sub_func, int sub_exponent) {
         formula_type = FORM_LFUNC;
         sub_formula.push_back(sub_func);
         exponent = sub_exponent;
     }
-    FormulaNameLFunction(const FormulaName* sub_func, Symbolic sub_exponent) {
+    NodeLFunction(const HFormula& sub_func, Symbolic sub_exponent) {
         formula_type = FORM_LFUNC;
         sub_formula.push_back(sub_func);
         exponent = sub_exponent;
     }
 };
 
-class FormulaNamePower : public FormulaName
+class HFormulaLFunction : public HFormula
 {
 public:
-    FormulaNamePower(const FormulaName* part, int new_power) {
-        if (part->isOne() || (new_power == 0)) {
+    HFormulaLFunction(const HFormula& sub_func, int sub_exponent) {
+        formula = std::make_shared<const Node>(NodeLFunction(sub_func, sub_exponent));
+    }
+
+    HFormulaLFunction(const HFormula& sub_func, Node::Symbolic sub_exponent) {
+        formula = std::make_shared<const Node>(NodeLFunction(sub_func, sub_exponent));
+    }
+};
+
+class NodePower : public HFormula::Node
+{
+public:
+    NodePower(const HFormula& part, int new_power) {
+        if (part.get()->isOne() || (new_power == 0)) {
             formula_type = FORM_ONE;
         } else {
             formula_type = FORM_POWER;
@@ -465,16 +518,24 @@ public:
     }
 };
 
-class FormulaNameProduct : public FormulaName
+class HFormulaPower : public HFormula
+{
+public:
+    HFormulaPower(const HFormula& part, int power) {
+        formula = std::make_shared<const Node>(NodePower(part, power));
+    }
+};
+
+class NodeProduct : public HFormula::Node
 {
 private:
-    void add_subformula(const FormulaName* form) {
-        if (form->isOne()) {
+    void add_subformula(const HFormula& form) {
+        if (form.get()->isOne()) {
             return;
         }
-        if (form->isProduct()) {
-            for (auto sub : form->getSubFormula()) {
-                assert(!sub->isProduct());
+        if (form.get()->isProduct()) {
+            for (auto sub : form.get()->getSubFormula()) {
+                assert(!sub.get()->isProduct());
                 sub_formula.push_back(sub);
             }
         } else {
@@ -483,8 +544,8 @@ private:
     }
 
 public:
-    FormulaNameProduct(const FormulaName* unique) {
-        if (unique->isOne()) {
+    NodeProduct(const HFormula& unique) {
+        if (unique.get()->isOne()) {
             formula_type = FORM_ONE;
         } else {
             formula_type = FORM_PRODUCT;
@@ -492,8 +553,8 @@ public:
         }
     }
 
-    FormulaNameProduct(const FormulaName* left, const FormulaName* right) {
-        if (left->isOne() && right->isOne()) {
+    NodeProduct(const HFormula& left, const HFormula& right) {
+        if (left.get()->isOne() && right.get()->isOne()) {
             formula_type = FORM_ONE;
         } else {
             formula_type = FORM_PRODUCT;
@@ -502,6 +563,25 @@ public:
         }
     }
 };
+
+class HFormulaProduct : public HFormula
+{
+public:
+    HFormulaProduct(const HFormula& unique) {
+        formula = std::make_shared<const Node>(NodeProduct(unique));
+    }
+
+    HFormulaProduct(const HFormula& left, const HFormula& right) {
+        formula = std::make_shared<const Node>(NodeProduct(left, right));
+    }
+};
+
+std::ostream& operator << (std::ostream& out, const HFormula &h) {
+    return h.get()->print_full(out, false);
+}
+
+using FormulaNode = HFormula::Node;
+
 
 std::ofstream latex;
 

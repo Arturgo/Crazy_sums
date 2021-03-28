@@ -17,14 +17,14 @@ private:
    size_t nbThreads;
 
 public:
-   vector<const FormulaName*> names;
+   vector<HFormula> names;
    vector<Fraction<Univariate>> rational_fractions;
 
    vector<Univariate> polynomials;
    vector<Univariate> polynomial_basis;
 
    void addPolynomial(Univariate poly, int index = 0);
-   void addFraction(const FormulaName *name, Fraction<Univariate> frac);
+   void addFraction(HFormula& name, Fraction<Univariate> frac);
 
    void printRelation(const vector<Rational>& relation, const vector<size_t>& iCol_in_rows);
    void printRelations();
@@ -43,7 +43,7 @@ public:
    }
 };
 
-void RelationGenerator::addFraction(const FormulaName *name, Fraction<Univariate> frac) {
+void RelationGenerator::addFraction(HFormula& name, Fraction<Univariate> frac) {
    names.push_back(name);
    rational_fractions.push_back(frac);
 
