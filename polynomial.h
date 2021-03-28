@@ -89,6 +89,7 @@ inline void Polynomial<T>::setCoeff_unsafe(size_t pos, T coeff) {
 		coeffs.push_back(T(0));
 	}
 	coeffs[pos] = coeff;
+	/* Unsafe: caller should perform reduce() once it has batched operations. */
 }
 
 template<typename T>
@@ -102,7 +103,7 @@ bool operator == (const Polynomial<T>& a, const Polynomial<T>& b) {
 	if(a.size() != b.size())
 		return false;
 
-	for(int iCoeff = 0;iCoeff < (int)a.size();iCoeff++) {
+	for(size_t iCoeff = 0;iCoeff < a.size();iCoeff++) {
 		if(!(a.getCoeff(iCoeff) == b.getCoeff(iCoeff)))
 			return false;
 	}
@@ -141,7 +142,7 @@ Polynomial<T> operator + (const Polynomial<T>& a, const Polynomial<T>& b) {
 
 template<typename T>
 void Polynomial<T>::operator *= (const T& a) {
-	for(int iCoeff = (int)size() - 1;iCoeff >= 0;iCoeff--) {
+	for(size_t iCoeff = 0;iCoeff < size();iCoeff++) {
 		setCoeff_unsafe(iCoeff, a * getCoeff(iCoeff));
 	}
 	reduce();
@@ -291,30 +292,34 @@ Polynomial<T> operator / (Polynomial<T> a, Polynomial<T> b) {
 }
 
 /*
- * Input condition: a.size() + shift <= size()
+ * Input condition: a.size() + shift <= this.size()
  */
 template<typename T>
-void Polynomial<T>::substractShiftedForGCD (const Polynomial<T>& a, size_t shift) {
-	for(int iCoeff = size() - 1;iCoeff >= (int)shift;iCoeff--) {
-		setCoeff_unsafe(iCoeff, getCoeff(iCoeff) - a.getCoeff(iCoeff-shift));
+inline void Polynomial<T>::substractShiftedForGCD(const Polynomial<T>& a, size_t shift) {
+	T mult = leading(*this) * inverse(leading(a));
+	bool needs_mult = !(mult == T(1));
+	for(size_t iCoeff = shift;iCoeff < size();iCoeff++) {
+		/* Most of the time false, hence branching is cheaper than the multiplication */
+		if (needs_mult) {
+			setCoeff_unsafe(iCoeff, getCoeff(iCoeff) - mult*a.getCoeff(iCoeff-shift));
+		} else {
+			setCoeff_unsafe(iCoeff, getCoeff(iCoeff) - a.getCoeff(iCoeff-shift));
+		}
 	}
 	reduce();
 }
 
 template<typename T>
 Polynomial<T> gcd(Polynomial<T> a, Polynomial<T> b) {
-	a.toMonic();
-	b.toMonic();
-
 	while(a.size() != 0) {
 		if(a.size() > b.size())
 			swap(a, b);
 
 		b.substractShiftedForGCD(a, b.size() - a.size());
-		b.toMonic();
 		swap(a, b);
 	}
 
+	b.toMonic();
 	return b;
 }
 
