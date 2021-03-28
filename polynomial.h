@@ -15,7 +15,10 @@ public:
 	size_t size() const;
 	T getCoeff(size_t pos) const;
 	void setCoeff(size_t pos, T coeff);
+	void toMonic();
 	void reduce();
+	void operator *= (const T& a);
+	void operator -= (const Polynomial<T>& a);
 private:
 	vector<T> coeffs;
 };
@@ -116,7 +119,7 @@ Polynomial<T> operator << (const Polynomial<T>& a, size_t shift) {
 	}
 
 	sum.reduce();
-	return sum;  
+	return sum;
 }
 
 template<typename T>
@@ -129,13 +132,18 @@ Polynomial<T> operator + (const Polynomial<T>& a, const Polynomial<T>& b) {
 	return sum;
 }
 
+template<typename T>
+void Polynomial<T>::operator *= (const T& a) {
+	for(int iCoeff = (int)size() - 1;iCoeff >= 0;iCoeff--) {
+		setCoeff(iCoeff, a * getCoeff(iCoeff));
+	}
+	reduce();
+}
+
 template<typename V, typename T>
 Polynomial<T> operator * (const V& a, const Polynomial<T>& b) {
-	Polynomial<T> sum;
-	for(int iCoeff = (int)b.size() - 1;iCoeff >= 0;iCoeff--) {
-		sum.setCoeff(iCoeff, a * b.getCoeff(iCoeff));
-	}
-	sum.reduce();
+	Polynomial<T> sum = b;
+	sum *= a;
 	return sum;
 }
 
@@ -156,8 +164,18 @@ Polynomial<T> operator - (const Polynomial<T>& a) {
 }
 
 template<typename T>
+void Polynomial<T>::operator -= (const Polynomial<T>& a) {
+	for(int iCoeff = max<int>(size(), a.size()) - 1;iCoeff >= 0;iCoeff--) {
+		setCoeff(iCoeff, getCoeff(iCoeff) - a.getCoeff(iCoeff));
+	}
+	reduce();
+}
+
+template<typename T>
 Polynomial<T> operator - (const Polynomial<T>& a, const Polynomial<T>& b) {
-	return a + (-b);
+	Polynomial<T> sum = a;
+	sum -= b;
+	return sum;
 }
 
 template<typename T>
@@ -183,115 +201,106 @@ Polynomial<T> derive(Polynomial<T> a) {
 	return sum;
 }
 
-#if 0
-//TODO: faire mieux
-Rational leading(const Rational& a) {
-	return a;
-}
-#endif
-
-Mod leading(const Mod& a) {
-	return a;
+template<typename T>
+T leading(const Polynomial<T>& a) {
+	return a.getCoeff(a.size() - 1);
 }
 
 template<typename T>
-T leading(const Polynomial<T>& a) {
-	return leading(a.getCoeff(a.size() - 1));
-}
-
-template<typename T> 
-Polynomial<T> toMonic(const Polynomial<T>& a) {
-	return inverse(leading(a)) * a;
+void Polynomial<T>::toMonic(void) {
+	if (!(leading(*this) == T(1))) {
+		*this *= inverse(leading(*this));
+	}
 }
 
 template<typename T, typename... Args>
 string toString(const Polynomial<T>& poly, string variable, Args... args) {
-  string result;
-  
-  bool first = true;
-  for(size_t iCoeff = 0;iCoeff < poly.size();iCoeff++) {
-    if(!(poly.getCoeff(iCoeff) == T(0))) {
-      if(!first) {
-        result += " + ";
-      }
-      first = false;
-      
-      result += toString(poly.getCoeff(iCoeff), args...);
-      switch(iCoeff) {
-        case 0:
-          break;
-        case 1:
-          result += KGRY + variable + KRST;
-          break;
-        default:
-          result += KGRY + variable + "^" + KRST + to_string(iCoeff);
-     }
-     
-    }
-  }
-  
-  return "(" + result + ")";
+	string result;
+
+	bool first = true;
+	for(size_t iCoeff = 0;iCoeff < poly.size();iCoeff++) {
+		if(!(poly.getCoeff(iCoeff) == T(0))) {
+			if(!first) {
+				result += " + ";
+			}
+			first = false;
+
+			result += toString(poly.getCoeff(iCoeff), args...);
+			switch(iCoeff) {
+				case 0:
+					break;
+				case 1:
+					result += KGRY + variable + KRST;
+					break;
+				default:
+					result += KGRY + variable + "^" + KRST + to_string(iCoeff);
+		}
+
+		}
+	}
+
+	return "(" + result + ")";
 }
 
 typedef Polynomial<Mod> Univariate;
 
 template<typename T>
 Polynomial<T> operator % (Polynomial<T> a, Polynomial<T> b) {
-  a.reduce();
-  b.reduce();
-  
-  while(a.size() >= b.size()) {
-    size_t shift = a.size() - b.size();
-    Polynomial<T> shifted_b = b << shift;
-    size_t leading_index = a.size() - 1;
-    
-    a = a - (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)) * shifted_b;
-    
-    a.reduce();
-  }
-  
-  return a;
+	a.reduce();
+	b.reduce();
+
+	while(a.size() >= b.size()) {
+		size_t shift = a.size() - b.size();
+		Polynomial<T> shifted_b = b << shift;
+		size_t leading_index = a.size() - 1;
+
+		a = a - (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)) * shifted_b;
+
+		a.reduce();
+	}
+
+	return a;
 }
 
 template<typename T>
 Polynomial<T> operator / (Polynomial<T> a, Polynomial<T> b) {
-  Polynomial<T> quotient;
-  a.reduce();
-  b.reduce();
-  
-  while(a.size() >= b.size()) {
-    size_t shift = a.size() - b.size();
-    Polynomial<T> shifted_b = b << shift;
-    size_t leading_index = a.size() - 1;
-    
-    quotient.setCoeff(shift, (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)));
-    a = a - (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)) * shifted_b;
-    
-    a.reduce();
-  }
-  
-  quotient.reduce();
-  return quotient;
+	Polynomial<T> quotient;
+	a.reduce();
+	b.reduce();
+
+	while(a.size() >= b.size()) {
+		size_t shift = a.size() - b.size();
+		Polynomial<T> shifted_b = b << shift;
+		size_t leading_index = a.size() - 1;
+
+		quotient.setCoeff(shift, (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)));
+		a = a - (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)) * shifted_b;
+
+		a.reduce();
+	}
+
+	quotient.reduce();
+	return quotient;
 }
 
 template<typename T>
 Polynomial<T> gcd(Polynomial<T> a, Polynomial<T> b) {
-	a = toMonic(a);
-	b = toMonic(b);
-	
+	a.toMonic();
+	b.toMonic();
+
 	while(a.size() != 0) {
 		if(a.size() > b.size())
 			swap(a, b);
-		
-		Polynomial<T> res = b - (a << (b.size() - a.size()));
-		b = a;
-		a = toMonic(res);
+
+		b -= (a << (b.size() - a.size()));
+		b.toMonic();
+		swap(a, b);
 	}
-	
+
 	return b;
 }
 
 template<typename T>
 Polynomial<T> normalFactor(const Polynomial<T>& a, const Polynomial<T>& b) {
-   return gcd(a, b);
+	return gcd(a, b);
 }
