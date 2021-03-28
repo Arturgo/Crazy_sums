@@ -33,9 +33,9 @@ static void add_relation(RelationGenerator &manager,
    assert(i_mu <= 2);
 
    Fraction<Univariate> frac =
-      (pow(phi(), i_phi)
+      (pow(theta(), i_theta)
+    * pow(phi(), i_phi)
     * pow(jordan_totient(2), i_J_2)
-    * pow(theta(), i_theta)
     * pow(sigma_k(1), i_sigma_1)
     * pow(sigma_k(2), i_sigma_2)
     * pow(sigma_k(3), i_sigma_3)
@@ -44,10 +44,10 @@ static void add_relation(RelationGenerator &manager,
 
    auto t2 = std::chrono::high_resolution_clock::now();
 
-   HFormula name = HFormulaOne();
+   HFormula name = HFormulaOne(); /* https://youtu.be/i8knduidWCw */
+   name = name_append_component(name, FormulaNode::LEAF_THETA, i_theta);
    name = name_append_component(name, FormulaNode::LEAF_JORDAN_T, 1, i_phi);
    name = name_append_component(name, FormulaNode::LEAF_JORDAN_T, 2, i_J_2);
-   name = name_append_component(name, FormulaNode::LEAF_THETA, i_theta);
    name = name_append_component(name, FormulaNode::LEAF_SIGMA, 1, i_sigma_1);
    name = name_append_component(name, FormulaNode::LEAF_SIGMA, 2, i_sigma_2);
    name = name_append_component(name, FormulaNode::LEAF_SIGMA, 3, i_sigma_3);
@@ -90,9 +90,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
       add_relation(manager, 0, 0, 0, 0, 0, 0, 0, s);
    }
 
+   for(int i_theta = 0;i_theta <= maxi_theta;i_theta++) {
    for(int i_phi = 0;i_phi <= maxi_phi;i_phi++) {
    for(int i_J_2 = 0;i_J_2 <= maxi_J_2;i_J_2++) {
-   for(int i_theta = 0;i_theta <= maxi_theta;i_theta++) {
    for(int i_sigma_1 = 0;i_sigma_1 <= maxi_sigma_1;i_sigma_1++) {
    for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
    for(int i_sigma_3 = 0;i_sigma_3 <= maxi_sigma_3;i_sigma_3++) {
@@ -110,13 +110,17 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
 
    auto t2 = std::chrono::high_resolution_clock::now();
    std::chrono::duration<float> e21 = t2 - t1;
-   cerr << "Data generated" << KGRY << " (" << e21.count() << "s)" KRST << endl;
+   cout.flush();
+   cerr << "Data generated ("<< manager.rational_fractions.size() << " fractions)"
+        << KGRY << " (" << e21.count() << "s)" KRST << endl;
 
    auto t3 = std::chrono::high_resolution_clock::now();
    manager.prepareBasis();
    auto t4 = std::chrono::high_resolution_clock::now();
    std::chrono::duration<float> e43 = t4 - t3;
-   cerr << "Basis prepared" << KGRY << " (" << e43.count() << "s)" KRST << endl;
+   cerr << "Basis prepared ("<< manager.polynomial_basis.size() << " polynomials)"
+        << KGRY << " (" << e43.count() << "s)" KRST << endl;
+
    manager.printRelations();
 
    latex_end();
