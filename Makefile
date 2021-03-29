@@ -1,7 +1,7 @@
 BIN := crazysums
 #GPROF := -pg
 OPT := -O3 -flto
-OPT := -O2
+#OPT := -O2
 
 all: build run
 

@@ -13,6 +13,7 @@ public:
 	Polynomial(MatrixRow<T> sparse_vect);
 	Polynomial(int64_t _constant);
 	size_t size() const;
+	T getCoeff_unsafe(size_t pos) const;
 	T getCoeff(size_t pos) const;
 	void setCoeff(size_t pos, T coeff);
 	void setCoeff_unsafe(size_t pos, T coeff);
@@ -77,10 +78,17 @@ inline size_t Polynomial<T>::size() const {
 }
 
 template<typename T>
+inline T Polynomial<T>::getCoeff_unsafe(size_t pos) const {
+	/* Unsafe: no size check */
+	return coeffs[pos];
+}
+
+
+template<typename T>
 inline T Polynomial<T>::getCoeff(size_t pos) const {
 	if(pos >= coeffs.size())
 		return T(0);
-	return coeffs[pos];
+	return getCoeff_unsafe(pos);
 }
 
 template<typename T>
@@ -295,16 +303,10 @@ Polynomial<T> operator / (Polynomial<T> a, Polynomial<T> b) {
  * Input condition: a.size() + shift <= this.size()
  */
 template<typename T>
-inline void Polynomial<T>::substractShiftedForGCD(const Polynomial<T>& a, size_t shift) {
+void Polynomial<T>::substractShiftedForGCD(const Polynomial<T>& a, size_t shift) {
 	T mult = leading(*this) * inverse(leading(a));
-	bool needs_mult = !(mult == T(1));
 	for(size_t iCoeff = shift;iCoeff < size();iCoeff++) {
-		/* Most of the time false, hence branching is cheaper than the multiplication */
-		if (needs_mult) {
-			setCoeff_unsafe(iCoeff, getCoeff(iCoeff) - mult*a.getCoeff(iCoeff-shift));
-		} else {
-			setCoeff_unsafe(iCoeff, getCoeff(iCoeff) - a.getCoeff(iCoeff-shift));
-		}
+		setCoeff_unsafe(iCoeff, getCoeff_unsafe(iCoeff) - mult*a.getCoeff_unsafe(iCoeff-shift));
 	}
 	reduce();
 }

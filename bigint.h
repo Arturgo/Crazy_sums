@@ -1,5 +1,4 @@
 #pragma once
-#include <boost/multiprecision/gmp.hpp>
 #include <string>
 #include <vector>
 using namespace std;
@@ -96,6 +95,7 @@ public:
 };
 
 #if 0
+#include <boost/multiprecision/gmp.hpp>
 using SomeInt = boost::multiprecision::mpz_int;
 #else
 using SomeInt = SmallInt;
@@ -118,67 +118,90 @@ string toString(const SomeInt& a) {
   return a.str();
 }
 
-
+constexpr int modulo = PRIME_MODULO;
 
 class Mod {
+public: /* TODO: Refactor inverse someday */
+    int value; /* !!! Invariant: 0 <= value < modulo !!! */
+
 public:
-  Mod(int val = 0);
-  int value;
+    Mod(int _constant) {
+        value = ((_constant % modulo) + modulo) % modulo;
+    }
+
+    bool operator == (const Mod& m) const {
+        return value == m.value;
+    }
+
+    bool operator < (const Mod& m) const {
+        return value < m.value;
+    }
+
+    void operator += (const Mod& m) {
+        int v = value + m.value;
+        if (v >= modulo) {
+            v -= modulo;
+        }
+        value = v;
+    }
+
+    void operator -= (const Mod& m) {
+        int v = modulo + value - m.value;
+        if (v >= modulo) {
+            v -= modulo;
+        }
+        value = v;
+    }
+
+    void operator *= (const Mod& m) {
+        value = (value * m.value) % modulo;
+    }
+
+    friend std::string toString(const Mod& a) {
+        if(a.value > modulo / 2)
+            return to_string(a.value - modulo);
+        return to_string(a.value);
+    }
+
+    friend std::ostream& operator << (std::ostream& out, const Mod &r) {
+        out << toString(r);
+        return out;
+    }
 };
 
-int modulo;
 vector<Mod> inverseTable;
 
-string toString(const Mod& a) {
-	if(a.value > modulo / 2)
-		return to_string(a.value - modulo);
-	return to_string(a.value);
-}
-
-Mod::Mod(int _constant) {
-	value = ((_constant % modulo) + modulo) % modulo;
-}
-
-Mod operator + (const Mod& a, const Mod& b) {
-	return Mod(a.value + b.value);
-}
-
-Mod operator * (const Mod& a, const Mod& b) {
-	return Mod(a.value * b.value);
-}
-
-Mod operator - (const Mod& a, const Mod& b) {
-	return Mod(a.value - b.value);
+void precomputeInverses() {
+    inverseTable.push_back(Mod(0));
+    for(int i = 1;i < modulo;i++) {
+        int j = 1;
+        for(;(i * j) % modulo != 1;j++);
+        inverseTable.push_back(Mod(j));
+    }
 }
 
 Mod inverse(const Mod& a) {
-	return inverseTable[a.value];
+    return inverseTable[a.value];
+}
+
+Mod operator + (const Mod& a, const Mod& b) {
+    Mod sum = a;
+    sum += b;
+    return sum;
+}
+
+Mod operator - (const Mod& a, const Mod& b) {
+    Mod sum = a;
+    sum -= b;
+    return sum;
+}
+
+Mod operator * (const Mod& a, const Mod& b) {
+    Mod sum = a;
+    sum *= b;
+    return sum;
 }
 
 Mod operator / (const Mod&a, const Mod& b) {
-	return a * inverse(b);
-}
-
-bool operator == (const Mod& a, const Mod& b) {
-	return a.value == b.value;
-}
-
-bool operator < (const Mod& a, const Mod& b) {
-   return a.value < b.value;
-}
-
-ostream& operator << (ostream& out, const Mod &r) {
-   out << toString(r);
-   return out;
-}
-
-void precomputeInverses(int PRIME) {
-    modulo = PRIME;
-
-    inverseTable.push_back(Mod(0));
-    for(int i = 1;i < PRIME;i++) {
-        int j = 1;
-        for(;(i * j) % PRIME != 1;j++);
-        inverseTable.push_back(Mod(j));
-    }
+    return a * inverse(b);
 }

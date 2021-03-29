@@ -1,3 +1,5 @@
+constexpr int PRIME_MODULO = 211;
+
 #include <fstream>
 #include <iostream>
 #include "arith_f.h"
@@ -68,7 +70,7 @@ static void add_relation(RelationGenerator &manager, Latex& latex,
 }
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
-   precomputeInverses(211);
+   precomputeInverses();
    X.setCoeff(1, 1);
    U.setCoeff(0, 1);
    Latex latex;
