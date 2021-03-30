@@ -21,7 +21,7 @@ public:
 	void reduce();
 	void operator *= (const T& a);
 	void operator -= (const Polynomial<T>& a);
-	void substractShiftedForGCD(const Polynomial<T>& a, size_t shift);
+	void substractShiftedForReduction(const Polynomial<T>& a, size_t shift);
 private:
 	vector<T> coeffs;
 };
@@ -262,17 +262,9 @@ typedef Polynomial<Mod> Univariate;
 
 template<typename T>
 Polynomial<T> operator % (Polynomial<T> a, Polynomial<T> b) {
-	a.reduce();
-	b.reduce();
-
 	while(a.size() >= b.size()) {
 		size_t shift = a.size() - b.size();
-		Polynomial<T> shifted_b = b << shift;
-		size_t leading_index = a.size() - 1;
-
-		a = a - (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)) * shifted_b;
-
-		a.reduce();
+		a.substractShiftedForReduction(b, shift);
 	}
 
 	return a;
@@ -281,18 +273,12 @@ Polynomial<T> operator % (Polynomial<T> a, Polynomial<T> b) {
 template<typename T>
 Polynomial<T> operator / (Polynomial<T> a, Polynomial<T> b) {
 	Polynomial<T> quotient;
-	a.reduce();
-	b.reduce();
 
 	while(a.size() >= b.size()) {
 		size_t shift = a.size() - b.size();
-		Polynomial<T> shifted_b = b << shift;
-		size_t leading_index = a.size() - 1;
 
-		quotient.setCoeff_unsafe(shift, (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)));
-		a = a - (a.getCoeff(leading_index) / shifted_b.getCoeff(leading_index)) * shifted_b;
-
-		a.reduce();
+		quotient.setCoeff_unsafe(shift, leading(a) / leading(b));
+		a.substractShiftedForReduction(b, shift);
 	}
 
 	quotient.reduce();
@@ -303,8 +289,8 @@ Polynomial<T> operator / (Polynomial<T> a, Polynomial<T> b) {
  * Input condition: a.size() + shift <= this.size()
  */
 template<typename T>
-void Polynomial<T>::substractShiftedForGCD(const Polynomial<T>& a, size_t shift) {
-	T mult = leading(*this) * inverse(leading(a));
+void Polynomial<T>::substractShiftedForReduction(const Polynomial<T>& a, size_t shift) {
+	T mult = leading(*this) / leading(a);
 	for(size_t iCoeff = shift;iCoeff < size();iCoeff++) {
 		setCoeff_unsafe(iCoeff, getCoeff_unsafe(iCoeff) - mult*a.getCoeff_unsafe(iCoeff-shift));
 	}
@@ -317,7 +303,7 @@ Polynomial<T> gcd(Polynomial<T> a, Polynomial<T> b) {
 		if(a.size() > b.size())
 			swap(a, b);
 
-		b.substractShiftedForGCD(a, b.size() - a.size());
+		b.substractShiftedForReduction(a, b.size() - a.size());
 		swap(a, b);
 	}
 
