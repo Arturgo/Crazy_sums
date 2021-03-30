@@ -229,17 +229,17 @@ void decomposition_worker(
 		mtx->unlock();
 
 		vector<pair<int, int>> numerator = decompose(fraction.getNumerator(), *basis);
-      vector<pair<int, int>> denominator = decompose(fraction.getDenominator(), *basis);
+		vector<pair<int, int>> denominator = decompose(fraction.getDenominator(), *basis);
 
-      vector<Rational> decomposition(basis->size(), Rational(0));
+		vector<Rational> decomposition(basis->size(), Rational(0));
 
-      for(pair<int, int> poly : numerator) {
-         decomposition[poly.first] = decomposition[poly.first] + Rational(poly.second);
-      }
+		for(pair<int, int> poly : numerator) {
+			decomposition[poly.first] = decomposition[poly.first] + Rational(poly.second);
+		}
 
-      for(pair<int, int> poly : denominator) {
-         decomposition[poly.first] = decomposition[poly.first] - Rational(poly.second);
-      }
+		for(pair<int, int> poly : denominator) {
+			decomposition[poly.first] = decomposition[poly.first] - Rational(poly.second);
+		}
 
 		mtx->lock();
 		decompositions->coeffs[id] = decomposition;
@@ -250,8 +250,6 @@ void decomposition_worker(
 void RelationGenerator::printRelations() {
    auto t1 = std::chrono::high_resolution_clock::now();
    Matrix<Rational> decompositions(rational_fractions.size(), 0);
-
-   cerr << "Factoring fractions : " << rational_fractions.size() << endl;
 
    vector<thread> threads(nbThreads);
    mutex mtx;
@@ -268,23 +266,23 @@ void RelationGenerator::printRelations() {
       thread_i.join();
    }
 
-   cerr << "Done" << endl;
-
-   auto t2 = std::chrono::high_resolution_clock::now();
    decompositions.actualizeNCols();
-
-   //Matrix<Rational> relations = row_echelon_form(kernel_basis(decompositions));
-   Matrix<Rational> rows = kernel_basis(decompositions);
-
-   auto t3 = std::chrono::high_resolution_clock::now();
+   auto t2 = std::chrono::high_resolution_clock::now();
 
    std::chrono::duration<float> e21 = t2 - t1;
-   std::chrono::duration<float> e32 = t3 - t2;
-   cerr << "Relations computed (" << e21.count() << "s+ " << e32.count() << "s). "
-        << "Size : " << rows.nbRows() << " * " << rows.nbCols() << endl;
+   cerr << "Factored " << rational_fractions.size() << " fractions "
+        << KGRY << " (" << e21.count() << "s)" KRST << endl;
+
+   auto t3 = std::chrono::high_resolution_clock::now();
+   //Matrix<Rational> relations = row_echelon_form(kernel_basis(decompositions));
+   Matrix<Rational> rows = kernel_basis(decompositions);
+   auto t4 = std::chrono::high_resolution_clock::now();
+
+   std::chrono::duration<float> e43 = t4 - t3;
+   cerr << "Relations computed. " << "Size: " << rows.nbRows() << " * " << rows.nbCols()
+        << KGRY << " (" << e43.count() << "s)" KRST << endl;
+
    cerr << "Simplifying.." << endl;
-
-
    //Matrix<Rational> relations_matrix = LLL(rows, Rational(3) / Rational(4));
    //Matrix<Rational> relations_matrix = row_echelon_form(rows);
    Matrix<Rational> relations_matrix = rows;
