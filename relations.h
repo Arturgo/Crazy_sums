@@ -75,7 +75,7 @@ vector<pair<int, int>> decompose(Univariate poly, const vector<Univariate>& basi
 }
 
 void factorisation_worker(
-	mutex* mtx,
+	std::shared_mutex* mtx,
 	deque<pair<size_t, Univariate>>* waiting_queue,
 	mutex* waiting_queue_mtx,
 	deque<atomic<Univariate*>>* basis,
@@ -117,11 +117,11 @@ void factorisation_worker(
 			}
 
 			while(true) {
-				mtx->lock();
+				mtx->lock_shared();
 				/* If we do not take the lock, the element we want to read
 				 * from `basis` might be deleted in the middle of the read */
 				Univariate element = *((*basis)[iElement]);
-				mtx->unlock();
+				mtx->unlock_shared();
 
 				Univariate pgcd = gcd(poly, element);
 
@@ -166,7 +166,7 @@ void factorisation_worker(
 
 void RelationGenerator::prepareBasis(void) {
    vector<thread> threads(nbThreads);
-   mutex mtx;
+   std::shared_mutex mtx;
 
    deque<pair<size_t, Univariate>> waiting_queue;
    mutex waiting_queue_mtx;
