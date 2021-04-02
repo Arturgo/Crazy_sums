@@ -4,10 +4,9 @@
 #include <chrono>
 #include <deque>
 #include <iostream>
-#include <mutex>
 #include <random>
-#include <thread>
 #include <shared_mutex>
+#include <thread>
 #include "berlekamp.h"
 #include "matrix.h"
 #include "polynomial.h"
@@ -60,7 +59,7 @@ vector<pair<int, int>> decompose(Univariate poly, const vector<Univariate>& basi
    vector<pair<int, int>> decomposition;
    for(size_t iFactor = 0;iFactor < basis.size();iFactor++) {
       int nb = 0;
-      while(poly.size() > 1 && poly % basis[iFactor] == Univariate(0)) {
+      while(poly.size() > 1 && isMultipleOf(poly, basis[iFactor])) {
          poly = poly / basis[iFactor];
          nb++;
       }
@@ -128,36 +127,33 @@ void factorisation_worker(
 
 				if(pgcd.size() <= 1) break;
 
-				Univariate simplified = element;
-				while(simplified % pgcd == Univariate(0)) {
-					simplified = simplified / pgcd;
-				}
-
-				mtx->lock();
-				if(element == *((*basis)[iElement])) {
-					if(pgcd.size() != element.size()) {
+				if(pgcd.size() != element.size()) {
+					mtx->lock();
+					if(element == *((*basis)[iElement])) {
 						Univariate* ptr = new Univariate();
 						*ptr = pgcd;
 
 						Univariate* oldElement = (*basis)[iElement];
 						(*basis)[iElement] = ptr;
 						delete oldElement;
-					}
 
-					if(simplified.size() > 1) {
-						waiting_queue_mtx->lock();
-						waiting_queue->push_back({iElement, simplified});
-						waiting_queue_mtx->unlock();
+						/* Strange: computing simplified is faster here than before the lock */
+						Univariate simplified = element;
+						while(isMultipleOf(simplified, pgcd)) {
+							simplified = simplified / pgcd;
+						}
+						if(simplified.size() > 1) {
+							waiting_queue_mtx->lock();
+							waiting_queue->push_back({iElement+1, simplified});
+							waiting_queue_mtx->unlock();
+						}
 					}
-
 					mtx->unlock();
-
-					while(poly % pgcd == Univariate(0))
-						poly = poly / pgcd;
-
-					continue;
 				}
-				mtx->unlock();
+
+				while(isMultipleOf(poly, pgcd)) {
+					poly = poly / pgcd;
+				}
 			}
 
 			iElement++;
@@ -184,6 +180,21 @@ void RelationGenerator::prepareBasis(void) {
          &mtx, &waiting_queue, &waiting_queue_mtx, &basis, &basis_size
       );
    }
+
+#if 0
+   /* Progress-bar */
+   size_t initial_queue_size = waiting_queue.size();
+   size_t curr_size = initial_queue_size;
+   while(curr_size > 0) {
+      waiting_queue_mtx.lock();
+      curr_size = waiting_queue.size();
+      waiting_queue_mtx.unlock();
+      cerr << "\x1b[2K\x1b[100D[" << curr_size << "/" << initial_queue_size << "]";
+      cerr.flush();
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+   }
+   cerr << endl;
+#endif
 
    for(auto& thread_i: threads) {
       thread_i.join();

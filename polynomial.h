@@ -21,6 +21,7 @@ public:
 	void reduce();
 	void operator *= (const T& a);
 	void operator -= (const Polynomial<T>& a);
+	void operator %= (const Polynomial<T>& a);
 	void substractShiftedForReduction(const Polynomial<T>& a, size_t shift);
 private:
 	vector<T> coeffs;
@@ -180,7 +181,7 @@ Polynomial<T> operator - (const Polynomial<T>& a) {
 }
 
 template<typename T>
-void Polynomial<T>::operator -= (const Polynomial<T>& a) {
+inline void Polynomial<T>::operator -= (const Polynomial<T>& a) {
 	for(int iCoeff = max<int>(size(), a.size()) - 1;iCoeff >= 0;iCoeff--) {
 		setCoeff_unsafe(iCoeff, getCoeff(iCoeff) - a.getCoeff(iCoeff));
 	}
@@ -261,13 +262,27 @@ string toString(const Polynomial<T>& poly, string variable, Args... args) {
 typedef Polynomial<Mod> Univariate;
 
 template<typename T>
-Polynomial<T> operator % (Polynomial<T> a, Polynomial<T> b) {
-	while(a.size() >= b.size()) {
-		size_t shift = a.size() - b.size();
-		a.substractShiftedForReduction(b, shift);
+inline void Polynomial<T>::operator %= (const Polynomial<T>& a) {
+	while(size() >= a.size()) {
+		size_t shift = size() - a.size();
+		substractShiftedForReduction(a, shift);
 	}
+}
 
+
+template<typename T>
+Polynomial<T> operator % (Polynomial<T> a, Polynomial<T> b) {
+	a %= b;
 	return a;
+}
+
+/*
+ * This avoid comparing to T(0), which might be slow to generate
+ */
+template<typename T>
+bool isMultipleOf(Polynomial<T> a, Polynomial<T> b) {
+	a %= b;
+	return a.size() == 0;
 }
 
 template<typename T>
@@ -289,8 +304,8 @@ Polynomial<T> operator / (Polynomial<T> a, Polynomial<T> b) {
  * Input condition: a.size() + shift <= this.size()
  */
 template<typename T>
-void Polynomial<T>::substractShiftedForReduction(const Polynomial<T>& a, size_t shift) {
-	T mult = leading(*this) / leading(a);
+inline void Polynomial<T>::substractShiftedForReduction(const Polynomial<T>& a, size_t shift) {
+	T mult = leading(*this) * inverse(leading(a)); /* FIXME: leading(*this) / leading(a)` is slower */
 	for(size_t iCoeff = shift;iCoeff < size();iCoeff++) {
 		setCoeff_unsafe(iCoeff, getCoeff_unsafe(iCoeff) - mult*a.getCoeff_unsafe(iCoeff-shift));
 	}
@@ -307,7 +322,6 @@ Polynomial<T> gcd(Polynomial<T> a, Polynomial<T> b) {
 		swap(a, b);
 	}
 
-	b.toMonic();
 	return b;
 }
 
