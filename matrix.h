@@ -426,6 +426,39 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
    return basis;
 }
 
+template<typename T>
+Matrix<T> inverse(Matrix<T> mat) {
+   Matrix<T> id = identity<T>(mat.nbRows());
+   assert(mat.nbRows() == mat.nbCols());
+   for(size_t coord = 0;coord < mat.nbCols();coord++) {
+      size_t non_zero = coord;
+      for(size_t iRow = coord;iRow < mat.nbRows();iRow++) {
+         if(!(mat.coeffs[iRow].getCoeff(coord) == T(0))) {
+            non_zero = iRow;
+         }
+      }
+
+      swap(mat.coeffs[coord], mat.coeffs[non_zero]);
+      swap(id.coeffs[coord], id.coeffs[non_zero]);
+
+      if(mat.coeffs[coord].getCoeff(coord) == T(0)) {
+      	assert (false);
+      }
+
+      id.coeffs[coord] = (T(1) / mat.coeffs[coord].getCoeff(coord)) * id.coeffs[coord];
+      mat.coeffs[coord] = (T(1) / mat.coeffs[coord].getCoeff(coord)) * mat.coeffs[coord];
+
+      for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
+         if(iRow == coord) continue;
+         if(!(mat.coeffs[iRow].getCoeff(coord) == T(0))) {
+            id.coeffs[iRow] = id.coeffs[iRow] - mat.coeffs[iRow].getCoeff(coord) * id.coeffs[coord];
+            mat.coeffs[iRow] = mat.coeffs[iRow] - mat.coeffs[iRow].getCoeff(coord) * mat.coeffs[coord];
+         }
+      }
+   }
+   return id;
+}
+
 #if 0 /* UNUSED BUT SHOULD KEEP */
 
 template<typename T>

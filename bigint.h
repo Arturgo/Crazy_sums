@@ -196,6 +196,11 @@ Mod operator - (const Mod& a, const Mod& b) {
     return sum;
 }
 
+Mod operator - (const Mod& a) {
+    Mod sum = 0 - a;
+    return sum;
+}
+
 Mod operator * (const Mod& a, const Mod& b) {
     Mod sum = a;
     sum *= b;
