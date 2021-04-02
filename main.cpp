@@ -73,6 +73,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    precomputeInverses();
    X.setCoeff(1, 1);
    U.setCoeff(0, 1);
+   x = Fraction<Univariate>(X);
+   u = Fraction<Univariate>(U);
+   z = Fraction<Univariate>(Z);
    Latex latex;
 
    int maxi_phi = 2;
