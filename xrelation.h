@@ -235,7 +235,7 @@ public:
                 out << "\\textcolor{DarkGreen}{\\texttt{[" << known_formula << "]}}";
             } else {
                 std::ostringstream ss;
-                out << KGRN << "[" << known_formula << "]" KRST;
+                out << KGRN << "[" << std::left << std::setw(4) << known_formula << "]" KRST;
             }
         } else {
             if (is_simple) {
@@ -384,7 +384,33 @@ private:
         return true; /* O RLY? */
     }
 
-    bool try_instantiate(const HFormula h_rel, const HFormula h_form, SymbolicInstantiation& instantiation, int debug) const {
+    bool try_instantiate_product(const vector<HFormula>& v_rel, const vector<HFormula>& v_form,
+                                 SymbolicInstantiation& instantiation, int debug) const {
+            if((v_rel.size() == 0) && (v_form.size() == 0)) {
+                return true; /* Nothing (a.k.a everything) matches */
+            }
+            if (debug>=0) { cerr << string(debug, ' ') << __func__ << " TP " << v_rel.size() << " wrt " << v_form.size() << endl; }
+            for(size_t i=0; i<v_rel.size(); i++) {
+                for(size_t j=0; j<v_form.size(); j++) {
+                    SymbolicInstantiation new_instantiation = instantiation;
+                    bool good = try_instantiate(v_rel[i], v_form[j], new_instantiation, iincr(debug));
+                    if (good) {
+                        vector<HFormula> new_v_rel = v_rel;
+                        new_v_rel.erase(new_v_rel.begin() + i);
+                        vector<HFormula> new_v_form = v_form;
+                        new_v_form.erase(new_v_form.begin() + j);
+                        good = try_instantiate_product(new_v_rel, new_v_form, new_instantiation, iincr(debug));
+                        if (good) {
+                            instantiation = new_instantiation;
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+    }
+
+    bool try_instantiate(const HFormula& h_rel, const HFormula& h_form, SymbolicInstantiation& instantiation, int debug) const {
         if (debug>=0) { cerr << string(debug, ' ') << __func__ << " TX " << h_rel << " wrt " << h_form << endl; }
 
         const FormulaNode* rel = h_rel.get();
@@ -427,7 +453,34 @@ private:
             if ((rel->getProductSize() == 1) && (form->getProductSize() == 1)) {
                 return try_instantiate(rel->getProductElem(0), form->getProductElem(0), instantiation, iincr(debug));
             }
-            return false; //TODO: try all combinations...
+            /* Try all combinations... is there a better way? */
+            vector<HFormula> rel_product, form_product;
+            for (size_t idx=0; idx<rel->getProductSize(); idx++) {
+                HFormula formula = rel->getProductElem(idx);
+                size_t n_times = 1;
+                if (formula.get()->isPower()) {
+                    n_times = formula.get()->getPower();
+                    formula = formula.get()->getPowerInner();
+                }
+                for (size_t times=0; times<n_times; times++) {
+                    rel_product.push_back(formula);
+                }
+            }
+            for (size_t idx=0; idx<form->getProductSize(); idx++) {
+                HFormula formula = form->getProductElem(idx);
+                size_t n_times = 1;
+                if (formula.get()->isPower()) {
+                    n_times = formula.get()->getPower();
+                    formula = formula.get()->getPowerInner();
+                }
+                for (size_t times=0; times<n_times; times++) {
+                    form_product.push_back(formula);
+                }
+            }
+            if(rel_product.size() != form_product.size()) {
+                return false; /* Since we flatten the product, it should have the same size */
+            }
+            return try_instantiate_product(rel_product, form_product, instantiation, iincr(debug));
         } else if (rel->isZeta() && form->isZeta()) {
             return try_instantiate(rel->getZetaExponent(), form->getZetaExponentS(), instantiation, iincr(debug));
         } else if (rel->isLFuncNonZeta() && form->isLFuncNonZeta()) {
@@ -446,7 +499,7 @@ private:
         return false; /* We could not do it. This does not mean this is not doable */
     }
 
-    bool try_instantiate(const Element& rel, const Element& form, SymbolicInstantiation& instantiation, int debug) const {
+    bool try_instantiate_e(Element rel, const Element& form, SymbolicInstantiation& instantiation, Rational& rel_power, int debug) const {
         if (debug>=0) {
             cerr << string(debug, ' ') << __func__ << " TI ";
             print_element(cerr, false, rel, false);
@@ -454,11 +507,24 @@ private:
             print_element(cerr, false, form, false);
             cerr << endl;
         }
-        if (rel.second != form.second) {
+        if (rel.second == form.second) {
+            /* OK */
+        } else if (is_positive(rel.second) && is_positive(form.second) && (rel.second > form.second)) {
+            /* We might have ζ(4)^2 w.r.t ζ(a)ζ(b), so me must match partial powers on 'rel' side. */
+            rel.second = form.second;
+        } else if (!is_positive(rel.second) && !is_positive(form.second) && (rel.second < form.second)) {
+            /* Same as above but for negative powers */
+            rel.second = form.second;
+        } else {
             if (debug>=0) { cerr << string(debug, ' ') << __func__ << KBLD " TI DIFF-PWR" KRST << endl; }
             return false; /* Not the same relation power... maybe we will need to do better here someday */
         }
-        return try_instantiate(rel.first, form.first, instantiation, iincr(debug));
+
+        bool good = try_instantiate(rel.first, form.first, instantiation, iincr(debug));
+        if (good) {
+            rel_power = rel.second;
+        }
+        return good;
     }
 
     bool is_instance_of(SymbolicInstantiation& instantiation, int debug) const {
@@ -476,8 +542,14 @@ private:
         for (auto rel_elem: instantiation.relation_elements) {
             for (auto form_elem: instantiation.formula_elements) {
                 SymbolicInstantiation new_instantiation = instantiation;
-                if (try_instantiate(*rel_elem, *form_elem, new_instantiation, iincr(debug))) {
+                Rational rel_power;
+                if (try_instantiate_e(*rel_elem, *form_elem, new_instantiation, rel_power, iincr(debug))) {
+                    Element new_rel_elem = *rel_elem;
                     new_instantiation.relation_elements.erase(rel_elem);
+                    if (rel_power != rel_elem->second) {
+                        new_rel_elem.second = new_rel_elem.second - rel_power;
+                        new_instantiation.relation_elements.insert(&new_rel_elem);
+                    }
                     new_instantiation.formula_elements.erase(form_elem);
                     if (is_instance_of(new_instantiation, iincr(debug))) {
                         instantiation = new_instantiation;
@@ -491,7 +563,7 @@ private:
     }
 
     bool is_instance_of(RelationSummary::instance_early_bailout early_bailout, const RelationSummary& summary,
-                        const Relation &formula, SymbolicInstantiation::assignment* assignment, int debug) {
+                        const Relation& formula, SymbolicInstantiation::assignment* assignment, int debug) {
         if (debug>=0) cerr << string(debug, ' ') << __func__ << " IIO " << *this << " wrt "<< formula << endl;
         if (formula.elements.size() < elements.size()) {
             return false;
@@ -503,7 +575,7 @@ private:
         bool good = is_instance_of(instantiation, iincr(debug));
         if (good && (assignment != NULL)) {
 #if 0
-            cerr << KRED << "Assignement:";
+            cerr << KRED << "Assignment:";
             for (auto it = instantiation.variables.begin(); it != instantiation.variables.end(); it++) {
                 cerr << " " << it->first << ':' << it->second << " ";
             }
@@ -517,7 +589,7 @@ private:
     typedef bool(Relation::*relation_classifier)(const RelationSummary&, string&);
 
     bool check_D2(const RelationSummary& summary, string& out_name) {
-        std::string name = "D-2 ";
+        std::string name = "D-2";
         vector<pair<HFormula, Rational>> vect{
             {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(FormulaNode::LEAF_MU)), FormulaNode::Symbolic("s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(1)},
@@ -530,7 +602,7 @@ private:
     }
 
     bool check_D4_D6(const RelationSummary& summary, string& out_name) {
-        std::string name = "D-6 ";
+        std::string name = "D-6";
         vector<pair<HFormula, Rational>> vect{
             {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
                 FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("1*k"), .l = 0})), FormulaNode::Symbolic("s")), Rational(1)},
@@ -546,7 +618,7 @@ private:
         }
         out_name = name;
         if (assignment["k"] == 1) {
-            out_name = "D-4 ";
+            out_name = "D-4";
         }
         return good;
     }
@@ -568,7 +640,7 @@ private:
     bool check_D18(const RelationSummary& summary, string& out_name) {
         std::string name = "D-18";
         vector<pair<HFormula, Rational>> vect{
-            {HFormulaLFunction(HFormulaProduct(HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_THETA), 1)), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(FormulaNode::LEAF_THETA)), FormulaNode::Symbolic("s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("1*s")), Rational(-2)},
         };
@@ -596,163 +668,29 @@ private:
         }
         out_name = name;
         if (assignment["k"] == 1) {
-            out_name = "D-5 ";
+            out_name = "D-5";
         }
         return good;
     }
 
-    bool check_D58(string& out_name) {
-        bool debug = false;
-        if (debug) cerr << __func__ << " A" << endl;
-        int Lsigma_exponent = 0;
-        int sigmaA_k = 0;
-        int sigmaB_k = 0;
-        vector<int> zeta_numbers_down;
-        int zeta_number_up = 0;
-
-        for(auto element: elements) {
-            if (debug) cerr << __func__ << " L" << endl;
-            const FormulaNode* name = element.first.get();
-            Rational power = element.second;
-            if (name->isZeta()) {
-                int number = name->getZetaExponent();
-                if (!is_integer(power)) {
-                    if (debug) cerr << __func__ << " B" << endl;
-                    return false;
-                }
-                if (is_positive(power)) {
-                    if (zeta_number_up != 0) {
-                        if (debug) cerr << __func__ << " C" << endl;
-                        return false;
-                    }
-                    zeta_number_up = number;
-                    if (debug) cerr << __func__ << " zeta_number_up " << zeta_number_up << endl;
-                }
-                for (SomeInt i=0; i<-power.getNumerator(); i++) {
-                    if (zeta_numbers_down.size() < 4) {
-                        zeta_numbers_down.push_back(number);
-                        if (debug) cerr << __func__ << " zeta_number_down[] " << number << endl;
-                    } else {
-                        if (debug) cerr << __func__ << " D" << endl;
-                        return false;
-                    }
-                }
-            } else {
-                if (sigmaA_k != 0) {
-                    if (debug) cerr << __func__ << " E" << endl;
-                    return false;
-                }
-                if (power != Rational(1)) {
-                    if (debug) cerr << __func__ << " F" << endl;
-                    return false;
-                }
-                const FormulaNode* infunc = name->getLFuncProduct().get();
-                if (infunc->getProductSize() == 1) {
-                    const FormulaNode* inner = infunc->getProductElem(0).get();
-                    if (!inner->isSigma()) {
-                        if (debug) cerr << __func__ << " G" << endl;
-                        return false;
-                    } else if (inner->getPower() != 2) {
-                        if (debug) cerr << __func__ << " H" << endl;
-                        return false;
-                    } else {
-                        assert(sigmaA_k == 0);
-                        assert(Lsigma_exponent == 0);
-                        Lsigma_exponent = name->getLFuncExponent();
-                        sigmaA_k = inner->getSigmaK();
-                        sigmaB_k = inner->getSigmaK();
-                    }
-                } else if (infunc->getProductSize() == 2) {
-                    for (size_t idx=0; idx<2; idx++) {
-                        const FormulaNode* inner = infunc->getProductElem(idx).get();
-                        if (!inner->isSigma()) {
-                            if (debug) cerr << __func__ << " I" << endl;
-                            return false;
-                        } else if (inner->getPower() != 1) {
-                            if (debug) cerr << __func__ << " J" << endl;
-                            return false;
-                        } else {
-                            if (sigmaA_k == 0) {
-                                Lsigma_exponent = name->getLFuncExponent();
-                                sigmaA_k = inner->getSigmaK();
-                            } else {
-                                assert(sigmaB_k == 0);
-                                if(Lsigma_exponent != name->getLFuncExponent()) {
-                                    if (debug) cerr << __func__ << " K" << endl;
-                                    return false;
-                                }
-                                sigmaB_k = inner->getSigmaK();
-                            }
-                        }
-                    }
-                } else {
-                    if (debug) cerr << __func__ << " L" << endl;
-                    return false;
-                }
-            }
-        }
-
-        if ((Lsigma_exponent == 0) || (sigmaA_k == 0) || (sigmaB_k == 0)) {
-            if (debug) cerr << __func__ << " M" << endl;
-            return false;
-        }
-        if (!(
-              ((zeta_numbers_down.size() == 3) && (zeta_number_up == 0))
-              ||
-              ((zeta_numbers_down.size() == 4) && (zeta_number_up != 0))
-              )) {
-            if (debug) cerr << __func__ << " N" << endl;
-            return false;
-        }
-        std::sort(zeta_numbers_down.begin(), zeta_numbers_down.end());
-
-        if (debug) cerr << __func__ << " Z " << Lsigma_exponent << " " << sigmaA_k << " " << sigmaB_k << endl;
-
-        /* Tandem, the final mathemagical check */
-        int a = sigmaA_k;
-        int b = sigmaB_k;
-        int s = Lsigma_exponent;
-        vector<int> to_find_down { s, s-a, s-b, s-a-b };
-        std::sort(to_find_down.begin(), to_find_down.end());
-        int to_find_up = 2*s-a-b;
-
-        if (to_find_up < 0) {
-            if (debug) cerr << __func__ << " P" << endl;
-            return false;
-        }
-        for(auto n: to_find_down) {
-            if (n < 0) {
-                if (debug) cerr << __func__ << " Q" << endl;
-                return false;
-            }
-        }
-        for (size_t idx=0; idx<to_find_down.size(); idx++) {
-            if (to_find_down[idx] == to_find_up) {
-                to_find_down.erase(to_find_down.begin() + idx);
-                to_find_up = 0;
-                break;
-            }
-        }
-
-        if (to_find_up != zeta_number_up) {
-            if (debug) cerr << __func__ << " R" << endl;
-            return false;
-        }
-
-        if (to_find_down.size() != zeta_numbers_down.size()) {
-            if (debug) cerr << __func__ << " S" << endl;
-            return false;
-        }
-        for (size_t idx=0; idx<to_find_down.size(); idx++) {
-            if (to_find_down[idx] != zeta_numbers_down[idx]) {
-                if (debug) cerr << __func__ << " T" << endl;
-                return false;
-            }
-        }
-
-        /* Incredible */
-        out_name = "D-58";
-        return true;
+    bool check_D58(const RelationSummary& summary, string& out_name) {
+        std::string name = "D-58";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("1*a"), .l = 0}),
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("1*b"), .l = 0})
+                ), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("1*s")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("1*s+-1*a")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("1*s+-1*b")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("1*s+-1*a+-1*b")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-1*a+-1*b")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
     }
 
 
@@ -792,23 +730,15 @@ public:
 
             /* ... */
 
-            /* Check for D-58: TODO: handled separately below */
+            &Relation::check_D58,
             /* D-59 and later we won't find */
         };
 
-        const RelationSummary dummy; //TODO
+        const RelationSummary dummy; (void)zeta; (void)nb; //TODO
         for (auto classifier: classifiers) {
             std::string found_formula;
             if ((this->*classifier)(dummy, found_formula)) {
                 known_formula = found_formula;
-                known = true;
-                return;
-            }
-        }
-
-        if (zeta + 1 == nb) {
-            /* Check for D-58 */
-            if (check_D58(known_formula)) {
                 known = true;
                 return;
             }

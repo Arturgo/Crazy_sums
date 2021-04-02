@@ -115,6 +115,16 @@ bool is_positive(const Fraction<T>& a) {
 }
 
 template<typename T>
+bool operator < (const Fraction<T>& a, const Fraction<T>& b) {
+  return is_positive(b - a);
+}
+
+template<typename T>
+bool operator > (const Fraction<T>& a, const Fraction<T>& b) {
+  return b < a;
+}
+
+template<typename T>
 bool is_integer(const Fraction<T>& a) {
   return a.getDenominator() == T(1);
 }
