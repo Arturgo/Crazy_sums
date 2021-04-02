@@ -113,7 +113,8 @@ public:
         }
     };
 
-    enum LeafType { LEAF_MU, LEAF_SIGMA, LEAF_THETA, LEAF_JORDAN_T, LEAF_UNKNOWN };
+    enum LeafType { LEAF_MU, LEAF_SIGMA, LEAF_THETA,
+                    LEAF_JORDAN_T, LEAF_LIOUVILLE, LEAF_NBDIVISORS, LEAF_UNKNOWN };
     typedef struct LeafExtraArg {
         MaybeSymbolic k;
         MaybeSymbolic l;
@@ -134,6 +135,9 @@ protected:
             case LEAF_THETA:
                 ret = (latex ? "\\theta{}" : "θ");
                 break;
+            case LEAF_LIOUVILLE:
+                ret = (latex ? "\\lambda{}" : "λ");
+                break;
             case LEAF_MU:
                 ret = (latex ? "\\mu{}" : "µ");
                 break;
@@ -147,6 +151,9 @@ protected:
                         ret += "_" + std::to_string(value);
                     }
                 }
+                break;
+            case LEAF_NBDIVISORS:
+                ret = (latex ? "\\tau{}" : "τ");
                 break;
             case LEAF_JORDAN_T:
                 if (leaf_extra.k.is_symbolic()) {
@@ -382,28 +389,8 @@ public:
         return leaf_type == other->leaf_type;
     }
 
-    bool isTheta() const {
-        return isLeafOfType(LEAF_THETA);
-    }
-
     bool isMu() const {
         return isLeafOfType(LEAF_MU);
-    }
-
-    bool isJordanT() const {
-        return isLeafOfType(LEAF_JORDAN_T);
-    }
-
-    int getJordanTK() const {
-        return getLeafK(LEAF_JORDAN_T);
-    }
-
-    bool isSigma() const {
-        return isLeafOfType(LEAF_SIGMA);
-    }
-
-    int getSigmaK() const {
-        return getLeafK(LEAF_SIGMA);
     }
 
     int getLeafK_dangerous() const {
@@ -451,7 +438,7 @@ class NodeLeaf : public HFormula::Node
 {
 public:
     NodeLeaf(LeafType type) {
-        assert(type==LEAF_MU || type==LEAF_THETA);
+        assert(type==LEAF_MU || type==LEAF_THETA || type==LEAF_LIOUVILLE || type==LEAF_NBDIVISORS);
         formula_type = FORM_LEAF;
         leaf_type = type;
         leaf_extra = (Node::LeafExtraArg){.k = 0, .l = 0}; /* Force init to zero, helps comparison */
