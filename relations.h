@@ -7,6 +7,7 @@
 #include <mutex>
 #include <random>
 #include <thread>
+#include <shared_mutex>
 #include "berlekamp.h"
 #include "matrix.h"
 #include "polynomial.h"
