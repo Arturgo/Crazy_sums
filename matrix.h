@@ -298,7 +298,7 @@ Matrix<T>::Matrix(size_t nbRows, size_t nbCols, size_t value) {
 template<typename T>
 Matrix<T>::Matrix(vector<vector<T>> _coeffs) {
    for (auto& row : _coeffs) {
-      coeffs.push_back(MatrixRow<T>(_coeffs));
+      coeffs.push_back(MatrixRow<T>(row));
    }
    actualizeNCols();
 }
@@ -347,13 +347,13 @@ Matrix<T> operator * (const T& a, const Matrix<T>& b) {
 
 template<typename T>
 Matrix<T> operator * (const Matrix<T>& a, const Matrix<T>& b) {
-   Matrix<T> res(b.nbRows(), b.nbCols());
+   Matrix<T> res(a.nbRows(), b.nbCols());
    
    for (size_t iRow = 0; iRow < a.nbRows(); iRow++) {
       for (size_t iCol = 0; iCol < b.nbCols(); iCol++) {
          T total = 0;
-         for (auto& coordA: a.coeffs[iRow]) {
-            total += coordA.second * b.coeffs[coordA.first].getCoeff(iCol);
+         for (auto& coordA: a.coeffs[iRow].coeffs) {
+            total = total + coordA.second * b.coeffs[coordA.first].getCoeff(iCol);
          }
          res.coeffs[iRow].setCoeff(iCol, total);
       }
@@ -413,7 +413,7 @@ Matrix<T> magic_op(const Matrix<T>& a, const Matrix<T>& b) {
    }
 
    result.coeffs[0] = result.coeffs[0] + result.coeffs[a.nbRows()];
-
+   return result;
 }
 
 template<typename T>
