@@ -335,6 +335,17 @@ Matrix<T> transpose(Matrix<T> mat) {
 }
 
 template<typename T>
+Matrix<T> tensor(Matrix<T> a, Matrix<T> b) {
+   Matrix<T> res(a.nbRows() * b.nbRows(), a.nbCols() * b.nbCols());
+   for (size_t aRow = 0; aRow < a.nbRows(); aRow++) {
+      for (size_t bRow = 0; bRow < b.nbRows(); bRow++) {
+         res.coeffs[a * b.nbRows() + bRow] = tensor(a.coeffs[aRow], b.coeffs[bRow], b.nbCols());
+      }
+   }
+   return res;
+}
+
+template<typename T>
 void debug(const Matrix<T>& mat) {
    for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
       cout << ((iRow == 0) ? "[" : " ") << "[ ";
