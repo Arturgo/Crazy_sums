@@ -91,8 +91,10 @@ template<typename T>
 MatrixRow<T> tensor(const MatrixRow<T>& a, const MatrixRow<T>& b, size_t n) {
    vector<pair<size_t, T>> result;
    for (auto& coeffA: a.coeffs) {
-      for (auto& coeffB: b.coeffs) {
-         result.push_back(make_pair(coeffA.first * n + coeffB.first, coeffA.second * coeffB.second));
+      if (!(coeffA.second == T(0))) {
+         for (auto& coeffB: b.coeffs) {
+            result.push_back(make_pair(coeffA.first * n + coeffB.first, coeffA.second * coeffB.second));
+         }
       }
    }
    return MatrixRow<T>(result);
@@ -133,6 +135,15 @@ MatrixRow<T> operator * (const T& a, const MatrixRow<T>& b) {
    vector<pair<size_t, T>> result;
    for (auto& coord : b.coeffs) {
       result.push_back(make_pair(coord.first, a * coord.second));
+   }
+   return MatrixRow<T>(result);
+}
+
+template<typename T>
+MatrixRow<T> operator << (const MatrixRow<T>& b, const size_t a) {
+   vector<pair<size_t, T>> result;
+   for (auto& coord : b.coeffs) {
+      result.push_back(make_pair(coord.first + a, coord.second));
    }
    return MatrixRow<T>(result);
 }
@@ -368,6 +379,25 @@ void debug(const Matrix<T>& mat) {
       }
       cout << "]" << ((iRow+1 == mat.nbRows()) ? "]" : "") << endl;
    }
+}
+
+template<typename T>
+Matrix<T> magic_op(const Matrix<T>& a, const Matrix<T>& b) {
+   Matrix<T> result(a.nbRows() + b.nbRows(), a.nbCols() + b.nbCols());
+   for (size_t iRow = 0; iRow < a.nbRows(); iRow++) {
+      result.coeffs[iRow] = a.coeffs[iRow];
+   }
+
+   for (size_t iRow = 0; iRow < b.nbRows(); iRow++) {
+      result.coeffs[iRow + a.nbRows()] = b.coeffs[iRow] << a.nbCols();
+   }
+
+   for (size_t iRow = 0; iRow < a.nbRows(); iRow++) {
+      result.coeffs[iRow].setCoeff(a.nbCols(), -a.coeffs[iRow].getCoeff(0));
+   }
+
+   result.coeffs[0] = result.coeffs[0] + result.coeffs[a.nbRows()];
+
 }
 
 template<typename T>
