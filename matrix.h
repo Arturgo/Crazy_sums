@@ -88,6 +88,17 @@ T MatrixRow<T>::getCoeff(size_t num_col) const {
 }
 
 template<typename T>
+MatrixRow<T> tensor(const MatrixRow<T>& a, const MatrixRow<T>& b, size_t n) {
+   vector<pair<size_t, T>> result;
+   for (auto& coeffA: a.coeffs) {
+      for (auto& coeffB: b.coeffs) {
+         result.push_back(make_pair(coeffA.first * n + coeffB.first, coeffA.second * coeffB.second));
+      }
+   }
+   return MatrixRow<T>(result);
+}
+
+template<typename T>
 size_t MatrixRow<T>::size() const {
    return coeffs.size();
 }
