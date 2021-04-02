@@ -126,10 +126,10 @@ protected:
     LeafExtraArg leaf_extra;
     MaybeSymbolic power = MaybeSymbolic(0);
     MaybeSymbolic exponent = MaybeSymbolic(0);
-    vector<HFormula> sub_formula;
+    std::vector<HFormula> sub_formula;
 
-    string textify(LeafType in, bool latex) const {
-        string ret;
+    std::string textify(LeafType in, bool latex) const {
+        std::string ret;
         switch(in) {
             case LEAF_THETA:
                 ret = (latex ? "\\theta{}" : "θ");
@@ -265,7 +265,7 @@ public:
         }
         print_inside(out, latex);
         if (latex) {
-            out << "$" << endl << endl;
+            out << "$" << std::endl << std::endl;
         }
         out.flush(); /* Better for debug purposes */
         return out;
@@ -426,7 +426,7 @@ public:
         return leaf_extra.l;
     }
 
-    vector<HFormula> getSubFormula() const {
+    std::vector<HFormula> getSubFormula() const {
         return sub_formula;
     }
 };
@@ -589,21 +589,21 @@ public:
     Latex() {
         fs::create_directory("tex");
         stream.open ("tex/logs.tex", std::ofstream::out);
-        stream << "\\documentclass{minimal}" << endl;
-        stream << "\\usepackage[utf8]{inputenc}" << endl;
-        stream << "\\usepackage{amssymb}" << endl;
-        stream << "\\usepackage{mathtools}" << endl;
-        stream << "\\DeclarePairedDelimiter\\abs{\\lvert}{\\rvert}%" << endl;
-        stream << "\\makeatletter" << endl;
-        stream << "\\let\\oldabs\\abs" << endl;
-        stream << "\\def\\abs{\\@ifstar{\\oldabs}{\\oldabs*}}" << endl;
-        stream << "%" << endl;
-        stream << "\\usepackage[svgnames]{xcolor}" << endl;
-        stream << "\\begin{document}" << endl;
+        stream << "\\documentclass{minimal}" << std::endl;
+        stream << "\\usepackage[utf8]{inputenc}" << std::endl;
+        stream << "\\usepackage{amssymb}" << std::endl;
+        stream << "\\usepackage{mathtools}" << std::endl;
+        stream << "\\DeclarePairedDelimiter\\abs{\\lvert}{\\rvert}%" << std::endl;
+        stream << "\\makeatletter" << std::endl;
+        stream << "\\let\\oldabs\\abs" << std::endl;
+        stream << "\\def\\abs{\\@ifstar{\\oldabs}{\\oldabs*}}" << std::endl;
+        stream << "%" << std::endl;
+        stream << "\\usepackage[svgnames]{xcolor}" << std::endl;
+        stream << "\\begin{document}" << std::endl;
     }
 
     ~Latex() {
-        stream << "\\end{document}" << endl;
+        stream << "\\end{document}" << std::endl;
         stream.close();
     }
 };

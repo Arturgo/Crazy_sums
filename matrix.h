@@ -1,6 +1,7 @@
 #pragma once
-#include <vector>
 #include <iomanip>
+#include <vector>
+#include "print.h"
 using namespace std;
 
 // We work with row vectors
@@ -17,7 +18,6 @@ public:
    size_t size() const;
    size_t max_index() const;
    T getCoeff(size_t num_col) const;
-
 };
 
 template<typename T>

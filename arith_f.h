@@ -1,98 +1,101 @@
 #pragma once
 #include <cassert>
-#include <iostream>
-#include "polynomial.h"
 #include "matrix.h"
+#include "polynomial.h"
 using namespace std;
 
 Univariate X, U, Z;
 Fraction<Univariate> x, u, z;
 
+typedef Matrix<Fraction<Univariate>> FArithMatrix;
+
 struct FArith {
-	Matrix<Fraction<Univariate>> A;
-	Matrix<Fraction<Univariate>> u;
-	
-	Fraction<Univariate> get_fraction() {
-		return (inverse(identity<Fraction<Univariate>>(A.nbRows()) - A) * u).coeffs[0].getCoeff(0);
-	}
+    FArithMatrix A;
+    FArithMatrix u;
+
+    Fraction<Univariate> get_fraction() {
+        return (inverse(identity<Fraction<Univariate>>(A.nbRows()) - A) * u).coeffs[0].getCoeff(0);
+    }
 };
 
 FArith operator * (const FArith &a, const FArith &b) {
-    return {tensor(a.A, b.A), tensor(a.u, b.u)};
+    return {.A = tensor(a.A, b.A), .u = tensor(a.u, b.u)};
 }
 
 FArith operator ^ (const FArith &a, const FArith &b) {
-	auto tensAId = tensor(a.A, identity<Fraction<Univariate>>(b.A.nbRows()));
-	auto tensIdB = tensor(identity<Fraction<Univariate>>(a.A.nbRows()), b.A);
-	Matrix<Fraction<Univariate>> cross_mat = tensAId - tensIdB;
-	
-	Matrix<Fraction<Univariate>> v = tensor(a.u, b.u);
-	v = inverse(cross_mat) * v;
+    FArithMatrix tensAId = tensor(a.A, identity<Fraction<Univariate>>(b.A.nbRows()));
+    FArithMatrix tensIdB = tensor(identity<Fraction<Univariate>>(a.A.nbRows()), b.A);
+    FArithMatrix cross_mat = tensAId - tensIdB;
 
-	auto va = tensAId * v;
-	auto vb = -u * tensIdB * v;
-	
-	auto matrix = magic_op(
-		tensAId, 
-		tensIdB
-	);
-	
-	auto vfinal = va;
-	
-	for(auto& row : vb.coeffs) {
-		vfinal.coeffs.push_back(row);
-	}
-	
-	vfinal.coeffs[0].setCoeff(0, vfinal.coeffs[0].getCoeff(0) + vb.coeffs[0].getCoeff(0));
-	
-   return {matrix, vfinal};
+    FArithMatrix v = tensor(a.u, b.u);
+    v = inverse(cross_mat) * v;
+
+    FArithMatrix va = tensAId * v;
+    FArithMatrix vb = -u * tensIdB * v;
+
+    FArithMatrix matrix = magic_op(tensAId, tensIdB);
+
+    FArithMatrix vfinal = va;
+
+    for(auto& row : vb.coeffs) {
+        vfinal.coeffs.push_back(row);
+    }
+
+    vfinal.coeffs[0].setCoeff(0, vfinal.coeffs[0].getCoeff(0) + vb.coeffs[0].getCoeff(0));
+
+    return {.A = matrix, .u = vfinal};
 }
 
-/* Génération de quelques fonctions classiques */
+/* Generate some usual function */
 
 FArith id() {
-	return {Matrix<Fraction<Univariate>>({
-			{x}
-		}),
-		Matrix<Fraction<Univariate>>({
-			{u}
-		})
-	};
+    return {
+        .A = FArithMatrix({
+            {x}
+        }),
+        .u = FArithMatrix({
+            {u}
+        })
+    };
 }
 
 FArith inv_id() {
-	return {Matrix<Fraction<Univariate>>({
-			{u / x}
-		}),
-		Matrix<Fraction<Univariate>>({
-			{u}
-		})
-	};
+    return {
+        .A = FArithMatrix({
+            {u / x}
+        }),
+        .u = FArithMatrix({
+            {u}
+        })
+    };
 }
 
 FArith mobius() {
-    return {Matrix<Fraction<Univariate>>({
-			{z, u},
-			{z, z}
-		}),
-		Matrix<Fraction<Univariate>>({
-			{u},
-			{-u}
-		})
-	};
+    return {
+        .A = FArithMatrix({
+            {z, u},
+            {z, z}
+        }),
+        .u = FArithMatrix({
+            {u},
+            {-u}
+        })
+    };
 }
 
 FArith one() {
-    return {Matrix<Fraction<Univariate>>({
-			{u}
-		}),
-		Matrix<Fraction<Univariate>>({
-			{u}
-		})
-	};
+    return {
+        .A = FArithMatrix({
+            {u}
+        }),
+        .u = FArithMatrix({
+            {u}
+        })
+    };
 }
 
 FArith pow(const FArith &a, size_t exp) {
+    /* Exponentiation by squaring */
     if (exp <= 0) {
         return one();
     }
