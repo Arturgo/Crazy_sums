@@ -149,9 +149,9 @@ MatrixRow<T> operator + (const MatrixRow<T>& a, const MatrixRow<T>& b) {
          result.push_back(b.coeffs[c_b++]);
       } else {
          size_t id = a.coeffs[c_a].first;
-         T result = a.coeff[c_a++].second + b.coeff[c_b++].second;
-         if (!(result == T(0))) {
-            result.push_back(make_pair(id, result));
+         T added = a.coeffs[c_a++].second + b.coeffs[c_b++].second;
+         if (!(added == T(0))) {
+            result.push_back(make_pair(id, added));
          }
       }
    }
@@ -317,11 +317,23 @@ Matrix<T> operator - (const Matrix<T>& a, const Matrix<T>& b) {
    Matrix<T> res(a.nbRows(), a.nbCols());
    
    for(size_t iRow = 0;iRow < a.nbRows();iRow++) {
-      res.coeffs[iRow] = a.coeffs[iRow] + b.coeffs[iRow];
+      res.coeffs[iRow] = a.coeffs[iRow] - b.coeffs[iRow];
    }
    
    return res;
 }
+
+template<typename T>
+Matrix<T> operator * (const T& a, const Matrix<T>& b) {
+   Matrix<T> res(b.nbRows(), b.nbCols());
+   
+   for(size_t iRow = 0;iRow < b.nbRows();iRow++) {
+      res.coeffs[iRow] = a * b.coeffs[iRow];
+   }
+   
+   return res;
+}
+
 
 template<typename T>
 Matrix<T> transpose(Matrix<T> mat) {
@@ -339,7 +351,7 @@ Matrix<T> tensor(Matrix<T> a, Matrix<T> b) {
    Matrix<T> res(a.nbRows() * b.nbRows(), a.nbCols() * b.nbCols());
    for (size_t aRow = 0; aRow < a.nbRows(); aRow++) {
       for (size_t bRow = 0; bRow < b.nbRows(); bRow++) {
-         res.coeffs[a * b.nbRows() + bRow] = tensor(a.coeffs[aRow], b.coeffs[bRow], b.nbCols());
+         res.coeffs[aRow * b.nbRows() + bRow] = tensor(a.coeffs[aRow], b.coeffs[bRow], b.nbCols());
       }
    }
    return res;
