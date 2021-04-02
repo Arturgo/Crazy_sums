@@ -345,6 +345,22 @@ Matrix<T> operator * (const T& a, const Matrix<T>& b) {
    return res;
 }
 
+template<typename T>
+Matrix<T> operator * (const Matrix<T>& a, const Matrix<T>& b) {
+   Matrix<T> res(b.nbRows(), b.nbCols());
+   
+   for (size_t iRow = 0; iRow < a.nbRows(); iRow++) {
+      for (size_t iCol = 0; iCol < b.nbCols(); iCol++) {
+         T total = 0;
+         for (auto& coordA: a.coeffs[iRow]) {
+            total += coordA.second * b.coeffs[coordA.first].getCoeff(iCol);
+         }
+         res.coeffs[iRow].setCoeff(iCol, total);
+      }
+   }
+   
+   return res;
+}
 
 template<typename T>
 Matrix<T> transpose(Matrix<T> mat) {
