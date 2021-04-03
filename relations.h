@@ -40,7 +40,6 @@ public:
       char* nbThreads_string = getenv("NB_THREADS");
 
       nbThreads = std::thread::hardware_concurrency();
-      nbThreads = 1; /* Temporary, default to 1 until we fix concurrency issues */
       if(nbThreads_string != NULL) {
          nbThreads = stoi(string(nbThreads_string));
       }
@@ -127,7 +126,9 @@ void factorisation_worker(
 
 				if(pgcd.size() <= 1) break;
 
+				bool simplify_poly = true;
 				if(pgcd.size() != element.size()) {
+					simplify_poly = false;
 					mtx->lock();
 					if(element == *((*basis)[iElement])) {
 						Univariate* ptr = new Univariate();
@@ -147,12 +148,15 @@ void factorisation_worker(
 							waiting_queue->push_back({iElement+1, simplified});
 							waiting_queue_mtx->unlock();
 						}
+						simplify_poly = true;
 					}
 					mtx->unlock();
 				}
 
-				while(isMultipleOf(poly, pgcd)) {
-					poly = poly / pgcd;
+				if (simplify_poly) {
+					while(isMultipleOf(poly, pgcd)) {
+						poly = poly / pgcd;
+					}
 				}
 			}
 
