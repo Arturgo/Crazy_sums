@@ -82,15 +82,15 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    z = Fraction<Univariate>(Z);
    Latex latex;
 
-   int maxi_lambda = 0;
-   int maxi_tau = 0;
-   int maxi_phi = 2;
-   int maxi_J_2 = 0;
+   int maxi_lambda = 1;
+   int maxi_tau = 1;
    int maxi_theta = 0;
+   int maxi_phi = 1;
+   int maxi_J_2 = 0;
    int maxi_sigma_1 = 2;
    int maxi_sigma_2 = 1;
    int maxi_sigma_3 = 1;
-   int maxi_mu = 2;
+   int maxi_mu = 0;
    int maxi_sum = 8;
 
    auto t1 = std::chrono::high_resolution_clock::now();
@@ -112,7 +112,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    for(int i_mu = 0;i_mu <= maxi_mu;i_mu++) {
       int sum = 0*i_lambda + 1*i_tau + 0*i_theta + i_phi + 2*i_J_2
                 + i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 0*i_mu;
-      if ((i_J_2 > 0) && (i_mu > 0)) {
+      if ((i_phi > 0) && (i_sigma_1 > 0) && (i_mu > 0)) {
          continue; /* Avoid generating C-8: J_2µ == φσµ */
       }
       for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum);s++) {
