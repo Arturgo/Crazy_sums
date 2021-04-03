@@ -290,7 +290,8 @@ public:
                 out << "\\textcolor{DarkGreen}{\\texttt{[" << known_formula << "]}}";
             } else {
                 std::ostringstream ss;
-                out << KGRN << "[" << std::left << std::setw(4) << known_formula << "]" KRST;
+                std::string color = (known_formula[0] == 'C') ? KCYN : KGRN;
+                out << color << "[" << std::left << std::setw(4) << known_formula << "]" KRST;
             }
         } else {
             if (is_simple) {
@@ -338,6 +339,9 @@ public:
             return known > other.known;
         }
         if (known && (known_formula != other.known_formula)) {
+            if (known_formula[0] != other.known_formula[0]) {
+                return known_formula[0] > other.known_formula[0]; /* Hack */
+            }
             return nat_cmp(known_formula, other.known_formula);
         }
         std::ostringstream ss, other_ss;
@@ -407,7 +411,7 @@ private:
                 sum += times * (it->second);
             } else {
                 if (uninstanticated_var_cnt > 0) {
-                    /* TODO: we cannot instantiate more than one, bail out for now */
+                    /* We cannot instantiate more than one, bail out for now. Do better someday? */
                     if (debug>=0) { cerr << string(debug, ' ') << __func__ << " I " KGRY "TMV" KRST << endl; }
                     return false;
                 }
@@ -572,7 +576,7 @@ private:
             rel.second = form.second;
         } else {
             if (debug>=0) { cerr << string(debug, ' ') << __func__ << KBLD " TI DIFF-PWR" KRST << endl; }
-            return false; /* Not the same relation power... maybe we will need to do better here someday */
+            return false;
         }
 
         bool good = try_instantiate(rel.first, form.first, instantiation, iincr(debug));
@@ -737,7 +741,7 @@ private:
     bool check_D21(const RelationSummary& summary, string& out_name) {
         std::string name = "D-21";
         vector<pair<HFormula, Rational>> vect{
-            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(FormulaNode::LEAF_LIOUVILLE), HFormulaLeaf(FormulaNode::LEAF_THETA) ),
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(FormulaNode::LEAF_LIOUVILLE), HFormulaLeaf(FormulaNode::LEAF_THETA)),
                                FormulaNode::Symbolic("s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(2)},
@@ -880,8 +884,8 @@ private:
         std::string name = "D-58";
         vector<pair<HFormula, Rational>> vect{
             {HFormulaLFunction(HFormulaProduct(
-                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("1*a"), .l = 0}),
-                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("1*b"), .l = 0})
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("a"), .l = 0}),
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("b"), .l = 0})
                 ), FormulaNode::Symbolic("s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(-1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-1*a")), Rational(-1)},
@@ -896,10 +900,69 @@ private:
         return good;
     }
 
+    bool check_C17(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-17";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(FormulaNode::LEAF_LIOUVILLE), HFormulaLeaf(FormulaNode::LEAF_NBDIVISORS)),
+                               FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(2)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
+    bool check_C18(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-18";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_NBDIVISORS),
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})
+                ), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-1*k")), Rational(-2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(-2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-1*k")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
+    bool check_C19(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-19";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_LIOUVILLE),
+                HFormulaLeaf(FormulaNode::LEAF_NBDIVISORS),
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})
+                ), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-2*k")), Rational(-2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-1*k")), Rational(2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-1*k")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
 
 public:
     void classify() {
         vector<relation_classifier> classifiers{
+            /*
+             * D formulae,
+             * from Gould, H. W., & Shonhiwa, T. (2008). A catalog of interesting Dirichlet series.
+             * Missouri Journal of Mathematical Sciences, 20(1), 2-18.
+             */
+
             /* D-1 we won't find */
             &Relation::check_D2,
             &Relation::check_D3,
@@ -947,6 +1010,13 @@ public:
             /* D-56 & D-57 we won't find */
             &Relation::check_D58,
             /* D-59 and later we won't find */
+
+            /*
+             * C formulae, found with CrazySums
+             */
+            &Relation::check_C17,
+            &Relation::check_C18,
+            &Relation::check_C19,
         };
 
         const RelationSummary summary(elements);
