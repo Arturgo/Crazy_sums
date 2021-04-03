@@ -549,6 +549,17 @@ public:
             add_subformula(right);
         }
     }
+
+    NodeProduct(const HFormula& a, const HFormula& b, const HFormula& c) {
+        if (a.get()->isOne() && b.get()->isOne() && c.get()->isOne()) {
+            formula_type = FORM_ONE;
+        } else {
+            formula_type = FORM_PRODUCT;
+            add_subformula(a);
+            add_subformula(b);
+            add_subformula(c);
+        }
+    }
 };
 
 class HFormulaProduct : public HFormula
@@ -560,6 +571,10 @@ public:
 
     HFormulaProduct(const HFormula& left, const HFormula& right) {
         formula = std::make_shared<const Node>(NodeProduct(left, right));
+    }
+
+    HFormulaProduct(const HFormula& a, const HFormula& b, const HFormula& c) {
+        formula = std::make_shared<const Node>(NodeProduct(a, b, c));
     }
 };
 
