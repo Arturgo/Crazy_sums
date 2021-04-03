@@ -287,7 +287,8 @@ public:
 
         if (known) {
             if (latex) {
-                out << "\\textcolor{DarkGreen}{\\texttt{[" << known_formula << "]}}";
+                std::string color = (known_formula[0] == 'C') ? "DeepSkyBlue" : "DarkGreen";
+                out << "\\textcolor{" << color << "}{\\texttt{[" << known_formula << "]}}";
             } else {
                 std::ostringstream ss;
                 std::string color = (known_formula[0] == 'C') ? KCYN : KGRN;
@@ -967,6 +968,42 @@ private:
         return good;
     }
 
+    bool check_C1(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-1";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0}),
+                HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_MU), 2)
+                ), FormulaNode::Symbolic("2*s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("3*s")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
+    bool check_C11(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-11";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_JORDAN_T, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0}),
+                HFormulaLeaf(FormulaNode::LEAF_MU)
+                ), FormulaNode::Symbolic("2*s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("3*s")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("6*s")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
     bool check_C17(const RelationSummary& summary, string& out_name) {
         std::string name = "C-17";
         vector<pair<HFormula, Rational>> vect{
@@ -1081,6 +1118,8 @@ public:
             /*
              * C formulae, found with CrazySums
              */
+            &Relation::check_C1,
+            &Relation::check_C11,
             &Relation::check_C17,
             &Relation::check_C18,
             &Relation::check_C19,
