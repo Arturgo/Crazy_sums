@@ -393,6 +393,26 @@ public:
         return isLeafOfType(LEAF_MU);
     }
 
+    bool isSigma() const {
+        return isLeafOfType(LEAF_SIGMA);
+    }
+
+    bool isTheta() const {
+        return isLeafOfType(LEAF_THETA);
+    }
+
+    bool isJordanT() const {
+        return isLeafOfType(LEAF_JORDAN_T);
+    }
+
+    bool isLiouville() const {
+        return isLeafOfType(LEAF_LIOUVILLE);
+    }
+
+    bool isNbDivisors() const {
+        return isLeafOfType(LEAF_NBDIVISORS);
+    }
+
     int getLeafK_dangerous() const {
         assert(isLeaf());
         return leaf_extra.k.extract_value();

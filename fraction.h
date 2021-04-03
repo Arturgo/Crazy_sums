@@ -9,6 +9,7 @@ public:
   Fraction(int64_t _constant = 0);
   T getNumerator() const;
   T getDenominator() const;
+  void operator += (const Fraction<T>& a);
 private:
   T numerator, denominator;
 };
@@ -43,6 +44,12 @@ T Fraction<T>::getNumerator() const {
 template<typename T>
 T Fraction<T>::getDenominator() const {
   return denominator;
+}
+
+template<typename T>
+void Fraction<T>::operator += (const Fraction<T>& a) {
+  numerator = this->getNumerator() * a.getDenominator() + this->getDenominator() * a.getNumerator();
+  denominator = this->getDenominator() * a.getDenominator();
 }
 
 template<typename T>
@@ -112,6 +119,11 @@ template<typename T>
 bool is_positive(const Fraction<T>& a) {
   assert(a.getDenominator() > T(0));
   return a.getNumerator() > T(0);
+}
+
+template<typename T>
+Fraction<T> abs(const Fraction<T>& a) {
+  return is_positive(a) ? a : -a;
 }
 
 template<typename T>

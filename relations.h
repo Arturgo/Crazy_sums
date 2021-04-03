@@ -282,7 +282,7 @@ void RelationGenerator::printRelations() {
    auto t2 = std::chrono::high_resolution_clock::now();
 
    std::chrono::duration<float> e21 = t2 - t1;
-   cerr << "Factored " << rational_fractions.size() << " fractions "
+   cerr << "Factored " << rational_fractions.size() << " fractions"
         << KGRY << " (" << e21.count() << "s)" KRST << endl;
 
    auto t3 = std::chrono::high_resolution_clock::now();
@@ -305,10 +305,23 @@ void RelationGenerator::printRelations() {
       relations.push_back(Relation(relation_row.coeffs, names));
    }
 
+   auto t5 = std::chrono::high_resolution_clock::now();
    for(auto& relation: relations) {
        relation.classify();
    }
    std::sort(relations.begin(), relations.end());
+   auto t6 = std::chrono::high_resolution_clock::now();
+
+   std::chrono::duration<float> e65 = t6 - t5;
+   cerr << "Classified " << relations.size() << " relations"
+        << KGRY << " (" << e65.count() << "s)" KRST << endl;
+    #if DEBUG_TIME_CLASSIFY
+    size_t debug_idx = 0;
+    for (const auto& duration: relation_time_classify_debug) {
+        cerr << "RTCD " << debug_idx++ << " : " << duration.count() << "s" << endl;
+    }
+    #endif /* DEBUG_TIME_CLASSIFY */
+
 
    for(auto& relation: relations) {
        cout << relation << endl;
