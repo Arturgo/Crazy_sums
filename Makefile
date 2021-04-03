@@ -10,7 +10,7 @@ build: $(BIN)
 -include $(BIN).d
 
 $(BIN): main.cpp Makefile
-	g++ -o "$@" $< -Wall -Wextra -std=c++17 $(OPT) -march=native -lgmp -lpthread -lstdc++fs -MMD -g \
+	g++ -o "$@" $< -Wall -Wextra -std=c++17 $(OPT) -march=native -lpthread -lstdc++fs -MMD -g \
 	    ${EXTRA} $(GPROF) -DHAS_COLOR \
 
 run:

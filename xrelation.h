@@ -374,22 +374,15 @@ private:
         return tokens;
     }
 
-    int iincr(int debug) const {
-        if (debug >= 0) {
-            return debug+1;
-        }
-        return debug;
-    }
-
-    bool try_instantiate(SomeInt value, FormulaNode::MaybeSymbolic maybe_symbolic,
-                         SymbolicInstantiation& instantiation, int debug) const {
-        if (debug>=0) { cerr << string(debug, ' ') << __func__ << " I " << value << " wrt " << maybe_symbolic << endl; }
-        if (!maybe_symbolic.is_symbolic()) {
-            return value == maybe_symbolic.extract_value();
-        }
-        FormulaNode::Symbolic symbolic = maybe_symbolic.extract_symbol();
+    bool instantiate_eval_helper(FormulaNode::Symbolic symbolic,
+                                 const SymbolicInstantiation& instantiation,
+                                 SomeInt* out_sum,
+                                 unsigned int* out_uninstanticated_var_cnt,
+                                 string* out_uninstanticated_var_name,
+                                 SomeInt* out_uninstanticated_var_times,
+                                 int debug) const {
         vector<string> n_symbols = instantiate_split_helper(symbolic.str, "+");
-        int uninstanticated_var_cnt = 0;
+        unsigned int uninstanticated_var_cnt = 0;
         string uninstanticated_var_name;
         SomeInt uninstanticated_var_times = 0;
         SomeInt sum = 0;
@@ -419,6 +412,61 @@ private:
                 uninstanticated_var_times = times;
                 uninstanticated_var_cnt++;
             }
+        }
+
+        if (out_sum != NULL) {
+            *out_sum = sum;
+        }
+        if (out_uninstanticated_var_cnt != NULL) {
+            *out_uninstanticated_var_cnt = uninstanticated_var_cnt;
+        }
+        if (out_uninstanticated_var_name != NULL) {
+            *out_uninstanticated_var_name = uninstanticated_var_name;
+        }
+        if (out_uninstanticated_var_times != NULL) {
+            *out_uninstanticated_var_times = uninstanticated_var_times;
+        }
+        return true;
+    }
+
+
+    int iincr(int debug) const {
+        if (debug >= 0) {
+            return debug+1;
+        }
+        return debug;
+    }
+
+    bool try_instantiate(FormulaNode::MaybeSymbolic should_be_value, FormulaNode::MaybeSymbolic maybe_symbolic,
+                         SymbolicInstantiation& instantiation, int debug) const {
+        if (debug>=0) { cerr << string(debug, ' ') << __func__ << " I " << should_be_value << " wrt " << maybe_symbolic << endl; }
+        SomeInt value;
+        if (should_be_value.is_symbolic()) {
+            /* We only accept values on the left side. Fully-instantiated symbolic is OK. */
+            FormulaNode::Symbolic symbolic = should_be_value.extract_symbol();
+            unsigned int uninstanticated_var_cnt = 0;
+            SomeInt sum = 0;
+            bool good = instantiate_eval_helper(symbolic, instantiation, &sum, &uninstanticated_var_cnt,
+                                                NULL, NULL, iincr(debug));
+            if (!good || (uninstanticated_var_cnt > 0)) {
+                return false;
+            }
+            value = sum;
+        } else {
+            value = should_be_value.extract_value();
+        }
+        if (!maybe_symbolic.is_symbolic()) {
+            return value == maybe_symbolic.extract_value();
+        }
+        FormulaNode::Symbolic symbolic = maybe_symbolic.extract_symbol();
+        unsigned int uninstanticated_var_cnt = 0;
+        string uninstanticated_var_name;
+        SomeInt uninstanticated_var_times = 0;
+        SomeInt sum = 0;
+        bool good = instantiate_eval_helper(symbolic, instantiation, &sum, &uninstanticated_var_cnt,
+                                            &uninstanticated_var_name, &uninstanticated_var_times, iincr(debug));
+        if (!good) {
+            return false;
         }
         if (uninstanticated_var_cnt > 0) {
             assert(uninstanticated_var_cnt == 1);
@@ -480,9 +528,9 @@ private:
                 return false;
             }
             SymbolicInstantiation new_instantiation = instantiation;
-            bool good = try_instantiate(rel->getLeafK_dangerous(), form->getLeafKS_dangerous(), new_instantiation, iincr(debug));
+            bool good = try_instantiate(rel->getLeafKS_dangerous(), form->getLeafKS_dangerous(), new_instantiation, iincr(debug));
             if (good) {
-                good = try_instantiate(rel->getLeafL_dangerous(), form->getLeafLS_dangerous(), new_instantiation, iincr(debug));
+                good = try_instantiate(rel->getLeafLS_dangerous(), form->getLeafLS_dangerous(), new_instantiation, iincr(debug));
                 if (good) {
                     instantiation = new_instantiation;
                 }
@@ -541,10 +589,10 @@ private:
             }
             return try_instantiate_product(rel_product, form_product, instantiation, iincr(debug));
         } else if (rel->isZeta() && form->isZeta()) {
-            return try_instantiate(rel->getZetaExponent(), form->getZetaExponentS(), instantiation, iincr(debug));
+            return try_instantiate(rel->getZetaExponentS(), form->getZetaExponentS(), instantiation, iincr(debug));
         } else if (rel->isLFuncNonZeta() && form->isLFuncNonZeta()) {
             SymbolicInstantiation new_instantiation = instantiation;
-            bool good = try_instantiate(rel->getLFuncExponent(), form->getLFuncExponentS(), new_instantiation, iincr(debug));
+            bool good = try_instantiate(rel->getLFuncExponentS(), form->getLFuncExponentS(), new_instantiation, iincr(debug));
             if (good) {
                 good = try_instantiate(rel->getLFuncProduct(), form->getLFuncProduct(), new_instantiation, iincr(debug));
                 if (good) {
@@ -593,7 +641,26 @@ private:
                 return true; /* YA RLY! */
             } else {
                 /* It matches if every variable has been instantiated and the remaining product equals 1 */
-                return false; //TODO: handle me!
+                std::vector<Element> up, down;
+                for (const Element* element: instantiation.formula_elements) {
+                    if (is_positive(element->second)) {
+                        up.push_back(*element);
+                    } else {
+                        Element new_elem = *element;
+                        new_elem.second = -new_elem.second;
+                        down.push_back(new_elem);
+                    }
+                }
+                if ((up.size() == 0) || (down.size() == 0)) {
+                    return false;
+                }
+                SymbolicInstantiation new_instantiation = SymbolicInstantiation(up, down);
+                new_instantiation.variables = instantiation.variables;
+                if (is_instance_of(new_instantiation, iincr(debug))) {
+                    /* Check if no new variable was introduced, i.e. there was no non-instantiated variable */
+                    return new_instantiation.variables.size() == instantiation.variables.size();
+                }
+                return false;
             }
         }
         assert(instantiation.formula_elements.size() > 0);
