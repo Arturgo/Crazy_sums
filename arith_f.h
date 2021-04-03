@@ -125,3 +125,26 @@ FArith theta() {
     return pow(mobius(), 2) ^ one();
 }
 
+FArith nb_divisors() {
+    return {
+        .A = FArithMatrix({
+            {u, u},
+            {z, u},
+        }),
+        .u = FArithMatrix({
+            {u},
+            {u},
+        })
+    };
+}
+
+FArith liouville() {
+    return {
+        .A = FArithMatrix({
+            {-u}
+        }),
+        .u = FArithMatrix({
+            {-u}
+        })
+    };
+}

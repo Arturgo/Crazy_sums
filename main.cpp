@@ -25,17 +25,19 @@ static HFormula name_make_lfunc(const HFormula& name, int exponent)
 }
 
 static void add_relation(RelationGenerator &manager, Latex& latex,
-                         int i_phi, int i_J_2,
-                         int i_sigma_1, int i_sigma_2, int i_sigma_3,
-                         int i_mu, int i_theta,
+                         int i_lambda, int i_tau, int i_theta, int i_phi, int i_J_2,
+                         int i_sigma_1, int i_sigma_2, int i_sigma_3, int i_mu,
                          int s)
 {
    auto t1 = std::chrono::high_resolution_clock::now();
 
    assert(i_mu <= 2);
+   assert(i_lambda <= 1);
 
    Fraction<Univariate> frac =
-      (pow(theta(), i_theta)
+     (pow(liouville(), i_lambda)
+    * pow(nb_divisors(), i_tau)
+    * pow(theta(), i_theta)
     * pow(phi(), i_phi)
     * pow(jordan_totient(2), i_J_2)
     * pow(sigma_k(1), i_sigma_1)
@@ -47,6 +49,8 @@ static void add_relation(RelationGenerator &manager, Latex& latex,
    auto t2 = std::chrono::high_resolution_clock::now();
 
    HFormula name = HFormulaOne(); /* https://youtu.be/i8knduidWCw */
+   name = name_append_component(name, FormulaNode::LEAF_LIOUVILLE, i_lambda);
+   name = name_append_component(name, FormulaNode::LEAF_NBDIVISORS, i_tau);
    name = name_append_component(name, FormulaNode::LEAF_THETA, i_theta);
    name = name_append_component(name, FormulaNode::LEAF_JORDAN_T, 1, i_phi);
    name = name_append_component(name, FormulaNode::LEAF_JORDAN_T, 2, i_J_2);
@@ -78,6 +82,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    z = Fraction<Univariate>(Z);
    Latex latex;
 
+   int maxi_lambda = 0;
+   int maxi_tau = 0;
    int maxi_phi = 2;
    int maxi_J_2 = 0;
    int maxi_theta = 0;
@@ -92,9 +98,11 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    RelationGenerator manager(&latex);
 
    for(int s = 2;s <= 2+maxi_sum*3;s++) {
-      add_relation(manager, latex, 0, 0, 0, 0, 0, 0, 0, s);
+      add_relation(manager, latex, 0, 0, 0, 0, 0, 0, 0, 0, 0, s);
    }
 
+   for(int i_lambda = 0;i_lambda <= maxi_lambda;i_lambda++) {
+   for(int i_tau = 0;i_tau <= maxi_tau;i_tau++) {
    for(int i_theta = 0;i_theta <= maxi_theta;i_theta++) {
    for(int i_phi = 0;i_phi <= maxi_phi;i_phi++) {
    for(int i_J_2 = 0;i_J_2 <= maxi_J_2;i_J_2++) {
@@ -102,16 +110,18 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
    for(int i_sigma_3 = 0;i_sigma_3 <= maxi_sigma_3;i_sigma_3++) {
    for(int i_mu = 0;i_mu <= maxi_mu;i_mu++) {
-      int sum = i_phi + 2*i_J_2 + 0*i_theta + i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 0*i_mu;
+      int sum = 0*i_lambda + 1*i_tau + 0*i_theta + i_phi + 2*i_J_2
+                + i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 0*i_mu;
       if ((i_J_2 > 0) && (i_mu > 0)) {
          continue; /* Avoid generating C-8: J_2µ == φσµ */
       }
       for(int s = sum + 2;s <= sum + 2 + max(0, maxi_sum);s++) {
-         if(i_phi+i_J_2+i_theta+i_sigma_1+i_sigma_2+i_sigma_3+i_mu > 0) {
-            add_relation(manager, latex, i_phi, i_J_2, i_sigma_1, i_sigma_2, i_sigma_3, i_mu, i_theta , s);
+         if(i_lambda+i_tau+i_theta+i_phi+i_J_2+i_sigma_1+i_sigma_2+i_sigma_3+i_mu > 0) {
+            add_relation(manager, latex, i_lambda, i_tau, i_theta, i_phi, i_J_2,
+                         i_sigma_1, i_sigma_2, i_sigma_3, i_mu, s);
          }
       }
-   }}}}}}}
+   }}}}}}}}}
 
    auto t2 = std::chrono::high_resolution_clock::now();
    std::chrono::duration<float> e21 = t2 - t1;
