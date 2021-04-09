@@ -16,10 +16,81 @@ struct FArith {
     Fraction<Univariate> get_fraction() {
         return (inverse(identity<Fraction<Univariate>>(A.nbRows()) - A) * u).coeffs[0].getCoeff(0);
     }
+    
+    void remove_row(size_t row) {
+    	FArithMatrix nA(A.coeffs.size() - 1, A.coeffs.size() - 1);
+		FArithMatrix nu(A.coeffs.size() - 1, 1);
+		
+		size_t nRow = 0;
+		for(size_t iRow = 0;iRow < A.coeffs.size();iRow++) {
+			if(iRow == row)
+				continue;
+				
+			nu.coeffs[nRow].setCoeff(0, u.coeffs[iRow].getCoeff(0));
+			
+			size_t nCol = 0;
+			for(size_t iCol = 0;iCol < A.coeffs.size();iCol++) {
+				if(iCol == row)
+					continue;
+				
+				nA.coeffs[nRow].setCoeff(nCol, A.coeffs[iRow].getCoeff(iCol));
+				
+				nCol++;
+			}
+			nRow++;
+		}
+		
+		A = nA;
+		u = nu;
+    }
+    
+    void simplify() {
+    	for(size_t iCol = 1;iCol < A.nbCols();iCol++) {
+    		bool is_zero = true;
+    		
+    		for(size_t iRow = 0;is_zero && iRow < A.nbRows();iRow++) {
+    			if(iRow != iCol && A.coeffs[iRow].getCoeff(iCol).getNumerator().size() != 0) {
+    				is_zero = false;
+    			}
+    		}
+    		
+    		if(is_zero) {
+    			remove_row(iCol);
+    			simplify();
+    			return;
+    		}
+    	}
+    
+    	FArithMatrix new_mat = transpose(A);
+    	new_mat.coeffs.push_back(transpose(u).coeffs[0]);
+    	new_mat = transpose(new_mat);
+    	
+    	FArithMatrix basis = kernel_basis(new_mat);
+    	
+    	if(basis.nbRows() == 0)
+			return;
+    	
+		size_t row = basis.coeffs[0].coeffs[0].first;
+		
+		Fraction<Univariate> bCoeff = basis.coeffs[0].getCoeff(A.nbCols());
+		basis.coeffs[0].setCoeff(A.nbCols(), 0);
+		
+		for(size_t iRow = 0;iRow < A.nbRows();iRow++) {
+			if(iRow != row) {
+				u.coeffs[iRow].setCoeff(0, u.coeffs[iRow].getCoeff(0) - A.coeffs[iRow].getCoeff(row) / basis.coeffs[0].getCoeff(row) * bCoeff);
+				
+				A.coeffs[iRow] = A.coeffs[iRow] - A.coeffs[iRow].getCoeff(row) / basis.coeffs[0].getCoeff(row) * basis.coeffs[0];
+			}
+		}
+	
+    	simplify();
+    }
 };
 
 FArith operator * (const FArith &a, const FArith &b) {
-    return {.A = tensor(a.A, b.A), .u = tensor(a.u, b.u)};
+	FArith res = {.A = tensor(a.A, b.A), .u = tensor(a.u, b.u)};
+	res.simplify();
+    return res;
 }
 
 FArith operator ^ (const FArith &a, const FArith &b) {
@@ -42,8 +113,10 @@ FArith operator ^ (const FArith &a, const FArith &b) {
     }
 
     vfinal.coeffs[0].setCoeff(0, vfinal.coeffs[0].getCoeff(0) + vb.coeffs[0].getCoeff(0));
-
-    return {.A = matrix, .u = vfinal};
+	
+	FArith res = {.A = matrix, .u = vfinal};
+	res.simplify();
+    return res;
 }
 
 /* Generate some usual function */
