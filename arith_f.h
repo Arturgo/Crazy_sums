@@ -7,6 +7,8 @@ using namespace std;
 Univariate X, U, Z;
 Fraction<Univariate> x, u, z;
 
+std::chrono::duration<float> v1, v2;
+
 typedef Matrix<Fraction<Univariate>> FArithMatrix;
 
 struct FArith {
@@ -14,7 +16,20 @@ struct FArith {
     FArithMatrix u;
 
     Fraction<Univariate> get_fraction() {
-        return (inverse(identity<Fraction<Univariate>>(A.nbRows()) - A) * u).coeffs[0].getCoeff(0);
+    	auto t2 = std::chrono::high_resolution_clock::now();
+   		
+   		auto mat = inverse(identity<Fraction<Univariate>>(A.nbRows()) - A);
+   		
+   		auto t1 = std::chrono::high_resolution_clock::now();
+   		
+   		auto res = (mat * u).coeffs[0].getCoeff(0);
+   		
+   		auto t0 = std::chrono::high_resolution_clock::now();
+   		
+   		v1 += t1 - t2;
+   		v2 += t0 - t1;
+   		
+        return res;
     }
     
     void remove_row(size_t row) {
@@ -44,7 +59,7 @@ struct FArith {
 		u = nu;
     }
     
-    void simplify() {
+    void simplify() {    	
     	for(size_t iCol = 1;iCol < A.nbCols();iCol++) {
     		bool is_zero = true;
     		
@@ -143,17 +158,22 @@ FArith inv_id() {
     };
 }
 
+FArith mobius_k(size_t k) {
+	FArith res = {
+		.A = FArithMatrix(k + 1, k + 1),
+		.u = FArithMatrix(k + 1, 1)
+	};
+	
+	for(size_t i = 0;i < k;i++) {
+		res.u.coeffs[i].setCoeff(0, u);
+		res.A.coeffs[i].setCoeff(i + 1, u);
+	}
+	res.u.coeffs[k].setCoeff(0, -u);
+	return res;
+}
+
 FArith mobius() {
-    return {
-        .A = FArithMatrix({
-            {z, u},
-            {z, z}
-        }),
-        .u = FArithMatrix({
-            {u},
-            {-u}
-        })
-    };
+    return mobius_k(1);
 }
 
 FArith one() {
