@@ -12,6 +12,8 @@ public:
   void operator += (const Fraction<T>& a);
 private:
   T numerator, denominator;
+
+  Fraction<T> inverse_in_place(Fraction<T>& a);
 };
 
 template<typename T>
@@ -96,6 +98,13 @@ Fraction<T> inverse(const Fraction<T>& a) {
 template<typename T>
 Fraction<T> operator / (const Fraction<T>& a, const Fraction<T>& b) {
   return a * inverse(b);
+}
+
+template<typename T>
+Fraction<T> inverse_in_place(Fraction<T>& a) {
+  T c = a.getDenominator();
+  a.denominator = a.getNumerator();
+  a.numerator = c;
 }
 
 template<typename T>

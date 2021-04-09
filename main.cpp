@@ -83,7 +83,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    Latex latex;
 
    int maxi_lambda = 1;
-   int maxi_tau = 1;
+   int maxi_tau = 2;
    int maxi_theta = 0;
    int maxi_phi = 1;
    int maxi_J_2 = 0;

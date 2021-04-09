@@ -54,8 +54,8 @@ void RelationGenerator::addFraction(HFormula& name, Fraction<Univariate> frac) {
    polynomials.push_back(frac.getDenominator());
 }
 
-vector<pair<int, int>> decompose(Univariate poly, const vector<Univariate>& basis) {
-   vector<pair<int, int>> decomposition;
+vector<pair<size_t, Rational>> decompose(Univariate poly, const vector<Univariate>& basis) {
+   vector<pair<size_t, Rational>> decomposition;
    for(size_t iFactor = 0;iFactor < basis.size();iFactor++) {
       int nb = 0;
       while(poly.size() > 1 && isMultipleOf(poly, basis[iFactor])) {
@@ -244,10 +244,11 @@ void decomposition_worker(
 
 		mtx->unlock();
 
-		vector<pair<int, int>> numerator = decompose(fraction.getNumerator(), *basis);
-		vector<pair<int, int>> denominator = decompose(fraction.getDenominator(), *basis);
+		MatrixRow<Rational> numerator = decompose(fraction.getNumerator(), *basis);
+		MatrixRow<Rational> denominator = decompose(fraction.getDenominator(), *basis);
 
-		vector<Rational> decomposition(basis->size(), Rational(0));
+      MatrixRow<Rational> decomposition = numerator - denominator;
+		/*vector<Rational> decomposition(basis->size(), Rational(0));
 
 		for(pair<int, int> poly : numerator) {
 			decomposition[poly.first] = decomposition[poly.first] + Rational(poly.second);
@@ -255,7 +256,7 @@ void decomposition_worker(
 
 		for(pair<int, int> poly : denominator) {
 			decomposition[poly.first] = decomposition[poly.first] - Rational(poly.second);
-		}
+		}*/
 
 		mtx->lock();
 		decompositions->coeffs[id] = decomposition;
@@ -313,12 +314,15 @@ void RelationGenerator::printRelations() {
    for(auto& relation: relations) {
        relation.classify();
    }
+   auto t5b = std::chrono::high_resolution_clock::now();
+
    std::sort(relations.begin(), relations.end());
    auto t6 = std::chrono::high_resolution_clock::now();
 
    std::chrono::duration<float> e65 = t6 - t5;
+   std::chrono::duration<float> e65b = t6 - t5b;
    cerr << "Classified " << relations.size() << " relations"
-        << KGRY << " (" << e65.count() << "s)" KRST << endl;
+        << KGRY << " (" << e65.count() << "s)" KRST << " (" << e65b.count() << "s)" << endl;
     #if DEBUG_TIME_CLASSIFY
     size_t debug_idx = 0;
     for (const auto& duration: relation_time_classify_debug) {

@@ -15,9 +15,17 @@ public:
 
    void setCoeff(size_t num_col, T value);
 
+
    size_t size() const;
    size_t max_index() const;
    T getCoeff(size_t num_col) const;
+
+   void operator *= (const T& a) {
+      for (size_t index = 0; index < coeffs.size(); index++) {
+         coeffs[index].second = a * coeffs[index].second;
+      }
+   }
+
 };
 
 template<typename T>
@@ -440,8 +448,8 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
       	continue;
       }
       
-      id.coeffs[rowStart] = (T(1) / mat.coeffs[rowStart].getCoeff(iCol)) * id.coeffs[rowStart];
-      mat.coeffs[rowStart] = (T(1) / mat.coeffs[rowStart].getCoeff(iCol)) * mat.coeffs[rowStart];
+      id.coeffs[rowStart] *= (T(1) / mat.coeffs[rowStart].getCoeff(iCol));
+      mat.coeffs[rowStart] *= (T(1) / mat.coeffs[rowStart].getCoeff(iCol));
 
       for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
          if(iRow == rowStart) continue;
@@ -481,6 +489,7 @@ Matrix<T> inverse(Matrix<T> mat) {
       for(size_t iRow = coord;iRow < mat.nbRows();iRow++) {
          if(!(mat.coeffs[iRow].getCoeff(coord) == T(0))) {
             non_zero = iRow;
+            iRow = mat.nbRows();
          }
       }
 
@@ -491,8 +500,8 @@ Matrix<T> inverse(Matrix<T> mat) {
       	assert (false);
       }
 
-      id.coeffs[coord] = (T(1) / mat.coeffs[coord].getCoeff(coord)) * id.coeffs[coord];
-      mat.coeffs[coord] = (T(1) / mat.coeffs[coord].getCoeff(coord)) * mat.coeffs[coord];
+      id.coeffs[coord] *= (T(1) / mat.coeffs[coord].getCoeff(coord));
+      mat.coeffs[coord] *= (T(1) / mat.coeffs[coord].getCoeff(coord));
 
       for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
          if(iRow == coord) continue;
