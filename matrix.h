@@ -15,7 +15,6 @@ public:
 
    void setCoeff(size_t num_col, T value);
 
-
    size_t size() const;
    size_t max_index() const;
    T getCoeff(size_t num_col) const;

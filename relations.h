@@ -247,16 +247,7 @@ void decomposition_worker(
 		MatrixRow<Rational> numerator = decompose(fraction.getNumerator(), *basis);
 		MatrixRow<Rational> denominator = decompose(fraction.getDenominator(), *basis);
 
-      MatrixRow<Rational> decomposition = numerator - denominator;
-		/*vector<Rational> decomposition(basis->size(), Rational(0));
-
-		for(pair<int, int> poly : numerator) {
-			decomposition[poly.first] = decomposition[poly.first] + Rational(poly.second);
-		}
-
-		for(pair<int, int> poly : denominator) {
-			decomposition[poly.first] = decomposition[poly.first] - Rational(poly.second);
-		}*/
+		MatrixRow<Rational> decomposition = numerator - denominator;
 
 		mtx->lock();
 		decompositions->coeffs[id] = decomposition;
@@ -314,15 +305,12 @@ void RelationGenerator::printRelations() {
    for(auto& relation: relations) {
        relation.classify();
    }
-   auto t5b = std::chrono::high_resolution_clock::now();
-
    std::sort(relations.begin(), relations.end());
    auto t6 = std::chrono::high_resolution_clock::now();
 
    std::chrono::duration<float> e65 = t6 - t5;
-   std::chrono::duration<float> e65b = t6 - t5b;
    cerr << "Classified " << relations.size() << " relations"
-        << KGRY << " (" << e65.count() << "s)" KRST << " (" << e65b.count() << "s)" << endl;
+        << KGRY << " (" << e65.count() << "s)" KRST << endl;
     #if DEBUG_TIME_CLASSIFY
     size_t debug_idx = 0;
     for (const auto& duration: relation_time_classify_debug) {

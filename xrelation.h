@@ -5,7 +5,7 @@
 #include <sstream>
 #include "print.h"
 
-#define DEBUG_TIME_CLASSIFY 1
+#define DEBUG_TIME_CLASSIFY 0
 #if DEBUG_TIME_CLASSIFY
     vector<std::chrono::duration<float>> relation_time_classify_debug;
 #endif /* DEBUG_TIME_CLASSIFY */
@@ -863,7 +863,7 @@ private:
         formula.classify_raw(name);
 
         RelationSummary::instance_early_bailout early_bailout = [](const RelationSummary&r) {
-            return (r.liouville == Rational(1)) && (r.sigma == Rational(2)) 
+            return (r.liouville == Rational(1)) && (r.sigma == Rational(2))
                 && ((r.zeta == Rational(9) || (r.zeta == Rational(7)) || (r.zeta == Rational(5))));
         };
 
@@ -964,9 +964,9 @@ private:
         };
         Relation formula = Relation(vect);
         formula.classify_raw(name);
-        
+
         RelationSummary::instance_early_bailout early_bailout = [](const RelationSummary&r) {
-            return ((r.zeta == Rational(5)) && (r.sigma == Rational(2)));
+            return (r.sigma == Rational(2)) && (r.zeta == Rational(5));
         };
 
         bool good = is_instance_of(early_bailout, summary, formula, NULL, -1);
