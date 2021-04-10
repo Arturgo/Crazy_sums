@@ -15,7 +15,7 @@ struct FArith {
     FArithMatrix A;
     FArithMatrix u;
 
-    Fraction<Univariate> get_fraction() {
+    Fraction<Univariate> get_fraction() const {
         auto id = identity<Fraction<Univariate>>(A.nbRows());
         auto t0 = std::chrono::high_resolution_clock::now();
         auto mat = inverse(id - A);
