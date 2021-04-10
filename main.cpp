@@ -64,8 +64,10 @@ static void add_relation(RelationGenerator &manager, Latex& latex,
    manager.addFraction(name, frac);
 
    std::chrono::duration<float> e21 = t2 - t1;
-   cout << KBLD << name << KRST
-        << KGRY "   (" << e21.count() << "s)" KRST << endl;
+   if (1) {
+      cout << KBLD << name << KRST
+           << KGRY "   (" << e21.count() << "s)" KRST << endl;
+   }
    if(0) {
       cout << toString(frac.getNumerator(), "x") << KGRN "/" KRST
            << toString(frac.getDenominator(), "x") << endl;

@@ -10,6 +10,7 @@ public:
   T getNumerator() const;
   T getDenominator() const;
   void operator += (const Fraction<T>& a);
+  Fraction<T> operator + (const Fraction<T>& a) const;
 private:
   T numerator, denominator;
 
@@ -50,8 +51,35 @@ T Fraction<T>::getDenominator() const {
 
 template<typename T>
 void Fraction<T>::operator += (const Fraction<T>& a) {
-  numerator = this->getNumerator() * a.getDenominator() + this->getDenominator() * a.getNumerator();
-  denominator = this->getDenominator() * a.getDenominator();
+  if (0) {
+    #if 0
+    /* With pre-simplification */
+    T simpl_gcd = gcd(denominator, a.denominator);
+    T x = denominator;
+    T y = a.denominator;
+    if (simpl_gcd.size() > 1) {
+      x = x / simpl_gcd;
+      y = y / simpl_gcd;
+    }
+    numerator = numerator * y + a.numerator * x;
+    denominator = x * y;
+    #endif
+  } else {
+    /* With post-simplification */
+    numerator = numerator * a.denominator + denominator * a.numerator;
+    denominator = denominator * a.denominator;
+
+    T factor = normalFactor(numerator, denominator);
+    numerator = numerator / factor;
+    denominator = denominator / factor;
+  }
+}
+
+template<typename T>
+Fraction<T> Fraction<T>::operator + (const Fraction<T>& a) const {
+  Fraction<T> res = *this;
+  res += a;
+  return res;
 }
 
 template<typename T>
@@ -62,14 +90,6 @@ bool operator == (const Fraction<T>& a, const Fraction<T>& b) {
 template<typename T>
 bool operator != (const Fraction<T>& a, const Fraction<T>& b) {
   return !(a == b);
-}
-
-template<typename T>
-Fraction<T> operator + (const Fraction<T>& a, const Fraction<T>& b) {
-  return Fraction<T>(
-    a.getNumerator() * b.getDenominator() + a.getDenominator() * b.getNumerator(),
-    a.getDenominator() * b.getDenominator()
-  );
 }
 
 template<typename T>

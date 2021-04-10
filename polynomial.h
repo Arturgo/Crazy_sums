@@ -20,6 +20,7 @@ public:
 	void toMonic();
 	void reduce();
 	void operator *= (const T& a);
+	Polynomial<T> operator * (const Polynomial<T>& b) const;
 	void operator -= (const Polynomial<T>& a);
 	void operator %= (const Polynomial<T>& a);
 	void substractShiftedForReduction(const Polynomial<T>& a, size_t shift);
@@ -196,11 +197,16 @@ Polynomial<T> operator - (const Polynomial<T>& a, const Polynomial<T>& b) {
 }
 
 template<typename T>
-Polynomial<T> operator * (const Polynomial<T>& a, const Polynomial<T>& b) {
+Polynomial<T> Polynomial<T>::operator * (const Polynomial<T>& b) const {
+	const Polynomial<T>* a = this;
 	Polynomial<T> sum;
-	for(int iCoeffA = (int)a.size() - 1;iCoeffA >= 0;iCoeffA--) {
-		for(int iCoeffB = (int)b.size() - 1;iCoeffB >= 0;iCoeffB--) {
-			sum.setCoeff_unsafe(iCoeffA + iCoeffB, sum.getCoeff(iCoeffA + iCoeffB) + a.getCoeff(iCoeffA) * b.getCoeff(iCoeffB));
+	sum.coeffs.assign(a->size()+b.size(), T(0));
+	for(size_t iCoeffA = 0;iCoeffA < a->size();iCoeffA++) {
+		T coeff_A = a->coeffs[iCoeffA];
+		if (coeff_A != T(0)) {
+			for(size_t iCoeffB = 0;iCoeffB < b.size();iCoeffB++) {
+				sum.coeffs[iCoeffA + iCoeffB] += coeff_A * b.coeffs[iCoeffB];
+			}
 		}
 	}
 

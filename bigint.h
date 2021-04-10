@@ -65,16 +65,16 @@ public:
         return n == other.n;
     }
 
+    bool operator != (const SmallInt& other) const {
+        return n != other.n;
+    }
+
     void operator += (const SmallInt& other) {
         n += other.n;
     }
 
     void operator -= (const SmallInt& other) {
         n -= other.n;
-    }
-
-    bool operator != (const SmallInt& other) const {
-        return n != other.n;
     }
 
     bool operator < (const SmallInt& other) const {
@@ -131,6 +131,10 @@ public:
 
     bool operator == (const Mod& m) const {
         return value == m.value;
+    }
+
+    bool operator != (const Mod& other) const {
+        return value != other.value;
     }
 
     bool operator < (const Mod& m) const {

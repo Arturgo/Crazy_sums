@@ -352,17 +352,26 @@ Matrix<T> operator * (const T& a, const Matrix<T>& b) {
    return res;
 }
 
+/* Retrieve a single element of a*b */
+template<typename T>
+inline T single_product_element(const Matrix<T>& a, const Matrix<T>& b, size_t iRow, size_t iCol) {
+   T res = T(0);
+
+   for (auto& coordA: a.coeffs[iRow].coeffs) {
+      res += coordA.second * b.coeffs[coordA.first].getCoeff(iCol);
+   }
+
+   return res;
+}
+
 template<typename T>
 Matrix<T> operator * (const Matrix<T>& a, const Matrix<T>& b) {
    Matrix<T> res(a.nbRows(), b.nbCols());
    
    for (size_t iRow = 0; iRow < a.nbRows(); iRow++) {
       for (size_t iCol = 0; iCol < b.nbCols(); iCol++) {
-         T total = 0;
-         for (auto& coordA: a.coeffs[iRow].coeffs) {
-            total = total + coordA.second * b.coeffs[coordA.first].getCoeff(iCol);
-         }
-         res.coeffs[iRow].setCoeff(iCol, total);
+         T elem = single_product_element(a, b, iRow, iCol);
+         res.coeffs[iRow].setCoeff(iCol, elem);
       }
    }
    
@@ -481,30 +490,30 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
 
 template<typename T>
 Matrix<T> inverse(Matrix<T> mat) {
+   T T_0 = T(0);
    Matrix<T> id = identity<T>(mat.nbRows());
    assert(mat.nbRows() == mat.nbCols());
    for(size_t coord = 0;coord < mat.nbCols();coord++) {
       size_t non_zero = coord;
       for(size_t iRow = coord;iRow < mat.nbRows();iRow++) {
-         if(!(mat.coeffs[iRow].getCoeff(coord) == T(0))) {
+         if (mat.coeffs[iRow].getCoeff(coord) != T_0) {
             non_zero = iRow;
             iRow = mat.nbRows();
+            break;
          }
       }
 
       swap(mat.coeffs[coord], mat.coeffs[non_zero]);
       swap(id.coeffs[coord], id.coeffs[non_zero]);
 
-      if(mat.coeffs[coord].getCoeff(coord) == T(0)) {
-      	assert (false);
-      }
+      assert(mat.coeffs[coord].getCoeff(coord) != T_0);
 
-      id.coeffs[coord] *= (T(1) / mat.coeffs[coord].getCoeff(coord));
-      mat.coeffs[coord] *= (T(1) / mat.coeffs[coord].getCoeff(coord));
+      id.coeffs[coord] *= inverse(mat.coeffs[coord].getCoeff(coord));
+      mat.coeffs[coord] *= inverse(mat.coeffs[coord].getCoeff(coord));
 
       for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
          if(iRow == coord) continue;
-         if(!(mat.coeffs[iRow].getCoeff(coord) == T(0))) {
+         if(!(mat.coeffs[iRow].getCoeff(coord) == T_0)) {
             id.coeffs[iRow] = id.coeffs[iRow] - mat.coeffs[iRow].getCoeff(coord) * id.coeffs[coord];
             mat.coeffs[iRow] = mat.coeffs[iRow] - mat.coeffs[iRow].getCoeff(coord) * mat.coeffs[coord];
          }

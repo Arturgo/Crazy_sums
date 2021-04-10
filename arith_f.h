@@ -16,95 +16,92 @@ struct FArith {
     FArithMatrix u;
 
     Fraction<Univariate> get_fraction() {
-    	auto t2 = std::chrono::high_resolution_clock::now();
-   		
-   		auto mat = inverse(identity<Fraction<Univariate>>(A.nbRows()) - A);
-   		
-   		auto t1 = std::chrono::high_resolution_clock::now();
-   		
-   		auto res = (mat * u).coeffs[0].getCoeff(0);
-   		
-   		auto t0 = std::chrono::high_resolution_clock::now();
-   		
-   		v1 += t1 - t2;
-   		v2 += t0 - t1;
-   		
+        auto id = identity<Fraction<Univariate>>(A.nbRows());
+        auto t0 = std::chrono::high_resolution_clock::now();
+        auto mat = inverse(id - A);
+        auto t1 = std::chrono::high_resolution_clock::now();
+        auto res = single_product_element(mat, u, 0, 0);
+        auto t2 = std::chrono::high_resolution_clock::now();
+
+        v1 += t1 - t0;
+        v2 += t2 - t1;
+
         return res;
     }
-    
+
     void remove_row(size_t row) {
-    	FArithMatrix nA(A.coeffs.size() - 1, A.coeffs.size() - 1);
-		FArithMatrix nu(A.coeffs.size() - 1, 1);
-		
-		size_t nRow = 0;
-		for(size_t iRow = 0;iRow < A.coeffs.size();iRow++) {
-			if(iRow == row)
-				continue;
-				
-			nu.coeffs[nRow].setCoeff(0, u.coeffs[iRow].getCoeff(0));
-			
-			size_t nCol = 0;
-			for(size_t iCol = 0;iCol < A.coeffs.size();iCol++) {
-				if(iCol == row)
-					continue;
-				
-				nA.coeffs[nRow].setCoeff(nCol, A.coeffs[iRow].getCoeff(iCol));
-				
-				nCol++;
-			}
-			nRow++;
-		}
-		
-		A = nA;
-		u = nu;
+        FArithMatrix nA(A.coeffs.size() - 1, A.coeffs.size() - 1);
+        FArithMatrix nu(A.coeffs.size() - 1, 1);
+
+        size_t nRow = 0;
+        for(size_t iRow = 0;iRow < A.coeffs.size();iRow++) {
+            if(iRow == row)
+                continue;
+
+            nu.coeffs[nRow].setCoeff(0, u.coeffs[iRow].getCoeff(0));
+
+            size_t nCol = 0;
+            for(size_t iCol = 0;iCol < A.coeffs.size();iCol++) {
+                if(iCol == row)
+                    continue;
+
+                nA.coeffs[nRow].setCoeff(nCol, A.coeffs[iRow].getCoeff(iCol));
+
+                nCol++;
+            }
+            nRow++;
+        }
+
+        A = nA;
+        u = nu;
     }
-    
-    void simplify() {    	
-    	for(size_t iCol = 1;iCol < A.nbCols();iCol++) {
-    		bool is_zero = true;
-    		
-    		for(size_t iRow = 0;is_zero && iRow < A.nbRows();iRow++) {
-    			if(iRow != iCol && A.coeffs[iRow].getCoeff(iCol).getNumerator().size() != 0) {
-    				is_zero = false;
-    			}
-    		}
-    		
-    		if(is_zero) {
-    			remove_row(iCol);
-    			simplify();
-    			return;
-    		}
-    	}
-    
-    	FArithMatrix new_mat = transpose(A);
-    	new_mat.coeffs.push_back(transpose(u).coeffs[0]);
-    	new_mat = transpose(new_mat);
-    	
-    	FArithMatrix basis = kernel_basis(new_mat);
-    	
-    	if(basis.nbRows() == 0)
-			return;
-    	
-		size_t row = basis.coeffs[0].coeffs[0].first;
-		
-		Fraction<Univariate> bCoeff = basis.coeffs[0].getCoeff(A.nbCols());
-		basis.coeffs[0].setCoeff(A.nbCols(), 0);
-		
-		for(size_t iRow = 0;iRow < A.nbRows();iRow++) {
-			if(iRow != row) {
-				u.coeffs[iRow].setCoeff(0, u.coeffs[iRow].getCoeff(0) - A.coeffs[iRow].getCoeff(row) / basis.coeffs[0].getCoeff(row) * bCoeff);
-				
-				A.coeffs[iRow] = A.coeffs[iRow] - A.coeffs[iRow].getCoeff(row) / basis.coeffs[0].getCoeff(row) * basis.coeffs[0];
-			}
-		}
-	
-    	simplify();
+
+    void simplify() {
+        for(size_t iCol = 1;iCol < A.nbCols();iCol++) {
+            bool is_zero = true;
+
+            for(size_t iRow = 0;is_zero && iRow < A.nbRows();iRow++) {
+                if(iRow != iCol && A.coeffs[iRow].getCoeff(iCol).getNumerator().size() != 0) {
+                    is_zero = false;
+                }
+            }
+
+            if(is_zero) {
+                remove_row(iCol);
+                simplify();
+                return;
+            }
+        }
+
+        FArithMatrix new_mat = transpose(A);
+        new_mat.coeffs.push_back(transpose(u).coeffs[0]);
+        new_mat = transpose(new_mat);
+
+        FArithMatrix basis = kernel_basis(new_mat);
+
+        if(basis.nbRows() == 0)
+            return;
+
+        size_t row = basis.coeffs[0].coeffs[0].first;
+
+        Fraction<Univariate> bCoeff = basis.coeffs[0].getCoeff(A.nbCols());
+        basis.coeffs[0].setCoeff(A.nbCols(), 0);
+
+        for(size_t iRow = 0;iRow < A.nbRows();iRow++) {
+            if(iRow != row) {
+                u.coeffs[iRow].setCoeff(0, u.coeffs[iRow].getCoeff(0) - A.coeffs[iRow].getCoeff(row) / basis.coeffs[0].getCoeff(row) * bCoeff);
+
+                A.coeffs[iRow] = A.coeffs[iRow] - A.coeffs[iRow].getCoeff(row) / basis.coeffs[0].getCoeff(row) * basis.coeffs[0];
+            }
+        }
+
+        simplify();
     }
 };
 
 FArith operator * (const FArith &a, const FArith &b) {
-	FArith res = {.A = tensor(a.A, b.A), .u = tensor(a.u, b.u)};
-	res.simplify();
+    FArith res = {.A = tensor(a.A, b.A), .u = tensor(a.u, b.u)};
+    res.simplify();
     return res;
 }
 
@@ -128,9 +125,9 @@ FArith operator ^ (const FArith &a, const FArith &b) {
     }
 
     vfinal.coeffs[0].setCoeff(0, vfinal.coeffs[0].getCoeff(0) + vb.coeffs[0].getCoeff(0));
-	
-	FArith res = {.A = matrix, .u = vfinal};
-	res.simplify();
+
+    FArith res = {.A = matrix, .u = vfinal};
+    res.simplify();
     return res;
 }
 
@@ -159,17 +156,17 @@ FArith inv_id() {
 }
 
 FArith mobius_k(size_t k) {
-	FArith res = {
-		.A = FArithMatrix(k + 1, k + 1),
-		.u = FArithMatrix(k + 1, 1)
-	};
-	
-	for(size_t i = 0;i < k;i++) {
-		res.u.coeffs[i].setCoeff(0, u);
-		res.A.coeffs[i].setCoeff(i + 1, u);
-	}
-	res.u.coeffs[k].setCoeff(0, -u);
-	return res;
+    FArith res = {
+        .A = FArithMatrix(k + 1, k + 1),
+        .u = FArithMatrix(k + 1, 1)
+    };
+
+    for(size_t i = 0;i < k;i++) {
+        res.u.coeffs[i].setCoeff(0, u);
+        res.A.coeffs[i].setCoeff(i + 1, u);
+    }
+    res.u.coeffs[k].setCoeff(0, -u);
+    return res;
 }
 
 FArith mobius() {
