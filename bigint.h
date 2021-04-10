@@ -111,7 +111,11 @@ SomeInt normalFactor(const SomeInt& a, const SomeInt& b) {
   if(b >= SomeInt(0))
     return gcd(a, b);
   else
-    return -gcd(a, b);;
+    return -gcd(a, b);
+}
+
+bool normalFactorCanReduce(const SomeInt& a) {
+  return a != SomeInt(1);
 }
 
 string toString(const SomeInt& a) {

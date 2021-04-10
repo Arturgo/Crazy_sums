@@ -21,6 +21,8 @@ public:
 	void reduce();
 	void operator *= (const T& a);
 	Polynomial<T> operator * (const Polynomial<T>& b) const;
+	Polynomial<T> operator / (Polynomial<T> b) const;
+	Polynomial<T> operator + (const Polynomial<T>& b) const;
 	void operator -= (const Polynomial<T>& a);
 	void operator %= (const Polynomial<T>& a);
 	void substractShiftedForReduction(const Polynomial<T>& a, size_t shift);
@@ -45,7 +47,6 @@ bool operator < (const Polynomial<T>& a, const Polynomial<T>& b) {
 template<typename T>
 Polynomial<T>::Polynomial(vector<T> _coeffs) {
 	coeffs = _coeffs;
-	coeffs.reserve(64);
 	reduce();
 }
 
@@ -69,7 +70,7 @@ Polynomial<T>::Polynomial(MatrixRow<T> sparse_vect) {
 
 template<typename T>
 Polynomial<T>::Polynomial(int64_t _constant) {
-	coeffs.clear();
+	coeffs.reserve(1);
 	coeffs.push_back(T(_constant));
 	reduce();
 }
@@ -141,10 +142,12 @@ Polynomial<T> operator << (const Polynomial<T>& a, size_t shift) {
 }
 
 template<typename T>
-Polynomial<T> operator + (const Polynomial<T>& a, const Polynomial<T>& b) {
+Polynomial<T> Polynomial<T>::operator + (const Polynomial<T>& b) const {
 	Polynomial<T> sum;
-	for(int iCoeff = max<int>(a.size(), b.size()) - 1;iCoeff >= 0;iCoeff--) {
-		sum.setCoeff_unsafe(iCoeff, a.getCoeff(iCoeff) + b.getCoeff(iCoeff));
+	sum.coeffs.reserve(max(this->size(), b.size()));
+	const Polynomial<T>* a = this;
+	for(int iCoeff = max<int>(a->size(), b.size()) - 1;iCoeff >= 0;iCoeff--) {
+		sum.setCoeff_unsafe(iCoeff, a->getCoeff(iCoeff) + b.getCoeff(iCoeff));
 	}
 	sum.reduce();
 	return sum;
@@ -292,9 +295,10 @@ bool isMultipleOf(Polynomial<T> a, Polynomial<T> b) {
 }
 
 template<typename T>
-Polynomial<T> operator / (Polynomial<T> a, Polynomial<T> b) {
+Polynomial<T> Polynomial<T>::operator / (Polynomial<T> b) const {
 	Polynomial<T> quotient;
 
+	Polynomial<T> a = *this;
 	while(a.size() >= b.size()) {
 		size_t shift = a.size() - b.size();
 
@@ -311,7 +315,7 @@ Polynomial<T> operator / (Polynomial<T> a, Polynomial<T> b) {
  */
 template<typename T>
 inline void Polynomial<T>::substractShiftedForReduction(const Polynomial<T>& a, size_t shift) {
-	T mult = leading(*this) * inverse(leading(a)); /* FIXME: leading(*this) / leading(a)` is slower */
+	T mult = leading(*this) * inverse(leading(a)); /* FIXME: `leading(*this) / leading(a)` is slower */
 	for(size_t iCoeff = shift;iCoeff < size();iCoeff++) {
 		setCoeff_unsafe(iCoeff, getCoeff_unsafe(iCoeff) - mult*a.getCoeff_unsafe(iCoeff-shift));
 	}
@@ -334,4 +338,9 @@ Polynomial<T> gcd(Polynomial<T> a, Polynomial<T> b) {
 template<typename T>
 Polynomial<T> normalFactor(const Polynomial<T>& a, const Polynomial<T>& b) {
 	return gcd(a, b);
+}
+
+template<typename T>
+bool normalFactorCanReduce(const Polynomial<T>& a) {
+	return a.size() > 1;
 }

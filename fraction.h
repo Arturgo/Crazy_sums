@@ -4,8 +4,8 @@
 template<typename T>
 class Fraction {
 public:
-  Fraction(T _numerator, T _denominator);
-  Fraction(T _numerator);
+  Fraction(const T& _numerator, const T& _denominator, bool simplify=true);
+  Fraction(const T& _numerator);
   Fraction(int64_t _constant = 0);
   T getNumerator() const;
   T getDenominator() const;
@@ -13,23 +13,25 @@ public:
   Fraction<T> operator + (const Fraction<T>& a) const;
 private:
   T numerator, denominator;
-
-  Fraction<T> inverse_in_place(Fraction<T>& a);
 };
 
 template<typename T>
-Fraction<T>::Fraction(T _numerator, T _denominator) {
+Fraction<T>::Fraction(const T& _numerator, const T& _denominator, bool simplify) {
   numerator = _numerator;
   denominator = _denominator;
   
-  T factor = normalFactor(numerator, denominator);
-  numerator = numerator / factor;
-  denominator = denominator / factor;
+  if (simplify) {
+    T factor = normalFactor(numerator, denominator);
+    if (normalFactorCanReduce(factor)) {
+      numerator = numerator / factor;
+      denominator = denominator / factor;
+    }
+  }
 }
 
 template<typename T>
-Fraction<T>::Fraction(T _numerator) {
-  numerator = T(_numerator);
+Fraction<T>::Fraction(const T& _numerator) {
+  numerator = _numerator;
   denominator = T(1);
 }
 
@@ -52,26 +54,27 @@ T Fraction<T>::getDenominator() const {
 template<typename T>
 void Fraction<T>::operator += (const Fraction<T>& a) {
   if (0) {
-    #if 0
     /* With pre-simplification */
-    T simpl_gcd = gcd(denominator, a.denominator);
+    T factor = gcd(denominator, a.denominator);
     T x = denominator;
     T y = a.denominator;
-    if (simpl_gcd.size() > 1) {
-      x = x / simpl_gcd;
-      y = y / simpl_gcd;
+    if (normalFactorCanReduce(factor)) {
+      x = x / factor;
+      y = y / factor;
     }
     numerator = numerator * y + a.numerator * x;
     denominator = x * y;
-    #endif
+    assert(!normalFactorCanReduce(gcd(numerator, denominator)));
   } else {
     /* With post-simplification */
     numerator = numerator * a.denominator + denominator * a.numerator;
     denominator = denominator * a.denominator;
 
     T factor = normalFactor(numerator, denominator);
-    numerator = numerator / factor;
-    denominator = denominator / factor;
+    if (normalFactorCanReduce(factor)) {
+      numerator = numerator / factor;
+      denominator = denominator / factor;
+    }
   }
 }
 
@@ -94,7 +97,7 @@ bool operator != (const Fraction<T>& a, const Fraction<T>& b) {
 
 template<typename T>
 Fraction<T> operator - (const Fraction<T>& a) {
-  return Fraction<T>(-a.getNumerator(), a.getDenominator());
+  return Fraction<T>(-a.getNumerator(), a.getDenominator(), false);
 }
 
 template<typename T>
@@ -112,19 +115,12 @@ Fraction<T> operator * (const Fraction<T>& a, const Fraction<T>& b) {
 
 template<typename T>
 Fraction<T> inverse(const Fraction<T>& a) {
-  return Fraction<T>(a.getDenominator(), a.getNumerator());
+  return Fraction<T>(a.getDenominator(), a.getNumerator(), false);
 }
 
 template<typename T>
 Fraction<T> operator / (const Fraction<T>& a, const Fraction<T>& b) {
   return a * inverse(b);
-}
-
-template<typename T>
-Fraction<T> inverse_in_place(Fraction<T>& a) {
-  T c = a.getDenominator();
-  a.denominator = a.getNumerator();
-  a.numerator = c;
 }
 
 template<typename T>
@@ -134,14 +130,6 @@ string toString(const Fraction<T>& a) {
   if(a.getDenominator() == T(1))
     return toString(a.getNumerator());
   return toString(a.getNumerator()) + "/" + toString(a.getDenominator());
-}
-
-template<typename T>
-Fraction<T> gcd(const Fraction<T>& a, const Fraction<T>& b) {
-  return Fraction<T>(
-    gcd(a.getNumerator(), b.getNumerator()),
-    gcd(a.getDenominator(), b.getDenominator())
-  );
 }
 
 template<typename T>
