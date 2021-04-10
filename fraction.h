@@ -11,6 +11,8 @@ public:
   T getDenominator() const;
   void operator += (const Fraction<T>& a);
   Fraction<T> operator + (const Fraction<T>& a) const;
+  template<class U>
+  friend std::ostream& operator << (std::ostream& out,const Fraction<U>& a);
 private:
   T numerator, denominator;
 };
@@ -83,6 +85,13 @@ Fraction<T> Fraction<T>::operator + (const Fraction<T>& a) const {
   Fraction<T> res = *this;
   res += a;
   return res;
+}
+
+template<class T>
+std::ostream& operator << (std::ostream& out,const Fraction<T>& a) {
+  out << toString(a.getNumerator(), "x") << KGRN "/" KRST
+      << toString(a.getDenominator(), "x");
+  return out;
 }
 
 template<typename T>

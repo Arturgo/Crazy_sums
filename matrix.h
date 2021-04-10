@@ -272,6 +272,9 @@ public:
    Matrix(vector<MatrixRow<T>> _coeffs);
    size_t nCol;
    vector<MatrixRow<T>> coeffs;
+
+   template<class U>
+   friend std::ostream& operator << (std::ostream& out,const Matrix<U>& mat);
 };
 
 template<typename T>
@@ -401,7 +404,7 @@ Matrix<T> tensor(Matrix<T> a, Matrix<T> b) {
 }
 
 template<typename T>
-void debug(const Matrix<T>& mat) {
+std::ostream& operator << (std::ostream& out,const Matrix<T>& mat) {
    for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
       cout << ((iRow == 0) ? "[" : " ") << "[ ";
       for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
@@ -411,6 +414,7 @@ void debug(const Matrix<T>& mat) {
       }
       cout << "]" << ((iRow+1 == mat.nbRows()) ? "]" : "") << endl;
    }
+   return out;
 }
 
 template<typename T>

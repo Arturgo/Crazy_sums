@@ -27,6 +27,7 @@ static HFormula name_make_lfunc(const HFormula& name, int exponent)
 static void add_relation(RelationGenerator &manager, Latex& latex,
                          int i_lambda, int i_tau, int i_theta, int i_phi, int i_J_2,
                          int i_sigma_1, int i_sigma_2, int i_sigma_3, int i_mu,
+                         int i_zeta1,
                          int min_s, int max_s)
 {
    auto t1 = std::chrono::high_resolution_clock::now();
@@ -43,7 +44,9 @@ static void add_relation(RelationGenerator &manager, Latex& latex,
     * pow(sigma_k(1), i_sigma_1)
     * pow(sigma_k(2), i_sigma_2)
     * pow(sigma_k(3), i_sigma_3)
-    * pow(mobius(), i_mu);
+    * pow(mobius(), i_mu)
+    * pow(zeta_1(), i_zeta1)
+   ;
 
    auto t2 = std::chrono::high_resolution_clock::now();
    std::chrono::duration<float> elapsed = t2 - t1;
@@ -58,10 +61,12 @@ static void add_relation(RelationGenerator &manager, Latex& latex,
    name = name_append_component(name, FormulaNode::LEAF_SIGMA, 2, i_sigma_2);
    name = name_append_component(name, FormulaNode::LEAF_SIGMA, 3, i_sigma_3);
    name = name_append_component(name, FormulaNode::LEAF_MU, i_mu);
+   name = name_append_component(name, FormulaNode::LEAF_ZETAK, i_zeta1, ((i_zeta1 > 0) ? 1 : 0));
 
    for (int s=min_s; s<=max_s; s++) {
       auto t3 = std::chrono::high_resolution_clock::now();
-      Fraction<Univariate> frac = (formula * pow(inv_id(), s)).get_fraction();
+      FArith fformula = formula * pow(inv_id(), s);
+      Fraction<Univariate> frac = fformula.get_fraction();
       auto t4 = std::chrono::high_resolution_clock::now();
       HFormula fname = name_make_lfunc(name, s);
 
@@ -70,12 +75,11 @@ static void add_relation(RelationGenerator &manager, Latex& latex,
       if (1) {
          elapsed += t4 - t3;
          cout << KBLD << fname << KRST
-              << KGRY "   (" << elapsed.count() << "s)" KRST << endl;
+              << KGRY "   [" << fformula.A.nbCols() << "]  (" << elapsed.count() << "s)" KRST << endl;
          elapsed -= elapsed;
       }
       if (0) {
-         cout << toString(frac.getNumerator(), "x") << KGRN "/" KRST
-              << toString(frac.getDenominator(), "x") << endl;
+         cout << frac << endl;
          fname.get()->print_full(latex.stream, 1);
       }
    }
@@ -99,13 +103,14 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    int maxi_sigma_2 = 1;
    int maxi_sigma_3 = 1;
    int maxi_mu = 0;
+   int maxi_zeta1 = 0;
    int maxi_sum = 8;
 
    auto t1 = std::chrono::high_resolution_clock::now();
 
    RelationGenerator manager(&latex);
 
-   add_relation(manager, latex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2+maxi_sum*3);
+   add_relation(manager, latex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2+maxi_sum*3);
 
    for(int i_lambda = 0;i_lambda <= maxi_lambda;i_lambda++) {
    for(int i_tau = 0;i_tau <= maxi_tau;i_tau++) {
@@ -116,8 +121,10 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
    for(int i_sigma_3 = 0;i_sigma_3 <= maxi_sigma_3;i_sigma_3++) {
    for(int i_mu = 0;i_mu <= maxi_mu;i_mu++) {
-      int sum = 0*i_lambda + 1*i_tau + 0*i_theta + i_phi + 2*i_J_2
-                + i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 0*i_mu;
+   for(int i_zeta1 = 0;i_zeta1 <= maxi_zeta1;i_zeta1++) {
+      int sum = 0*i_lambda + 1*i_tau + 0*i_theta + 1*i_phi + 2*i_J_2
+                + 1*i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 0*i_mu
+                + 1*i_zeta1;
       if ((i_phi > 0) && (i_sigma_1 > 0) && (i_mu > 0)) {
          continue; /* Avoid generating C-8: J_2µ == φσµ */
       }
@@ -125,9 +132,9 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
          int min_s = sum + 2;
          int max_s = min_s + max(0, maxi_sum);
          add_relation(manager, latex, i_lambda, i_tau, i_theta, i_phi, i_J_2,
-                      i_sigma_1, i_sigma_2, i_sigma_3, i_mu, min_s, max_s);
+                      i_sigma_1, i_sigma_2, i_sigma_3, i_mu, i_zeta1, min_s, max_s);
       }
-   }}}}}}}}}
+   }}}}}}}}}}
 
    auto t2 = std::chrono::high_resolution_clock::now();
    std::chrono::duration<float> e21 = t2 - t1;

@@ -97,6 +97,15 @@ struct FArith {
 
         simplify();
     }
+
+    friend std::ostream& operator << (std::ostream& out, const FArith &a) {
+        out << "FArith:" << endl;
+        out << "A =" << endl;
+        out << a.A << endl;
+        out << "u =" << endl;
+        out << a.u << endl;
+        return out;
+    }
 };
 
 FArith operator * (const FArith &a, const FArith &b) {
@@ -235,6 +244,17 @@ FArith liouville() {
         }),
         .u = FArithMatrix({
             {-u}
+        })
+    };
+}
+
+FArith zeta_1() {
+    return {
+        .A = FArithMatrix({
+            {x}
+        }),
+        .u = FArithMatrix({
+            {x}
         })
     };
 }
