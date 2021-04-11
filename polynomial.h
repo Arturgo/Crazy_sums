@@ -45,6 +45,11 @@ bool operator < (const Polynomial<T>& a, const Polynomial<T>& b) {
 }
 
 template<typename T>
+inline bool operator > (const Polynomial<T>& a, const Polynomial<T>& b) {
+	return b < a;
+}
+
+template<typename T>
 Polynomial<T>::Polynomial(vector<T> _coeffs) {
 	coeffs = _coeffs;
 	reduce();
@@ -121,6 +126,10 @@ bool operator == (const Polynomial<T>& a, const Polynomial<T>& b) {
 	return true;
 }
 
+template<typename T>
+inline bool operator != (const Polynomial<T>& a, const Polynomial<T>& b) {
+	return !(a==b);
+}
 
 template<typename T>
 void Polynomial<T>::reduce() {

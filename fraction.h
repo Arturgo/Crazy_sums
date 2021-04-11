@@ -21,7 +21,7 @@ template<typename T>
 Fraction<T>::Fraction(const T& _numerator, const T& _denominator, bool simplify) {
   numerator = _numerator;
   denominator = _denominator;
-  
+
   if (simplify) {
     T factor = normalFactor(numerator, denominator);
     if (normalFactorCanReduce(factor)) {
@@ -95,6 +95,11 @@ std::ostream& operator << (std::ostream& out,const Fraction<T>& a) {
 }
 
 template<typename T>
+bool is_zero(const Fraction<T>& a) {
+  return a.getNumerator() == T(0);
+}
+
+template<typename T>
 bool operator == (const Fraction<T>& a, const Fraction<T>& b) {
   return (a.getNumerator() == b.getNumerator()) && (a.getDenominator() == b.getDenominator());
 }
@@ -124,7 +129,13 @@ Fraction<T> operator * (const Fraction<T>& a, const Fraction<T>& b) {
 
 template<typename T>
 Fraction<T> inverse(const Fraction<T>& a) {
-  return Fraction<T>(a.getDenominator(), a.getNumerator(), false);
+  T numerator = a.getNumerator();
+  T denominator = a.getDenominator();
+  if (numerator < T(0)) {
+      numerator = -numerator;
+      denominator = -denominator;
+  }
+  return Fraction<T>(denominator, numerator, false);
 }
 
 template<typename T>

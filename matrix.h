@@ -30,7 +30,7 @@ public:
 template<typename T>
 MatrixRow<T>::MatrixRow(vector<T> _coeffs) {
    for (size_t i = 0; i < _coeffs.size(); i++) {
-      if (!(_coeffs[i] == T(0))) {
+      if (!is_zero(_coeffs[i])) {
          coeffs.push_back(make_pair(i, _coeffs[i]));
       }
    }
@@ -57,12 +57,12 @@ void MatrixRow<T>::setCoeff(size_t num_col, T value) {
       ind++;
    }
    if (ind == coeffs.size()) {
-      if (!(value == T(0))) {
+      if (!is_zero(value)) {
          coeffs.push_back(make_pair(num_col, value));
       }
    } else {
       if (coeffs[ind].first == num_col) {
-         if (value == T(0)) {
+         if (is_zero(value)) {
             for (size_t i = ind; i + 1 < coeffs.size(); i++) {
                coeffs[i] = coeffs[i + 1];
             }
@@ -71,7 +71,7 @@ void MatrixRow<T>::setCoeff(size_t num_col, T value) {
             coeffs[ind].second = value;
          }
       } else {
-         if (!(value == T(0))) {
+         if (!is_zero(value)) {
             coeffs.push_back(make_pair(num_col, value)); // bullshit value
             for (size_t i = coeffs.size() - 1; i > ind; i--) {
                coeffs[i] = coeffs[i - 1];
@@ -98,7 +98,7 @@ template<typename T>
 MatrixRow<T> tensor(const MatrixRow<T>& a, const MatrixRow<T>& b, size_t n) {
    vector<pair<size_t, T>> result;
    for (auto& coeffA: a.coeffs) {
-      if (!(coeffA.second == T(0))) {
+      if (!is_zero(coeffA.second)) {
          for (auto& coeffB: b.coeffs) {
             result.push_back(make_pair(coeffA.first * n + coeffB.first, coeffA.second * coeffB.second));
          }
@@ -168,7 +168,7 @@ MatrixRow<T> operator + (const MatrixRow<T>& a, const MatrixRow<T>& b) {
       } else {
          size_t id = a.coeffs[c_a].first;
          T added = a.coeffs[c_a++].second + b.coeffs[c_b++].second;
-         if (!(added == T(0))) {
+         if (!is_zero(added)) {
             result.push_back(make_pair(id, added));
          }
       }
@@ -247,11 +247,11 @@ vector<T> operator * (T a, const vector<T>& b) {
 template<typename T>
 T operator * (const vector<T>& a, const vector<T>& b) {
    T res(0);
-   
+
    for(size_t iCoeff = 0;iCoeff < b.size();iCoeff++) {
       res = res + a[iCoeff] * b[iCoeff];
    }
-   
+
    return res;
 }
 
@@ -325,33 +325,33 @@ Matrix<T> identity(size_t size) {
 template<typename T>
 Matrix<T> operator + (const Matrix<T>& a, const Matrix<T>& b) {
    Matrix<T> res(a.nbRows(), a.nbCols());
-   
+
    for(size_t iRow = 0;iRow < a.nbRows();iRow++) {
       res.coeffs[iRow] = a.coeffs[iRow] + b.coeffs[iRow];
    }
-   
+
    return res;
 }
 
 template<typename T>
 Matrix<T> operator - (const Matrix<T>& a, const Matrix<T>& b) {
    Matrix<T> res(a.nbRows(), a.nbCols());
-   
+
    for(size_t iRow = 0;iRow < a.nbRows();iRow++) {
       res.coeffs[iRow] = a.coeffs[iRow] - b.coeffs[iRow];
    }
-   
+
    return res;
 }
 
 template<typename T>
 Matrix<T> operator * (const T& a, const Matrix<T>& b) {
    Matrix<T> res(b.nbRows(), b.nbCols());
-   
+
    for(size_t iRow = 0;iRow < b.nbRows();iRow++) {
       res.coeffs[iRow] = a * b.coeffs[iRow];
    }
-   
+
    return res;
 }
 
@@ -370,14 +370,14 @@ inline T single_product_element(const Matrix<T>& a, const Matrix<T>& b, size_t i
 template<typename T>
 Matrix<T> operator * (const Matrix<T>& a, const Matrix<T>& b) {
    Matrix<T> res(a.nbRows(), b.nbCols());
-   
+
    for (size_t iRow = 0; iRow < a.nbRows(); iRow++) {
       for (size_t iCol = 0; iCol < b.nbCols(); iCol++) {
          T elem = single_product_element(a, b, iRow, iCol);
          res.coeffs[iRow].setCoeff(iCol, elem);
       }
    }
-   
+
    return res;
 }
 
@@ -409,8 +409,8 @@ std::ostream& operator << (std::ostream& out,const Matrix<T>& mat) {
       cout << ((iRow == 0) ? "[" : " ") << "[ ";
       for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
          T value = mat.coeffs[iRow].getCoeff(iCol);
-         cout << ((value == T(0)) ? KGRY : "") << std::setw(2) << value
-              << ((value == T(0)) ? KRST : "") << " ";
+         cout << (is_zero(value) ? KGRY : "") << std::setw(2) << value
+              << (is_zero(value) ? KRST : "") << " ";
       }
       cout << "]" << ((iRow+1 == mat.nbRows()) ? "]" : "") << endl;
    }
@@ -441,66 +441,65 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
    /* We use Gaussian Elimination */
 
    Matrix<T> id = identity<T>(mat.nbRows());
-   
+
    size_t rowStart = 0;
    for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
-   	if(rowStart >= mat.nbRows()) break;
-   	
+      if(rowStart >= mat.nbRows()) break;
+
       size_t non_zero = rowStart;
       for(size_t iRow = rowStart;iRow < mat.nbRows();iRow++) {
-         if(!(mat.coeffs[iRow].getCoeff(iCol) == T(0))) {
+         if(!is_zero(mat.coeffs[iRow].getCoeff(iCol))) {
             non_zero = iRow;
          }
       }
-      
+
       swap(mat.coeffs[rowStart], mat.coeffs[non_zero]);
       swap(id.coeffs[rowStart], id.coeffs[non_zero]);
-      
-      if(mat.coeffs[rowStart].getCoeff(iCol) == T(0)) {
-      	continue;
+
+      if(is_zero(mat.coeffs[rowStart].getCoeff(iCol))) {
+         continue;
       }
-      
-      id.coeffs[rowStart] *= (T(1) / mat.coeffs[rowStart].getCoeff(iCol));
-      mat.coeffs[rowStart] *= (T(1) / mat.coeffs[rowStart].getCoeff(iCol));
+
+      id.coeffs[rowStart] *= inverse(mat.coeffs[rowStart].getCoeff(iCol));
+      mat.coeffs[rowStart] *= inverse(mat.coeffs[rowStart].getCoeff(iCol));
 
       for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
          if(iRow == rowStart) continue;
-         if(!(mat.coeffs[iRow].getCoeff(iCol) == T(0))) {
+         if(!is_zero(mat.coeffs[iRow].getCoeff(iCol))) {
             id.coeffs[iRow] = id.coeffs[iRow] - mat.coeffs[iRow].getCoeff(iCol) * id.coeffs[rowStart];
             mat.coeffs[iRow] = mat.coeffs[iRow] - mat.coeffs[iRow].getCoeff(iCol) * mat.coeffs[rowStart];
          }
       }
-      
+
       rowStart++;
    }
 
    Matrix<T> basis(0, 0);
-   
+
    for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
-      bool is_zero = true;
-      
+      bool is_row_zero = true;
+
       for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
-         is_zero &= mat.coeffs[iRow].getCoeff(iCol) == T(0);
+         is_row_zero &= is_zero(mat.coeffs[iRow].getCoeff(iCol));
       }
-      
-      if(is_zero) {
+
+      if(is_row_zero) {
          basis.coeffs.push_back(id.coeffs[iRow]);
       }
    }
    basis.actualizeNCols();
-   
+
    return basis;
 }
 
 template<typename T>
 Matrix<T> inverse(Matrix<T> mat) {
-   T T_0 = T(0);
    Matrix<T> id = identity<T>(mat.nbRows());
    assert(mat.nbRows() == mat.nbCols());
    for(size_t coord = 0;coord < mat.nbCols();coord++) {
       size_t non_zero = coord;
       for(size_t iRow = coord;iRow < mat.nbRows();iRow++) {
-         if (mat.coeffs[iRow].getCoeff(coord) != T_0) {
+         if (!is_zero(mat.coeffs[iRow].getCoeff(coord))) {
             non_zero = iRow;
             iRow = mat.nbRows();
             break;
@@ -510,14 +509,14 @@ Matrix<T> inverse(Matrix<T> mat) {
       swap(mat.coeffs[coord], mat.coeffs[non_zero]);
       swap(id.coeffs[coord], id.coeffs[non_zero]);
 
-      assert(mat.coeffs[coord].getCoeff(coord) != T_0);
+      assert(!is_zero(mat.coeffs[coord].getCoeff(coord)));
 
       id.coeffs[coord] *= inverse(mat.coeffs[coord].getCoeff(coord));
       mat.coeffs[coord] *= inverse(mat.coeffs[coord].getCoeff(coord));
 
       for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
          if(iRow == coord) continue;
-         if(!(mat.coeffs[iRow].getCoeff(coord) == T_0)) {
+         if(!is_zero(mat.coeffs[iRow].getCoeff(coord))) {
             id.coeffs[iRow] = id.coeffs[iRow] - mat.coeffs[iRow].getCoeff(coord) * id.coeffs[coord];
             mat.coeffs[iRow] = mat.coeffs[iRow] - mat.coeffs[iRow].getCoeff(coord) * mat.coeffs[coord];
          }
@@ -537,13 +536,13 @@ Matrix<T> row_echelon_form(Matrix<T> mat) {
             non_zero = iRow;
          }
       }
-      
+
       if(iCol >= mat.nbRows()) break;
       swap(mat.coeffs[iCol], mat.coeffs[non_zero]);
       if(mat.coeffs[iCol].getCoeff(iCol) == T(0)) continue;
-      
+
       mat.coeffs[iCol] = (T(1) / mat.coeffs[iCol].getCoeff(iCol)) * mat.coeffs[iCol];
-      
+
       for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
          if(iRow == iCol) continue;
          if(!(mat.coeffs[iRow][iCol] == T(0))) {
@@ -575,12 +574,12 @@ void debug(const vector<T>& v) {
 template<typename T>
 vector<T> projection(size_t i, const Matrix<T>& mat, vector<T> v) {
    vector<T> proj(v.size(), T(0));
-   
+
    for(size_t iRow = i;iRow < mat.nbRows();iRow++) {
-      proj = proj + ((v * mat.coeffs[iRow]) / squared_norm(mat.coeffs[iRow])) 
+      proj = proj + ((v * mat.coeffs[iRow]) / squared_norm(mat.coeffs[iRow]))
        * mat.coeffs[iRow];
    }
-   
+
    return proj;
 }
 
@@ -589,47 +588,47 @@ Matrix<T> gram_schmidt(Matrix<T> mat) {
    for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
       for(size_t iProj = 0;iProj < iRow;iProj++) {
          mat.coeffs[iRow] = mat.coeffs[iRow]
-          - ((mat.coeffs[iRow] * mat.coeffs[iProj]) / squared_norm(mat.coeffs[iProj])) 
+          - ((mat.coeffs[iRow] * mat.coeffs[iProj]) / squared_norm(mat.coeffs[iProj]))
           * mat.coeffs[iProj];
       }
    }
-   
+
    return mat;
 }
 
 template<typename T>
 vector<T> nearest_plane(Matrix<T> mat, vector<T> v) {
    if(mat.nbRows() == 0) return vector<T>(v.size(), T(0));
-   
+
    Matrix<T> ortho = gram_schmidt(mat);
    T coeff = round((v * ortho.coeffs.back()) / squared_norm(ortho.coeffs.back()));
-   
+
    vector<T> bn = mat.coeffs.back();
    mat.coeffs.pop_back();
-   
+
    return coeff * bn + nearest_plane(mat, v - coeff * bn);
 }
 
 template<typename T>
 Matrix<T> LLL(Matrix<T> mat, T delta) {
    Matrix<T> ortho = gram_schmidt(mat);
-   
+
    for(size_t iRow = 1;iRow < mat.nbRows();iRow++) {
       mat.coeffs[iRow] = mat.coeffs[iRow] + nearest_plane(mat, ortho.coeffs[iRow] - mat.coeffs[iRow]);
    }
-   
+
    ortho = gram_schmidt(mat);
    for(size_t iRow = 1;iRow < mat.nbRows();iRow++) {
       vector<T> projA = ortho.coeffs[iRow - 1];
       vector<T> projB = projection(iRow - 1, ortho, mat.coeffs[iRow]);
-      
+
       T diff = delta * squared_norm(projA) - squared_norm(projB);
       if(diff.getNumerator() > 0) {
          swap(mat.coeffs[iRow], mat.coeffs[iRow - 1]);
          return LLL(mat, delta);
       }
    }
-   
+
    return mat;
 }
 
