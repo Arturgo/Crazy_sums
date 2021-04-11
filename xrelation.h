@@ -36,7 +36,12 @@ private:
             }
         }
         if ((l_top < l_bottom) ||
-            ((l_top == 1) && (l_bottom == 1) && (top_n->getLFuncExponent() > bottom_n->getLFuncExponent()))) {
+            ((l_top == 1) && (l_bottom == 1) &&
+             (!top_n->getLFuncExponentS().is_symbolic()) &&
+             (!bottom_n->getLFuncExponentS().is_symbolic()) &&
+             (top_n->getLFuncExponent() > bottom_n->getLFuncExponent())
+            )
+           ) {
             for (Element& e: elements) {
                 e.second = -e.second;
             }
@@ -593,12 +598,15 @@ private:
             return try_instantiate(rel->getZetaExponentS(), form->getZetaExponentS(), instantiation, iincr(debug));
         } else if (rel->isLFuncNonZeta() && form->isLFuncNonZeta()) {
             SymbolicInstantiation new_instantiation = instantiation;
-            bool good = try_instantiate(rel->getLFuncExponentS(), form->getLFuncExponentS(), new_instantiation, iincr(debug));
+            bool good1 = try_instantiate(rel->getLFuncExponentS(), form->getLFuncExponentS(), new_instantiation, iincr(debug));
+            bool good2 = try_instantiate(rel->getLFuncProduct(), form->getLFuncProduct(), new_instantiation, iincr(debug));
+            if (good2 && !good1) {
+                /* See e.g. C13. Else we always fall in the "more than one non-instantiated var, which is not handled above */
+                good1 = try_instantiate(rel->getLFuncExponentS(), form->getLFuncExponentS(), new_instantiation, iincr(debug));
+            }
+            bool good = good1 && good2;
             if (good) {
-                good = try_instantiate(rel->getLFuncProduct(), form->getLFuncProduct(), new_instantiation, iincr(debug));
-                if (good) {
-                    instantiation = new_instantiation;
-                }
+                instantiation = new_instantiation;
             }
             return good;
         }
@@ -1031,6 +1039,70 @@ private:
         return good;
     }
 
+    bool check_C13(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-13";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_JORDAN_T, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("i"), .l = 0}),
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("i"), .l = 0})
+                ), FormulaNode::Symbolic("2*i+k")), Rational(1)},
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_JORDAN_T, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("2*i"), .l = 0}),
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("i+k"), .l = 0})
+                ), FormulaNode::Symbolic("3*i+2*k")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*i+2*k")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("i+2*k")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
+    bool check_C14(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-14";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_THETA),
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0})
+                ), FormulaNode::Symbolic("2*s")), Rational(1)},
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_JORDAN_T, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0}), 2)
+                ), FormulaNode::Symbolic("4*s")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(-2)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
+    bool check_C15(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-15";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_JORDAN_T, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0}),
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0})
+                ), FormulaNode::Symbolic("3*s")), Rational(1)},
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_JORDAN_T, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0}), 2)
+                ), FormulaNode::Symbolic("4*s")), Rational(1)},
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_JORDAN_T, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0}), 2),
+                HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0}), 2)
+                ), FormulaNode::Symbolic("5*s")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("3*s")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
     bool check_C17(const RelationSummary& summary, string& out_name) {
         std::string name = "C-17";
         vector<pair<HFormula, Rational>> vect{
@@ -1146,6 +1218,9 @@ public:
              */
             &Relation::check_C1,
             &Relation::check_C11,
+            &Relation::check_C13,
+            &Relation::check_C14,
+            &Relation::check_C15,
             &Relation::check_C17,
             &Relation::check_C18,
             &Relation::check_C19,
