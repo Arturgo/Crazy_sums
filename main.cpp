@@ -128,7 +128,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
       if ((i_phi > 0) && (i_sigma_1 > 0) && (i_mu > 0)) {
          continue; /* Avoid generating C-8: J_2µ == φσµ */
       }
-      if(i_lambda+i_tau+i_theta+i_phi+i_J_2+i_sigma_1+i_sigma_2+i_sigma_3+i_mu > 0) {
+      if(i_lambda+i_tau+i_theta+i_phi+i_J_2+i_sigma_1+i_sigma_2+i_sigma_3+i_mu+i_zeta1 > 0) {
          int min_s = sum + 2;
          int max_s = min_s + max(0, maxi_sum);
          add_relation(manager, latex, i_lambda, i_tau, i_theta, i_phi, i_J_2,

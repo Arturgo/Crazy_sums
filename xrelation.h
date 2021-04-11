@@ -742,7 +742,7 @@ private:
     }
 
 
-    bool check_D4_D6(const RelationSummary& summary, string& out_name) {
+    bool check_D6(const RelationSummary& summary, string& out_name) {
         std::string name = "D-6";
         vector<pair<HFormula, Rational>> vect{
             {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
@@ -789,6 +789,27 @@ private:
         formula.classify_raw(name);
         bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
         out_name = name;
+        return good;
+    }
+
+    bool check_D15(const RelationSummary& summary, string& out_name) {
+        std::string name = "D-15";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
+                FormulaNode::LEAF_ZETAK, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-1*k")), Rational(-1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        SymbolicInstantiation::assignment assignment;
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, &assignment, -1);
+        if (!good) {
+            return false;
+        }
+        out_name = name;
+        if (assignment["k"] == 1) {
+            out_name = "D-13";
+        }
         return good;
     }
 
@@ -1076,9 +1097,9 @@ public:
             /* D-1 we won't find */
             &Relation::check_D2,
             &Relation::check_D3,
-            &Relation::check_D4_D6,
+            /* Check for D-4: handled in D-6 */
             /* Check for D-5: handled in D-52 */
-            /* Check for D-6: handled in D-4 */
+            &Relation::check_D6,
             /* D-7 & D-8 we won't find */
             /* Check for D-9: this is D-18 */
             &Relation::check_D10,
@@ -1086,10 +1107,9 @@ public:
 
             /* ... */
 
+            /* Check for D-13: handled in D-15 */
             /* D-14 we won't find */
-
-            /* ... */
-
+            &Relation::check_D15,
             /* D-16 & D-17 we won't find */
             &Relation::check_D18,
             /* D-19 & D-20 we won't find */

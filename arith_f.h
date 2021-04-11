@@ -79,8 +79,9 @@ struct FArith {
 
         FArithMatrix basis = kernel_basis(new_mat);
 
-        if(basis.nbRows() == 0)
+        if(basis.nbRows() == 0) {
             return;
+        }
 
         size_t row = basis.coeffs[0].coeffs[0].first;
 
@@ -254,7 +255,7 @@ FArith zeta_1() {
             {x}
         }),
         .u = FArithMatrix({
-            {x}
+            {u}
         })
     };
 }
