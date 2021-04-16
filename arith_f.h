@@ -174,10 +174,11 @@ FArith mobius_k(size_t k) {
     };
 
     for(size_t i = 0;i < k;i++) {
-        res.u.coeffs[i].setCoeff(0, u);
+        res.u.coeffs[i].setCoeff(0, z);
         res.A.coeffs[i].setCoeff(i + 1, u);
     }
     res.u.coeffs[k].setCoeff(0, -u);
+    res.u.coeffs[0].setCoeff(0, u);
     return res;
 }
 
