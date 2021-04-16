@@ -1,4 +1,4 @@
-constexpr int PRIME_MODULO = 211;
+constexpr int PRIME_MODULO = 997;
 
 #include <fstream>
 #include <iostream>
@@ -110,7 +110,7 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
 
    RelationGenerator manager(&latex);
 
-   add_relation(manager, latex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2+maxi_sum*3);
+   add_relation(manager, latex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2+maxi_sum*10);
 
    for(int i_lambda = 0;i_lambda <= maxi_lambda;i_lambda++) {
    for(int i_tau = 0;i_tau <= maxi_tau;i_tau++) {
@@ -128,7 +128,8 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
       if ((i_phi > 0) && (i_sigma_1 > 0) && (i_mu > 0)) {
          continue; /* Avoid generating C-8: J_2µ == φσµ */
       }
-      if(i_lambda+i_tau+i_theta+i_phi+i_J_2+i_sigma_1+i_sigma_2+i_sigma_3+i_mu+i_zeta1 > 0) {
+      int sum_exponents = i_lambda+i_tau+i_theta+i_phi+i_J_2+i_sigma_1+i_sigma_2+i_sigma_3+i_mu+i_zeta1;
+      if((sum_exponents > 0) && (sum_exponents <= 6)) {
          int min_s = sum + 2;
          int max_s = min_s + max(0, maxi_sum);
          add_relation(manager, latex, i_lambda, i_tau, i_theta, i_phi, i_J_2,
