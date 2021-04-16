@@ -651,7 +651,9 @@ private:
             } else {
                 /* It matches if every variable has been instantiated and the remaining product equals 1 */
                 std::vector<Element> up, down;
+                Rational sum = 0;
                 for (const Element* element: instantiation.formula_elements) {
+                    sum += element->second;
                     if (is_positive(element->second)) {
                         up.push_back(*element);
                     } else {
@@ -663,11 +665,13 @@ private:
                 if ((up.size() == 0) || (down.size() == 0)) {
                     return false;
                 }
-                SymbolicInstantiation new_instantiation = SymbolicInstantiation(up, down);
-                new_instantiation.variables = instantiation.variables;
-                if (is_instance_of(new_instantiation, iincr(debug))) {
-                    /* Check if no new variable was introduced, i.e. there was no non-instantiated variable */
-                    return new_instantiation.variables.size() == instantiation.variables.size();
+                if (sum == Rational(0)) {
+                    SymbolicInstantiation new_instantiation = SymbolicInstantiation(up, down);
+                    new_instantiation.variables = instantiation.variables;
+                    if (is_instance_of(new_instantiation, iincr(debug))) {
+                        /* Check if no new variable was introduced, i.e. there was no non-instantiated variable */
+                        return new_instantiation.variables.size() == instantiation.variables.size();
+                    }
                 }
                 return false;
             }
