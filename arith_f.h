@@ -84,6 +84,8 @@ struct FArith {
         }
 
         size_t row = basis.coeffs[0].coeffs[0].first;
+		if(row == 0)
+			row = basis.coeffs[0].coeffs[1].first;
 
         Fraction<Univariate> bCoeff = basis.coeffs[0].getCoeff(A.nbCols());
         basis.coeffs[0].setCoeff(A.nbCols(), 0);
@@ -172,12 +174,28 @@ FArith mobius_k(size_t k) {
     };
 
     for(size_t i = 0;i < k;i++) {
-        res.u.coeffs[i].setCoeff(0, u);
         res.A.coeffs[i].setCoeff(i + 1, u);
     }
     res.u.coeffs[k].setCoeff(0, -u);
+    res.u.coeffs[0].setCoeff(0, u);
     return res;
 }
+
+FArith period_k(size_t k) {
+    FArith res = {
+        .A = FArithMatrix(k, k),
+        .u = FArithMatrix(k, 1)
+    };
+
+    for(size_t i = 0;i < k - 1;i++) {
+        res.A.coeffs[i].setCoeff(i + 1, u);
+    }
+    res.A.coeffs[k - 1].setCoeff(0, u);
+    
+    res.u.coeffs[0].setCoeff(0, u);
+    return res;
+}
+
 
 FArith mobius() {
     return mobius_k(1);
@@ -221,6 +239,21 @@ FArith sigma_k(size_t k) {
     return one() ^ pow(id(), k);
 }
 
+FArith sigma_prime_k(size_t k) {
+	return {
+        .A = FArithMatrix({
+            {z, Fraction<Univariate>(U, U + (U << k)), Fraction<Univariate>(U, U + (U << k)) },
+            {z, -(U << k), z},
+            {z, z, u}
+        }),
+        .u = FArithMatrix({
+            {u},
+            {- (U << (2 * k))},
+            {u}
+        })
+    };
+}
+
 FArith theta() {
     return pow(mobius(), 2) ^ one();
 }
@@ -258,4 +291,8 @@ FArith zeta_1() {
             {u}
         })
     };
+}
+
+FArith precompose_with_kth_power(FArith f, size_t k) {
+	return f * period_k(k);
 }

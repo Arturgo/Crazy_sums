@@ -353,3 +353,15 @@ template<typename T>
 bool normalFactorCanReduce(const Polynomial<T>& a) {
 	return a.size() > 1;
 }
+
+template<typename T>
+Polynomial<T> compose(Polynomial<T> a, Polynomial<T> b) {
+	Polynomial<T> sum;
+	Polynomial<T> puisB(1);
+	for (size_t iCoeff = 0;iCoeff < a.size();iCoeff++) {
+		sum += a.getCoeff_unsafe(iCoeff) * puisB;
+		puisB = puisB * b;
+	}
+	sum.reduce();
+	return sum;
+}
