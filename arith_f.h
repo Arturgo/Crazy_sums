@@ -320,6 +320,10 @@ FArith rho_k_s(size_t k, size_t s) {
 	return pow(id(), k) ^ nu_k(s);
 }
 
+FArith psi_k(size_t k) {
+	return pow(id(), k) ^ (mobius() * mobius());
+}
+
 FArith nb_divisors() {
     return tau(2);
 }
