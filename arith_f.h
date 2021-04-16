@@ -306,6 +306,21 @@ FArith beta_k(size_t k) {
 	return sigma_prime_k(k) * liouville();
 }
 
+FArith ksi_k(size_t k) {
+	FArith res = {
+        .A = FArithMatrix(k, k),
+        .u = FArithMatrix(k, 1)
+    };
+
+    for(size_t i = 0;i < k - 1;i++) {
+        res.A.coeffs[i].setCoeff(i + 1, u);
+        res.u.coeffs[i].setCoeff(0, u);
+    }
+    res.u.coeffs[k - 1].setCoeff(0, u);
+    
+    return res;
+}
+
 FArith nb_divisors() {
     return tau(2);
 }
