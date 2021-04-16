@@ -321,6 +321,10 @@ FArith ksi_k(size_t k) {
     return res;
 }
 
+FArith rho_k_s(size_t k, size_t s) {
+	return pow(id(), k) ^ nu_k(s);
+}
+
 FArith nb_divisors() {
     return tau(2);
 }
