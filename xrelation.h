@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 #include <unordered_map>
-#include <unordered_set>
+#include <set>
 #include <sstream>
 #include "print.h"
 
@@ -251,8 +251,8 @@ private:
     public:
         typedef std::unordered_map<std::string, SomeInt> assignment;
         assignment variables;
-        std::unordered_set<const Element*> relation_elements;
-        std::unordered_set<const Element*> formula_elements;
+        std::set<const Element*> relation_elements;
+        std::set<const Element*> formula_elements;
 
         SymbolicInstantiation(const std::vector<Element>& relation, const std::vector<Element>& formula) {
             for (auto& element: relation) {
@@ -674,8 +674,8 @@ private:
         }
         assert(instantiation.formula_elements.size() > 0);
 
-        for (auto rel_elem: instantiation.relation_elements) {
-            for (auto form_elem: instantiation.formula_elements) {
+        for (auto form_elem: instantiation.formula_elements) {
+            for (auto rel_elem: instantiation.relation_elements) {
                 SymbolicInstantiation new_instantiation = instantiation;
                 Rational rel_power;
                 if (try_instantiate_e(*rel_elem, *form_elem, new_instantiation, rel_power, iincr(debug))) {
@@ -878,14 +878,14 @@ private:
                 HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("h"), .l = 0}),
                 HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})
                 ), FormulaNode::Symbolic("s")), Rational(1)},
-            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
-            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-2*h")), Rational(-1)},
-            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-2*k")), Rational(-1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-2*h+-2*k")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-2*k")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-2*h")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(1)},
-            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-1*h")), Rational(1)},
-            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-1*k")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-1*h+-1*k")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-1*k")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-1*h")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-1*h+-1*k")), Rational(1)},
         };
         Relation formula = Relation(vect);
@@ -1158,73 +1158,76 @@ private:
     }
 
 public:
+
+    vector<relation_classifier> classifiers{
+        /*
+            * D formulae,
+            * from Gould, H. W., & Shonhiwa, T. (2008). A catalog of interesting Dirichlet series.
+            * Missouri Journal of Mathematical Sciences, 20(1), 2-18.
+            */
+
+        /* D-1 we won't find */
+        &Relation::check_D2,
+        &Relation::check_D3,
+        /* Check for D-4: handled in D-6 */
+        /* Check for D-5: handled in D-52 */
+        &Relation::check_D6,
+        /* D-7 & D-8 we won't find */
+        /* Check for D-9: this is D-18 */
+        &Relation::check_D10,
+        &Relation::check_D11,
+
+        /* ... */
+
+        /* Check for D-13: handled in D-15 */
+        /* D-14 we won't find */
+        &Relation::check_D15,
+        /* D-16 & D-17 we won't find */
+        &Relation::check_D18,
+        /* D-19 & D-20 we won't find */
+        &Relation::check_D21,
+
+        /* ... */
+
+        &Relation::check_D27,
+
+        /* ... */
+
+        &Relation::check_D46,
+        &Relation::check_D47,
+        /* D-48 we won't find */
+
+        /* ... */
+
+        &Relation::check_D50,
+
+        /* ... */
+
+        &Relation::check_D52,
+        &Relation::check_D53,
+        /* D-54 we won't find */
+
+        /* ... */
+
+        /* D-56 & D-57 we won't find */
+        &Relation::check_D58,
+        /* D-59 and later we won't find */
+
+        /*
+            * C formulae, found with CrazySums
+            */
+        &Relation::check_C1,
+        &Relation::check_C11,
+        &Relation::check_C13,
+        &Relation::check_C14,
+        &Relation::check_C15,
+        &Relation::check_C17,
+        &Relation::check_C18,
+        &Relation::check_C19,
+    };
+
+
     void classify() {
-        vector<relation_classifier> classifiers{
-            /*
-             * D formulae,
-             * from Gould, H. W., & Shonhiwa, T. (2008). A catalog of interesting Dirichlet series.
-             * Missouri Journal of Mathematical Sciences, 20(1), 2-18.
-             */
-
-            /* D-1 we won't find */
-            &Relation::check_D2,
-            &Relation::check_D3,
-            /* Check for D-4: handled in D-6 */
-            /* Check for D-5: handled in D-52 */
-            &Relation::check_D6,
-            /* D-7 & D-8 we won't find */
-            /* Check for D-9: this is D-18 */
-            &Relation::check_D10,
-            &Relation::check_D11,
-
-            /* ... */
-
-            /* Check for D-13: handled in D-15 */
-            /* D-14 we won't find */
-            &Relation::check_D15,
-            /* D-16 & D-17 we won't find */
-            &Relation::check_D18,
-            /* D-19 & D-20 we won't find */
-            &Relation::check_D21,
-
-            /* ... */
-
-            &Relation::check_D27,
-
-            /* ... */
-
-            &Relation::check_D46,
-            &Relation::check_D47,
-            /* D-48 we won't find */
-
-            /* ... */
-
-            &Relation::check_D50,
-
-            /* ... */
-
-            &Relation::check_D52,
-            &Relation::check_D53,
-            /* D-54 we won't find */
-
-            /* ... */
-
-            /* D-56 & D-57 we won't find */
-            &Relation::check_D58,
-            /* D-59 and later we won't find */
-
-            /*
-             * C formulae, found with CrazySums
-             */
-            &Relation::check_C1,
-            &Relation::check_C11,
-            &Relation::check_C13,
-            &Relation::check_C14,
-            &Relation::check_C15,
-            &Relation::check_C17,
-            &Relation::check_C18,
-            &Relation::check_C19,
-        };
 
         const RelationSummary summary(elements);
         #if DEBUG_TIME_CLASSIFY
@@ -1238,7 +1241,6 @@ public:
             if ((this->*classifier)(summary, found_formula)) {
                 known_formula = found_formula;
                 known = true;
-                return;
             }
             #if DEBUG_TIME_CLASSIFY
             auto t2 = std::chrono::high_resolution_clock::now();
@@ -1250,6 +1252,9 @@ public:
                 relation_time_classify_debug[classify_debug_idx] += e21;
             }
             classify_debug_idx++;
+            if (known) {
+                return;
+            }
             #endif /* DEBUG_TIME_CLASSIFY */
         }
     }
