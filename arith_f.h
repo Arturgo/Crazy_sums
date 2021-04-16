@@ -84,6 +84,8 @@ struct FArith {
         }
 
         size_t row = basis.coeffs[0].coeffs[0].first;
+		if(row == 0)
+			row = basis.coeffs[0].coeffs[1].first;
 
         Fraction<Univariate> bCoeff = basis.coeffs[0].getCoeff(A.nbCols());
         basis.coeffs[0].setCoeff(A.nbCols(), 0);
