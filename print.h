@@ -113,8 +113,11 @@ public:
         }
     };
 
-    enum LeafType { LEAF_MU, LEAF_SIGMA, LEAF_THETA, LEAF_ZETAK,
-                    LEAF_JORDAN_T, LEAF_LIOUVILLE, LEAF_NBDIVISORS, LEAF_UNKNOWN };
+    enum LeafType { LEAF_MU_K, LEAF_SIGMA, LEAF_THETA, LEAF_ZETAK,
+                    LEAF_JORDAN_T, LEAF_LIOUVILLE, LEAF_NBDIVISORS,
+                    LEAF_TAUK, LEAF_BETA_K, LEAF_KSI_K, LEAF_PSI_K,
+                    LEAF_UNKNOWN
+                };
     typedef struct LeafExtraArg {
         MaybeSymbolic k;
         MaybeSymbolic l;
@@ -138,8 +141,16 @@ protected:
             case LEAF_LIOUVILLE:
                 ret = (latex ? "\\lambda{}" : "λ");
                 break;
-            case LEAF_MU:
+            case LEAF_MU_K:
                 ret = (latex ? "\\mu{}" : "µ");
+                if (leaf_extra.k.is_symbolic()) {
+                    ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
+                } else {
+                    auto value = leaf_extra.k.extract_value();
+                    if (value != 1) {
+                        ret += "_" + std::to_string(value);
+                    }
+                }
                 break;
             case LEAF_SIGMA:
                 ret = (latex ? "\\sigma{}" : "σ");
@@ -174,6 +185,50 @@ protected:
                         ret = (latex ? "\\phi{}" : "φ");
                     } else {
                         ret = (latex ? "J" : "J");
+                        ret += "_" + std::to_string(value);
+                    }
+                }
+                break;
+            case LEAF_TAUK:
+                ret = (latex ? "\\tau" : "τ");
+                if (leaf_extra.k.is_symbolic()) {
+                    ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
+                } else {
+                    auto value = leaf_extra.k.extract_value();
+                    if (value != 1) {
+                        ret += "_" + std::to_string(value);
+                    }
+                }
+                break;
+            case LEAF_BETA_K:
+                ret = (latex ? "\\beta" : "β");
+                if (leaf_extra.k.is_symbolic()) {
+                    ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
+                } else {
+                    auto value = leaf_extra.k.extract_value();
+                    if (value != 1) {
+                        ret += "_" + std::to_string(value);
+                    }
+                }
+                break;
+            case LEAF_KSI_K:
+                ret = (latex ? "\\ksi" : "ξ");
+                if (leaf_extra.k.is_symbolic()) {
+                    ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
+                } else {
+                    auto value = leaf_extra.k.extract_value();
+                    if (value != 1) {
+                        ret += "_" + std::to_string(value);
+                    }
+                }
+                break;
+            case LEAF_PSI_K:
+                ret = (latex ? "\\psi" : "ψ");
+                if (leaf_extra.k.is_symbolic()) {
+                    ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
+                } else {
+                    auto value = leaf_extra.k.extract_value();
+                    if (value != 1) {
                         ret += "_" + std::to_string(value);
                     }
                 }
@@ -399,7 +454,7 @@ public:
     }
 
     bool isMu() const {
-        return isLeafOfType(LEAF_MU);
+        return isLeafOfType(LEAF_MU_K);
     }
 
     bool isSigma() const {
@@ -467,14 +522,14 @@ class NodeLeaf : public HFormula::Node
 {
 public:
     NodeLeaf(LeafType type) {
-        assert(type==LEAF_MU || type==LEAF_THETA || type==LEAF_LIOUVILLE || type==LEAF_NBDIVISORS);
+        assert(type==LEAF_THETA || type==LEAF_LIOUVILLE || type==LEAF_NBDIVISORS);
         formula_type = FORM_LEAF;
         leaf_type = type;
         leaf_extra = (Node::LeafExtraArg){.k = 0, .l = 0}; /* Force init to zero, helps comparison */
     }
 
     NodeLeaf(LeafType type, LeafExtraArg extra) {
-        assert(type==LEAF_SIGMA || type==LEAF_ZETAK || type==LEAF_JORDAN_T);
+        assert(type==LEAF_MU_K || type==LEAF_BETA_K || type==LEAF_SIGMA || type==LEAF_ZETAK || type==LEAF_JORDAN_T || type==LEAF_PSI_K || type==LEAF_TAUK || type==LEAF_KSI_K);
         formula_type = FORM_LEAF;
         leaf_type = type;
         leaf_extra = extra;

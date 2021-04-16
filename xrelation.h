@@ -401,7 +401,19 @@ private:
                 name = tmp[0];
             } else {
                 assert(tmp.size() == 2);
-                times = std::stoi(tmp[0]);
+                char c = tmp[0][0];
+                if ((c >= '0' && c <= '9') || c == '-') {
+                    times = std::stoi(tmp[0]);
+                } else {
+                    auto it = instantiation.variables.find(tmp[0]);
+                    if (it != instantiation.variables.end()) {
+                        times = (it->second);
+                    } else {
+                        /* We cannot instantiate more than one, bail out for now. Do better someday? */
+                        if (debug>=0) { cerr << string(debug, ' ') << __func__ << " I " KGRY "TMV" KRST << endl; }
+                        return false;
+                    }
+                }
                 name = tmp[1];
             }
 
@@ -727,19 +739,6 @@ private:
 
     typedef bool(Relation::*relation_classifier)(const RelationSummary&, string&);
 
-    bool check_D2(const RelationSummary& summary, string& out_name) {
-        std::string name = "D-2";
-        vector<pair<HFormula, Rational>> vect{
-            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(FormulaNode::LEAF_MU)), FormulaNode::Symbolic("s")), Rational(1)},
-            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(1)},
-        };
-        Relation formula = Relation(vect);
-        formula.classify_raw(name);
-        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
-        out_name = name;
-        return good;
-    }
-
     bool check_D3(const RelationSummary& summary, string& out_name) {
         std::string name = "D-3";
         vector<pair<HFormula, Rational>> vect{
@@ -779,7 +778,8 @@ private:
     bool check_D10(const RelationSummary& summary, string& out_name) {
         std::string name = "D-10";
         vector<pair<HFormula, Rational>> vect{
-            {HFormulaLFunction(HFormulaProduct(HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_MU), 2)), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaProduct(HFormulaPower(
+                HFormulaLeaf(FormulaNode::LEAF_MU_K, (FormulaNode::LeafExtraArg){.k = 1}), 2)), FormulaNode::Symbolic("s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(-1)},
         };
@@ -802,6 +802,13 @@ private:
         bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
         out_name = name;
         return good;
+    }
+
+    bool check_D12(const RelationSummary& summary, string& out_name) {
+
+        // TODO !
+
+        return false;
     }
 
     bool check_D15(const RelationSummary& summary, string& out_name) {
@@ -846,6 +853,71 @@ private:
                                FormulaNode::Symbolic("s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(2)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
+    bool check_D22(const RelationSummary& summary, string& out_name) {
+        std::string name = "D-22";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
+                FormulaNode::LEAF_MU_K, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("k*s")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        SymbolicInstantiation::assignment assignment;
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, &assignment, -1);
+        out_name = name;
+        if (assignment["k"] == 1) {
+            out_name = "D-2";
+        }
+        return good;
+    }
+
+    bool check_D24(const RelationSummary& summary, string& out_name) {
+        std::string name = "D-24";
+                vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
+                FormulaNode::LEAF_KSI_K, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("k*s")), Rational(-1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
+    bool check_D25(const RelationSummary& summary, string& out_name) {
+        std::string name = "D-25";
+                vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
+                FormulaNode::LEAF_BETA_K, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-k")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
+    bool check_D26(const RelationSummary& summary, string& out_name) {
+        std::string name = "D-26";
+                vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
+                FormulaNode::LEAF_PSI_K, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-k")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(-1)},
         };
         Relation formula = Relation(vect);
         formula.classify_raw(name);
@@ -1012,7 +1084,7 @@ private:
         vector<pair<HFormula, Rational>> vect{
             {HFormulaLFunction(HFormulaProduct(
                 HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0}),
-                HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_MU), 2)
+                HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_MU_K, (FormulaNode::LeafExtraArg){.k = 1}), 2)
                 ), FormulaNode::Symbolic("2*s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(-1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("3*s")), Rational(1)},
@@ -1029,7 +1101,7 @@ private:
         vector<pair<HFormula, Rational>> vect{
             {HFormulaLFunction(HFormulaProduct(
                 HFormulaLeaf(FormulaNode::LEAF_JORDAN_T, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0}),
-                HFormulaLeaf(FormulaNode::LEAF_MU)
+                HFormulaLeaf(FormulaNode::LEAF_MU_K, (FormulaNode::LeafExtraArg){.k = 1})
                 ), FormulaNode::Symbolic("2*s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("3*s")), Rational(-1)},
@@ -1171,7 +1243,7 @@ public:
             */
 
         /* D-1 we won't find */
-        &Relation::check_D2,
+        /* Check for D-2: handled in D-22 */
         &Relation::check_D3,
         /* Check for D-4: handled in D-6 */
         /* Check for D-5: handled in D-52 */
@@ -1180,8 +1252,7 @@ public:
         /* Check for D-9: this is D-18 */
         &Relation::check_D10,
         &Relation::check_D11,
-
-        /* ... */
+        &Relation::check_D12,
 
         /* Check for D-13: handled in D-15 */
         /* D-14 we won't find */
@@ -1190,9 +1261,12 @@ public:
         &Relation::check_D18,
         /* D-19 & D-20 we won't find */
         &Relation::check_D21,
+        &Relation::check_D22,
 
         /* ... */
-
+        &Relation::check_D24,
+        &Relation::check_D25,
+        &Relation::check_D26,
         &Relation::check_D27,
 
         /* ... */
