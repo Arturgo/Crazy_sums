@@ -181,7 +181,7 @@ FArith mobius_k(size_t k) {
     return res;
 }
 
-FArith period_k(size_t k) {
+FArith nu_k(size_t k) {
     FArith res = {
         .A = FArithMatrix(k, k),
         .u = FArithMatrix(k, 1)
@@ -326,5 +326,5 @@ FArith nb_divisors() {
 }
 
 FArith precompose_with_kth_power(FArith f, size_t k) {
-	return f * period_k(k);
+	return f * nu_k(k);
 }
