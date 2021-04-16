@@ -9,6 +9,12 @@ OPT := -O3 -flto
 ifndef CXX_TOOL
 CXX_TOOL := g++
 endif
+ifeq ($(CXX_TOOL), g++)
+	LFLAGS += -lstdc++fs
+endif
+ifeq ($(CXX_TOOL), clang)
+	LFLAGS += -lstdc++
+endif
 
 all: build run
 
@@ -17,7 +23,7 @@ build: $(BIN)
 -include $(BIN).d
 
 $(BIN): main.cpp Makefile
-	$(CXX_TOOL) -o "$@" $< -Wall -Wextra -std=c++17 $(OPT) -march=native -lstdc++fs -lpthread -MMD -g \
+	$(CXX_TOOL) -o "$@" $< -Wall -Wextra -std=c++17 $(OPT) -march=native $(LFLAGS) -lpthread -MMD -g \
 	    ${EXTRA} $(GPROF) -DHAS_COLOR \
 
 run:
