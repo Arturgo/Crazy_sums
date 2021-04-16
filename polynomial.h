@@ -35,7 +35,7 @@ bool operator < (const Polynomial<T>& a, const Polynomial<T>& b) {
 	if(a.size() != b.size())
 		return a.size() < b.size();
 
-	for(ssize_t iCoeff = a.size()-1;iCoeff >= 0;iCoeff--) {
+	for(ssize_t iCoeff = a.size() - 1;iCoeff >= 0;iCoeff--) {
 		if(a.getCoeff(iCoeff) == b.getCoeff(iCoeff))
 			continue;
 		return a.getCoeff(iCoeff) < b.getCoeff(iCoeff);
