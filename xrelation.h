@@ -946,6 +946,36 @@ private:
         return good;
     }
 
+    bool check_D28(const RelationSummary& summary, string& out_name) {
+        std::string name = "D-28";
+                vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
+                FormulaNode::LEAF_NU_K, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("k*s")), Rational(-1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
+
+    bool check_D30(const RelationSummary& summary, string& out_name) {
+        std::string name = "D-30";
+                vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
+                FormulaNode::LEAF_RHO_K_T, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = FormulaNode::Symbolic("t")})), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-k")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("t*s")), Rational(-1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
     bool check_D46(const RelationSummary& summary, string& out_name) {
         std::string name = "D-46";
         vector<pair<HFormula, Rational>> vect{
@@ -1262,12 +1292,14 @@ public:
         /* D-19 & D-20 we won't find */
         &Relation::check_D21,
         &Relation::check_D22,
-
-        /* ... */
+        /* D-23 PHI_K not implemented */
         &Relation::check_D24,
         &Relation::check_D25,
         &Relation::check_D26,
         &Relation::check_D27,
+        &Relation::check_D28,
+        /* D-29 form is not handle by checker */
+        &Relation::check_D30,
 
         /* ... */
 
