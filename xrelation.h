@@ -779,7 +779,7 @@ private:
         std::string name = "D-10";
         vector<pair<HFormula, Rational>> vect{
             {HFormulaLFunction(HFormulaProduct(HFormulaPower(
-                HFormulaLeaf(FormulaNode::LEAF_MU_K, (FormulaNode::LeafExtraArg){.k = 1}), 2)), FormulaNode::Symbolic("s")), Rational(1)},
+                HFormulaLeaf(FormulaNode::LEAF_MU_K, (FormulaNode::LeafExtraArg){.k = 1, .l = 0}), 2)), FormulaNode::Symbolic("s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(-1)},
         };
@@ -1152,7 +1152,7 @@ private:
         vector<pair<HFormula, Rational>> vect{
             {HFormulaLFunction(HFormulaProduct(
                 HFormulaLeaf(FormulaNode::LEAF_SIGMA, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0}),
-                HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_MU_K, (FormulaNode::LeafExtraArg){.k = 1}), 2)
+                HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_MU_K, (FormulaNode::LeafExtraArg){.k = 1, .l = 0}), 2)
                 ), FormulaNode::Symbolic("2*s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(-1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("3*s")), Rational(1)},
@@ -1169,7 +1169,7 @@ private:
         vector<pair<HFormula, Rational>> vect{
             {HFormulaLFunction(HFormulaProduct(
                 HFormulaLeaf(FormulaNode::LEAF_JORDAN_T, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("s"), .l = 0}),
-                HFormulaLeaf(FormulaNode::LEAF_MU_K, (FormulaNode::LeafExtraArg){.k = 1})
+                HFormulaLeaf(FormulaNode::LEAF_MU_K, (FormulaNode::LeafExtraArg){.k = 1, .l = 0})
                 ), FormulaNode::Symbolic("2*s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("3*s")), Rational(-1)},
