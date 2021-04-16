@@ -42,7 +42,11 @@ MatrixRow<T>::MatrixRow(vector<T> _coeffs) {
 
 template<typename T>
 MatrixRow<T>::MatrixRow(vector<pair<size_t, T>> _coeffs) {
-   coeffs = _coeffs;
+	for(size_t i = 0; i < _coeffs.size(); i++) {
+      if (!is_zero(_coeffs[i].second)) {
+         coeffs.push_back(_coeffs[i]);
+      }
+   }
 }
 
 template<typename T>
@@ -446,20 +450,9 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
    Matrix<T> id = identity<T>(mat.nbRows());
 
 	for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
-		bool is_zero = true;
-		size_t col;
-		
-		for(pair<size_t, T> coeff : mat.coeffs[iRow].coeffs) {
-			if(coeff.second != T(0)) {
-				col = coeff.first;
-				is_zero = false;
-				break;
-			}
-		}
-		
-		if(is_zero) {
+		if(mat.coeffs[iRow].coeffs.empty())
 			continue;
-		}
+		size_t col = mat.coeffs[iRow].coeffs[0].first;
 		
 		id.coeffs[iRow] *= inverse(mat.coeffs[iRow].getCoeff(col));
   		mat.coeffs[iRow] *= inverse(mat.coeffs[iRow].getCoeff(col));
