@@ -301,11 +301,6 @@ FArith tau(size_t k) {
 	return res;
 }
 
-// Inutile ?
-FArith beta_k(size_t k) {
-	return sigma_prime_k(k) * liouville();
-}
-
 FArith ksi_k(size_t k) {
 	FArith res = {
         .A = FArithMatrix(k, k),
@@ -327,6 +322,14 @@ FArith rho_k_s(size_t k, size_t s) {
 
 FArith nb_divisors() {
     return tau(2);
+}
+
+/********************************************************
+ *                Useless functions                     *
+ ********************************************************/
+ 
+FArith beta_k(size_t k) {
+	return sigma_prime_k(k) * liouville();
 }
 
 FArith precompose_with_kth_power(FArith f, size_t k) {
