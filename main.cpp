@@ -49,7 +49,7 @@ static void add_relation(RelationGenerator &manager, Latex& latex,
    ;
 
    auto t2 = std::chrono::high_resolution_clock::now();
-   std::chrono::duration<float> elapsed = t2 - t1;
+   std::chrono::duration<float> initial_elapsed = t2 - t1;
 
    HFormula name = HFormulaOne(); /* https://youtu.be/i8knduidWCw */
    name = name_append_component(name, FormulaNode::LEAF_LIOUVILLE, i_lambda);
@@ -73,10 +73,12 @@ static void add_relation(RelationGenerator &manager, Latex& latex,
       manager.addFraction(fname, frac);
 
       if (1) {
-         elapsed += t4 - t3;
+         std::chrono::duration<float>  elapsed = t4 - t3;
+         if (s == min_s) {
+             elapsed += initial_elapsed;
+         }
          cout << KBLD << fname << KRST
               << KGRY "   [" << fformula.A.nbCols() << "]  (" << elapsed.count() << "s)" KRST << endl;
-         elapsed -= elapsed;
       }
       if (0) {
          cout << frac << endl;

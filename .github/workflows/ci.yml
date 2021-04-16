@@ -12,5 +12,12 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: make build
+    - name: Build with g++
       run: make build
+      env:
+        EXTRA: -Werror
+    - name: Build with clang
+      run: make build
+      env:
+        EXTRA: -Werror
+        CXX_TOOL: clang

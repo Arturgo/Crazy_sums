@@ -1,7 +1,14 @@
+MAKEFLAGS += --no-builtin-rules --no-builtin-variables
+.SUFFIXES:
+
 BIN := crazysums
 #GPROF := -pg
 OPT := -O3 -flto
 #OPT := -O2
+
+ifndef CXX_TOOL
+CXX_TOOL := g++
+endif
 
 all: build run
 
@@ -10,7 +17,7 @@ build: $(BIN)
 -include $(BIN).d
 
 $(BIN): main.cpp Makefile
-	g++ -o "$@" $< -Wall -Wextra -std=c++17 $(OPT) -march=native -lstdc++fs -lpthread -MMD -g \
+	$(CXX_TOOL) -o "$@" $< -Wall -Wextra -std=c++17 $(OPT) -march=native -lstdc++fs -lpthread -MMD -g \
 	    ${EXTRA} $(GPROF) -DHAS_COLOR \
 
 run:
