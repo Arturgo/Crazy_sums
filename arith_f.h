@@ -258,26 +258,13 @@ FArith theta() {
     return pow(mobius(), 2) ^ one();
 }
 
-FArith nb_divisors() {
-    return {
-        .A = FArithMatrix({
-            {u, u},
-            {z, u},
-        }),
-        .u = FArithMatrix({
-            {u},
-            {u},
-        })
-    };
-}
-
 FArith liouville() {
     return {
         .A = FArithMatrix({
             {-u}
         }),
         .u = FArithMatrix({
-            {-u}
+            {u}
         })
     };
 }
@@ -291,6 +278,36 @@ FArith zeta_1() {
             {u}
         })
     };
+}
+
+FArith simple_factor(size_t k) {
+	return {
+        .A = FArithMatrix({
+            {u, u},
+            {z, u},
+        }),
+        .u = FArithMatrix({
+            {u},
+            {Fraction<Univariate>(1, k)},
+        })
+    };
+}
+
+FArith tau(size_t k) {
+	FArith res = one();
+	for(size_t i = 1;i < k;i++) {
+		res = res * simple_factor(i);
+	}
+	return res;
+}
+
+// Inutile ?
+FArith beta_k(size_t k) {
+	return sigma_prime_k(k) * liouville();
+}
+
+FArith nb_divisors() {
+    return tau(2);
 }
 
 FArith precompose_with_kth_power(FArith f, size_t k) {
