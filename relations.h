@@ -283,6 +283,8 @@ void RelationGenerator::printRelations() {
 
    auto t3 = std::chrono::high_resolution_clock::now();
    //Matrix<Rational> relations = row_echelon_form(kernel_basis(decompositions));
+   
+   decompositions = prepare_matrix(decompositions);
    Matrix<Rational> rows = kernel_basis(decompositions);
    auto t4 = std::chrono::high_resolution_clock::now();
 

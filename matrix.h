@@ -439,56 +439,34 @@ Matrix<T> magic_op(const Matrix<T>& a, const Matrix<T>& b) {
 template<typename T>
 Matrix<T> kernel_basis(Matrix<T> mat) {
    /* We use Gaussian Elimination */
-
    Matrix<T> id = identity<T>(mat.nbRows());
 
-   size_t rowStart = 0;
-   for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
-      if(rowStart >= mat.nbRows()) break;
-
-      size_t non_zero = rowStart;
-      for(size_t iRow = rowStart;iRow < mat.nbRows();iRow++) {
-         if(!is_zero(mat.coeffs[iRow].getCoeff(iCol))) {
-            non_zero = iRow;
-         }
-      }
-
-      swap(mat.coeffs[rowStart], mat.coeffs[non_zero]);
-      swap(id.coeffs[rowStart], id.coeffs[non_zero]);
-
-      if(is_zero(mat.coeffs[rowStart].getCoeff(iCol))) {
-         continue;
-      }
-
-      id.coeffs[rowStart] *= inverse(mat.coeffs[rowStart].getCoeff(iCol));
-      mat.coeffs[rowStart] *= inverse(mat.coeffs[rowStart].getCoeff(iCol));
-
-      for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
-         if(iRow == rowStart) continue;
-         if(!is_zero(mat.coeffs[iRow].getCoeff(iCol))) {
-            id.coeffs[iRow] = id.coeffs[iRow] - mat.coeffs[iRow].getCoeff(iCol) * id.coeffs[rowStart];
-            mat.coeffs[iRow] = mat.coeffs[iRow] - mat.coeffs[iRow].getCoeff(iCol) * mat.coeffs[rowStart];
-         }
-      }
-
-      rowStart++;
-   }
-
+	for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
+		if(mat.coeffs[iRow].size() == 0) {
+			continue;
+		}
+		
+		size_t col = mat.coeffs[iRow].coeffs[0].first;
+		id.coeffs[iRow] *= inverse(mat.coeffs[iRow].getCoeff(col));
+  		mat.coeffs[iRow] *= inverse(mat.coeffs[iRow].getCoeff(col));
+		
+		for(size_t nRow = iRow + 1;nRow < mat.nbRows();nRow++) {
+			if(!is_zero(mat.coeffs[nRow].getCoeff(col))) {
+		  		id.coeffs[nRow] = id.coeffs[nRow] - mat.coeffs[nRow].getCoeff(col) * id.coeffs[iRow];
+		      mat.coeffs[nRow] = mat.coeffs[nRow] - mat.coeffs[nRow].getCoeff(col) * mat.coeffs[iRow];
+		   }
+		}
+	}
+	
    Matrix<T> basis(0, 0);
 
    for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
-      bool is_row_zero = true;
-
-      for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
-         is_row_zero &= is_zero(mat.coeffs[iRow].getCoeff(iCol));
-      }
-
-      if(is_row_zero) {
+      if(mat.coeffs[iRow].coeffs.empty()) {
          basis.coeffs.push_back(id.coeffs[iRow]);
       }
    }
    basis.actualizeNCols();
-
+   
    return basis;
 }
 
@@ -523,6 +501,17 @@ Matrix<T> inverse(Matrix<T> mat) {
       }
    }
    return id;
+}
+
+template<typename T>
+Matrix<T> prepare_matrix(Matrix<T> mat) {
+	mat = transpose(mat);
+	
+	sort(mat.coeffs.begin(), mat.coeffs.end(), [](const MatrixRow<T>& a, const MatrixRow<T>& b) {
+		return a.coeffs.size() > b.coeffs.size();
+	});
+	
+	return transpose(mat);
 }
 
 #if 0 /* UNUSED BUT SHOULD KEEP */
