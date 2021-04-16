@@ -20,9 +20,13 @@ public:
    T getCoeff(size_t num_col) const;
 
    void operator *= (const T& a) {
-      for (size_t index = 0; index < coeffs.size(); index++) {
-         coeffs[index].second = a * coeffs[index].second;
-      }
+   	if(a == T(0))
+   		coeffs.clear();
+   	else {
+		   for (size_t index = 0; index < coeffs.size(); index++) {
+		      coeffs[index].second = a * coeffs[index].second;
+		   }
+		}
    }
 
 };
@@ -442,16 +446,26 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
    Matrix<T> id = identity<T>(mat.nbRows());
 
 	for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
-		if(mat.coeffs[iRow].size() == 0) {
+		bool is_zero = true;
+		size_t col;
+		
+		for(pair<size_t, T> coeff : mat.coeffs[iRow].coeffs) {
+			if(coeff.second != T(0)) {
+				col = coeff.first;
+				is_zero = false;
+				break;
+			}
+		}
+		
+		if(is_zero) {
 			continue;
 		}
 		
-		size_t col = mat.coeffs[iRow].coeffs[0].first;
 		id.coeffs[iRow] *= inverse(mat.coeffs[iRow].getCoeff(col));
   		mat.coeffs[iRow] *= inverse(mat.coeffs[iRow].getCoeff(col));
 		
 		for(size_t nRow = iRow + 1;nRow < mat.nbRows();nRow++) {
-			if(!is_zero(mat.coeffs[nRow].getCoeff(col))) {
+			if(mat.coeffs[nRow].getCoeff(col) != T(0)) {
 		  		id.coeffs[nRow] = id.coeffs[nRow] - mat.coeffs[nRow].getCoeff(col) * id.coeffs[iRow];
 		      mat.coeffs[nRow] = mat.coeffs[nRow] - mat.coeffs[nRow].getCoeff(col) * mat.coeffs[iRow];
 		   }
