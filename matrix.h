@@ -20,13 +20,13 @@ public:
    T getCoeff(size_t num_col) const;
 
    void operator *= (const T& a) {
-   	if(a == T(0))
-   		coeffs.clear();
-   	else {
-		   for (size_t index = 0; index < coeffs.size(); index++) {
-		      coeffs[index].second = a * coeffs[index].second;
-		   }
-		}
+      if(a == T(0))
+         coeffs.clear();
+      else {
+         for (size_t index = 0; index < coeffs.size(); index++) {
+            coeffs[index].second = a * coeffs[index].second;
+         }
+      }
    }
 
 };
@@ -42,7 +42,7 @@ MatrixRow<T>::MatrixRow(vector<T> _coeffs) {
 
 template<typename T>
 MatrixRow<T>::MatrixRow(vector<pair<size_t, T>> _coeffs) {
-	for(size_t i = 0; i < _coeffs.size(); i++) {
+   for(size_t i = 0; i < _coeffs.size(); i++) {
       if (!is_zero(_coeffs[i].second)) {
          coeffs.push_back(_coeffs[i]);
       }
@@ -449,22 +449,22 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
    /* We use Gaussian Elimination */
    Matrix<T> id = identity<T>(mat.nbRows());
 
-	for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
-		if(mat.coeffs[iRow].coeffs.empty())
-			continue;
-		size_t col = mat.coeffs[iRow].coeffs[0].first;
-		
-		id.coeffs[iRow] *= inverse(mat.coeffs[iRow].getCoeff(col));
-  		mat.coeffs[iRow] *= inverse(mat.coeffs[iRow].getCoeff(col));
-		
-		for(size_t nRow = iRow + 1;nRow < mat.nbRows();nRow++) {
-			if(mat.coeffs[nRow].getCoeff(col) != T(0)) {
-		  		id.coeffs[nRow] = id.coeffs[nRow] - mat.coeffs[nRow].getCoeff(col) * id.coeffs[iRow];
-		      mat.coeffs[nRow] = mat.coeffs[nRow] - mat.coeffs[nRow].getCoeff(col) * mat.coeffs[iRow];
-		   }
-		}
-	}
-	
+   for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
+      if(mat.coeffs[iRow].coeffs.empty())
+         continue;
+      size_t col = mat.coeffs[iRow].coeffs[0].first;
+
+      id.coeffs[iRow] *= inverse(mat.coeffs[iRow].getCoeff(col));
+        mat.coeffs[iRow] *= inverse(mat.coeffs[iRow].getCoeff(col));
+
+      for(size_t nRow = iRow + 1;nRow < mat.nbRows();nRow++) {
+         if(!is_zero(mat.coeffs[nRow].getCoeff(col))) {
+              id.coeffs[nRow] = id.coeffs[nRow] - mat.coeffs[nRow].getCoeff(col) * id.coeffs[iRow];
+            mat.coeffs[nRow] = mat.coeffs[nRow] - mat.coeffs[nRow].getCoeff(col) * mat.coeffs[iRow];
+         }
+      }
+   }
+
    Matrix<T> basis(0, 0);
 
    for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
@@ -473,7 +473,7 @@ Matrix<T> kernel_basis(Matrix<T> mat) {
       }
    }
    basis.actualizeNCols();
-   
+
    return basis;
 }
 
@@ -512,13 +512,13 @@ Matrix<T> inverse(Matrix<T> mat) {
 
 template<typename T>
 Matrix<T> prepare_matrix(Matrix<T> mat) {
-	mat = transpose(mat);
-	
-	sort(mat.coeffs.begin(), mat.coeffs.end(), [](const MatrixRow<T>& a, const MatrixRow<T>& b) {
-		return a.coeffs.size() > b.coeffs.size();
-	});
-	
-	return transpose(mat);
+   mat = transpose(mat);
+
+   sort(mat.coeffs.begin(), mat.coeffs.end(), [](const MatrixRow<T>& a, const MatrixRow<T>& b) {
+      return a.coeffs.size() > b.coeffs.size();
+   });
+
+   return transpose(mat);
 }
 
 #if 0 /* UNUSED BUT SHOULD KEEP */

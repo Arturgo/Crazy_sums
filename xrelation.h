@@ -805,7 +805,8 @@ private:
     }
 
     bool check_D12(const RelationSummary& summary, string& out_name) {
-
+        (void) summary;
+        (void) out_name;
         // TODO !
 
         return false;
@@ -1385,8 +1386,6 @@ private:
         return good;
     }
 
-public:
-
     vector<relation_classifier> classifiers{
         /*
             * D formulae,
@@ -1405,7 +1404,6 @@ public:
         &Relation::check_D10,
         &Relation::check_D11,
         &Relation::check_D12,
-
         /* Check for D-13: handled in D-15 */
         /* D-14 we won't find */
         &Relation::check_D15,
@@ -1414,7 +1412,7 @@ public:
         /* D-19 & D-20 we won't find */
         &Relation::check_D21,
         &Relation::check_D22, // TODO !
-        /* D-23 PHI_K not implemented */
+        /* D-23 TODO: PHI_K not implemented */
         &Relation::check_D24,
         &Relation::check_D25,
         &Relation::check_D26,
@@ -1467,9 +1465,8 @@ public:
         &Relation::check_C19,
     };
 
-
+public:
     void classify() {
-
         const RelationSummary summary(elements);
         #if DEBUG_TIME_CLASSIFY
         size_t classify_debug_idx = 0;

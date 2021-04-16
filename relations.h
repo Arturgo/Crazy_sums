@@ -282,23 +282,16 @@ void RelationGenerator::printRelations() {
         << KGRY << " (" << e21.count() << "s)" KRST << endl;
 
    auto t3 = std::chrono::high_resolution_clock::now();
-   //Matrix<Rational> relations = row_echelon_form(kernel_basis(decompositions));
-   
    decompositions = prepare_matrix(decompositions);
-   Matrix<Rational> rows = kernel_basis(decompositions);
+   Matrix<Rational> relations_matrix = kernel_basis(decompositions);
    auto t4 = std::chrono::high_resolution_clock::now();
 
    std::chrono::duration<float> e43 = t4 - t3;
-   cerr << "Relations computed. " << "Size: " << rows.nbRows() << " * " << rows.nbCols()
+   cerr << "Relations computed. " << "Size: " << relations_matrix.nbRows()<< " * " << relations_matrix.nbCols()
         << KGRY << " (" << e43.count() << "s)" KRST << endl;
 
-   cerr << "Simplifying.." << endl;
-   //Matrix<Rational> relations_matrix = LLL(rows, Rational(3) / Rational(4));
-   //Matrix<Rational> relations_matrix = row_echelon_form(rows);
-   Matrix<Rational> relations_matrix = rows;
 
    vector<Relation> relations;
-
    for(const auto& relation_row : relations_matrix.coeffs) {
       relations.push_back(Relation(relation_row.coeffs, names));
    }

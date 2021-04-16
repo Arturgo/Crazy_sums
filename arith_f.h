@@ -58,15 +58,15 @@ struct FArith {
 
     void simplify() {
         for(size_t iCol = 1;iCol < A.nbCols();iCol++) {
-            bool is_zero = true;
+            bool is_col_zero = true;
 
-            for(size_t iRow = 0;is_zero && iRow < A.nbRows();iRow++) {
-                if(iRow != iCol && A.coeffs[iRow].getCoeff(iCol).getNumerator().size() != 0) {
-                    is_zero = false;
+            for(size_t iRow = 0;is_col_zero && iRow < A.nbRows();iRow++) {
+                if(iRow != iCol && !is_zero(A.coeffs[iRow].getCoeff(iCol))) {
+                    is_col_zero = false;
                 }
             }
 
-            if(is_zero) {
+            if(is_col_zero) {
                 remove_row(iCol);
                 simplify();
                 return;
@@ -84,8 +84,8 @@ struct FArith {
         }
 
         size_t row = basis.coeffs[0].coeffs[0].first;
-		if(row == 0)
-			row = basis.coeffs[0].coeffs[1].first;
+        if(row == 0)
+            row = basis.coeffs[0].coeffs[1].first;
 
         Fraction<Univariate> bCoeff = basis.coeffs[0].getCoeff(A.nbCols());
         basis.coeffs[0].setCoeff(A.nbCols(), 0);
@@ -191,7 +191,7 @@ FArith nu_k(size_t k) {
         res.A.coeffs[i].setCoeff(i + 1, u);
     }
     res.A.coeffs[k - 1].setCoeff(0, u);
-    
+
     res.u.coeffs[0].setCoeff(0, u);
     return res;
 }
@@ -240,7 +240,7 @@ FArith sigma_k(size_t k) {
 }
 
 FArith sigma_prime_k(size_t k) {
-	return {
+    return {
         .A = FArithMatrix({
             {z, Fraction<Univariate>(U, U + (U << k)), Fraction<Univariate>(U, U + (U << k)) },
             {z, -(U << k), z},
@@ -281,7 +281,7 @@ FArith zeta_1() {
 }
 
 FArith simple_factor(size_t k) {
-	return {
+    return {
         .A = FArithMatrix({
             {u, u},
             {z, u},
@@ -294,15 +294,15 @@ FArith simple_factor(size_t k) {
 }
 
 FArith tau(size_t k) {
-	FArith res = one();
-	for(size_t i = 1;i < k;i++) {
-		res = res * simple_factor(i);
-	}
-	return res;
+    FArith res = one();
+    for(size_t i = 1;i < k;i++) {
+        res = res * simple_factor(i);
+    }
+    return res;
 }
 
 FArith ksi_k(size_t k) {
-	FArith res = {
+    FArith res = {
         .A = FArithMatrix(k, k),
         .u = FArithMatrix(k, 1)
     };
@@ -312,16 +312,16 @@ FArith ksi_k(size_t k) {
         res.u.coeffs[i].setCoeff(0, u);
     }
     res.u.coeffs[k - 1].setCoeff(0, u);
-    
+
     return res;
 }
 
 FArith rho_k_s(size_t k, size_t s) {
-	return pow(id(), k) ^ nu_k(s);
+    return pow(id(), k) ^ nu_k(s);
 }
 
 FArith psi_k(size_t k) {
-	return pow(id(), k) ^ (mobius() * mobius());
+    return pow(id(), k) ^ (mobius() * mobius());
 }
 
 FArith nb_divisors() {
@@ -331,11 +331,11 @@ FArith nb_divisors() {
 /********************************************************
  *                Useless functions                     *
  ********************************************************/
- 
+
 FArith beta_k(size_t k) {
-	return sigma_prime_k(k) * liouville();
+    return sigma_prime_k(k) * liouville();
 }
 
 FArith precompose_with_kth_power(FArith f, size_t k) {
-	return f * nu_k(k);
+    return f * nu_k(k);
 }

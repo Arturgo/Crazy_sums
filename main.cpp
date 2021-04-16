@@ -94,15 +94,15 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    z = Fraction<Univariate>(Z);
    Latex latex;
 
-   int maxi_lambda = 0;
-   int maxi_tau = 0;
+   int maxi_lambda = 1;
+   int maxi_tau = 1;
    int maxi_theta = 0;
    int maxi_phi = 1;
    int maxi_J_2 = 0;
-   int maxi_sigma_1 = 0;
-   int maxi_sigma_2 = 0;
-   int maxi_sigma_3 = 0;
-   int maxi_mu = 2;
+   int maxi_sigma_1 = 2;
+   int maxi_sigma_2 = 1;
+   int maxi_sigma_3 = 1;
+   int maxi_mu = 0;
    int maxi_zeta1 = 0;
    int maxi_sum = 8;
 
