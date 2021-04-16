@@ -60,7 +60,7 @@ static void add_relation(RelationGenerator &manager, Latex& latex,
    name = name_append_component(name, FormulaNode::LEAF_SIGMA, 1, i_sigma_1);
    name = name_append_component(name, FormulaNode::LEAF_SIGMA, 2, i_sigma_2);
    name = name_append_component(name, FormulaNode::LEAF_SIGMA, 3, i_sigma_3);
-   name = name_append_component(name, FormulaNode::LEAF_MU, i_mu);
+   name = name_append_component(name, FormulaNode::LEAF_MU_K, 1, i_mu);
    name = name_append_component(name, FormulaNode::LEAF_ZETAK, i_zeta1, ((i_zeta1 > 0) ? 1 : 0));
 
    for (int s=min_s; s<=max_s; s++) {
@@ -94,15 +94,15 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
    z = Fraction<Univariate>(Z);
    Latex latex;
 
-   int maxi_lambda = 1;
-   int maxi_tau = 1;
+   int maxi_lambda = 0;
+   int maxi_tau = 0;
    int maxi_theta = 0;
    int maxi_phi = 1;
    int maxi_J_2 = 0;
-   int maxi_sigma_1 = 2;
-   int maxi_sigma_2 = 1;
-   int maxi_sigma_3 = 1;
-   int maxi_mu = 0;
+   int maxi_sigma_1 = 0;
+   int maxi_sigma_2 = 0;
+   int maxi_sigma_3 = 0;
+   int maxi_mu = 2;
    int maxi_zeta1 = 0;
    int maxi_sum = 8;
 

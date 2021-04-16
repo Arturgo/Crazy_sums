@@ -116,7 +116,7 @@ public:
     enum LeafType { LEAF_MU_K, LEAF_SIGMA, LEAF_THETA, LEAF_ZETAK,
                     LEAF_JORDAN_T, LEAF_LIOUVILLE, LEAF_NBDIVISORS,
                     LEAF_TAUK, LEAF_BETA_K, LEAF_KSI_K, LEAF_PSI_K,
-                    LEAF_NU_K, LEAF_RHO_K_T,
+                    LEAF_NU_K, LEAF_RHO_K_T, LEAF_SIGMA_PRIM_K,
                     LEAF_UNKNOWN
                 };
     typedef struct LeafExtraArg {
@@ -155,6 +155,17 @@ protected:
                 break;
             case LEAF_SIGMA:
                 ret = (latex ? "\\sigma{}" : "σ");
+                if (leaf_extra.k.is_symbolic()) {
+                    ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
+                } else {
+                    auto value = leaf_extra.k.extract_value();
+                    if (value != 1) {
+                        ret += "_" + std::to_string(value);
+                    }
+                }
+                break;
+            case LEAF_SIGMA_PRIM_K:
+                ret = (latex ? "\\sigma{}'" : "σ'");
                 if (leaf_extra.k.is_symbolic()) {
                     ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
                 } else {
@@ -559,7 +570,8 @@ public:
 
     NodeLeaf(LeafType type, LeafExtraArg extra) {
         assert(type==LEAF_MU_K || type==LEAF_BETA_K || type==LEAF_SIGMA || type==LEAF_ZETAK || type==LEAF_JORDAN_T
-                || type==LEAF_PSI_K || type==LEAF_TAUK || type==LEAF_KSI_K || type==LEAF_NU_K || type==LEAF_RHO_K_T);
+                || type==LEAF_PSI_K || type==LEAF_TAUK || type==LEAF_KSI_K || type==LEAF_NU_K || type==LEAF_RHO_K_T
+                || type==LEAF_SIGMA_PRIM_K);
         formula_type = FORM_LEAF;
         leaf_type = type;
         leaf_extra = extra;
