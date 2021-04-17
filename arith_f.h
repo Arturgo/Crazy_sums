@@ -327,6 +327,17 @@ FArith psi_k(size_t k) {
     return pow(id(), k) ^ (mobius() * mobius());
 }
 
+FArith precompose_with_kth_power(FArith f, size_t k) {
+	FArithMatrix A = f.A;
+	for(size_t i = 0;i < k - 1;i++) {
+		A = A * f.A;
+	}
+    return {
+		.A = A,
+		.u = f.u
+    };
+}
+
 /********************************************************
  *                Useless functions                     *
  ********************************************************/
@@ -337,6 +348,4 @@ FArith beta_k(size_t k) {
 }
 
 /* We use directly nu_k */
-FArith precompose_with_kth_power(FArith f, size_t k) {
-    return f * nu_k(k);
-}
+
