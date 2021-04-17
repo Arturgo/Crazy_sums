@@ -1253,7 +1253,9 @@ private:
     bool check_D53(const RelationSummary& summary, string& out_name) {
         std::string name = "D-53";
         vector<pair<HFormula, Rational>> vect{
-            {HFormulaLFunction(HFormulaProduct(HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_LIOUVILLE), 1)), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaPower(HFormulaLeaf(FormulaNode::LEAF_LIOUVILLE), 1)),
+                FormulaNode::Symbolic("s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(1)},
         };

@@ -6,8 +6,10 @@
 
 typedef struct GenerationFacts {
     std::vector<int> i_sigma;
+    int i_liouville = 0;
     int i_phi = 0;
     int i_mu = 0;
+    bool has_nu = false;
 } GenerationFacts;
 
 typedef struct GenerationConstraintExtraArg {
@@ -43,7 +45,11 @@ static bool bad_formula(GenerationFacts facts)
 {
     /* Avoid generating C-8: J_2µ == φσµ */
     facts_vector_helper(facts.i_sigma, 1, 0);
-    if ((facts.i_phi > 0) && (facts.i_sigma[0] > 0) && (facts.i_mu > 0)) {
+    if ((facts.i_phi > 0) && (facts.i_sigma[1] > 0) && (facts.i_mu > 0)) {
+        return true;
+    }
+    /* Avoid generating C23: λν_{2k} == 1 && λν_{2k+1} == λ */
+    if ((facts.i_liouville > 0) && facts.has_nu) {
         return true;
     }
     return false;
@@ -99,9 +105,10 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
             int sum_extra;
             switch (gc->leaf_type) {
                 case FormulaNode::LEAF_LIOUVILLE:
+                    assert(exp <= 1);
                     fformula = liouville();
                     sum_extra = 0;
-                    assert(exp <= 1);
+                    ffacts.i_liouville += exp;
                     break;
                 case FormulaNode::LEAF_TAUK:
                     fformula = tau(extra_k);
@@ -128,9 +135,9 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
                     sum_extra = extra_k;
                     break;
                 case FormulaNode::LEAF_KSI:
+                    assert(extra_k >= 2);
                     fformula = ksi_k(extra_k);
                     sum_extra = extra_k;
-                    assert(extra_k >= 2);
                     break;
                 case FormulaNode::LEAF_MU:
                     fformula = mobius_k(extra_k);
@@ -139,16 +146,19 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
                     assert(exp <= 2);
                     break;
                 case FormulaNode::LEAF_NU:
-                    fformula = nu_k(extra_k);
-                    sum_extra = 1;
-                    ffacts.i_mu += exp;
+                    if (facts.has_nu) {
+                        return;
+                    }
                     assert(extra_k >= 2);
                     assert(exp <= 1);
+                    fformula = nu_k(extra_k);
+                    sum_extra = 1;
+                    ffacts.has_nu |= true;
                     break;
                 case FormulaNode::LEAF_ZETAK:
+                    assert(exp <= 1);
                     fformula = zeta_1();
                     sum_extra = 1;
-                    assert(exp <= 1);
                     break;
                 default:
                     assert(false); /* Unknown leaf */
@@ -203,7 +213,7 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
         .lines = NULL,
         .lines_count = 0,
         .min_sum = 0,
-        .max_sum = 10*generation_constraints.max_sum,
+        .max_sum = 6*(generation_constraints.max_sum+generation_constraints.max_score),
         .max_score = 1,
     };
     add_relations(manager, latex, zeta_constraints,
