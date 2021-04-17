@@ -115,7 +115,7 @@ public:
     };
 
     enum LeafType { LEAF_THETA, LEAF_ZETAK, LEAF_MU, LEAF_NU, LEAF_RHO,
-                    LEAF_SIGMA, LEAF_KSI, LEAF_SIGMA_PRIME, LEAF_TAUK, LEAF_PSI,
+                    LEAF_SIGMA, LEAF_XI, LEAF_SIGMA_PRIME, LEAF_TAUK, LEAF_PSI,
                     LEAF_JORDAN_T, LEAF_LIOUVILLE,
                     LEAF_UNKNOWN
                 };
@@ -209,8 +209,8 @@ protected:
                     }
                 }
                 break;
-            case LEAF_KSI:
-                ret = (latex ? "\\ksi" : "ξ");
+            case LEAF_XI:
+                ret = (latex ? "\\xi" : "ξ");
                 if (leaf_extra.k.is_symbolic()) {
                     ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
                 } else {
@@ -566,7 +566,7 @@ public:
         assert( (   (!extra.k.is_symbolic() && (extra.k.extract_value()== 0))
                  && (!extra.l.is_symbolic() && (extra.l.extract_value()== 0)))
                 || type==LEAF_MU || type==LEAF_NU || type==LEAF_SIGMA || type==LEAF_SIGMA_PRIME
-                || type==LEAF_ZETAK|| type==LEAF_JORDAN_T || type==LEAF_PSI || type==LEAF_TAUK || type==LEAF_KSI
+                || type==LEAF_ZETAK|| type==LEAF_JORDAN_T || type==LEAF_PSI || type==LEAF_TAUK || type==LEAF_XI
                 || type==LEAF_RHO
               );
         formula_type = FORM_LEAF;

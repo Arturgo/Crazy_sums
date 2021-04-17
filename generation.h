@@ -10,6 +10,7 @@ typedef struct GenerationFacts {
     int i_phi = 0;
     int i_mu = 0;
     bool has_nu = false;
+    bool has_xi = false;
 } GenerationFacts;
 
 typedef struct GenerationConstraintExtraArg {
@@ -134,10 +135,14 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
                     fformula = sigma_prime_k(extra_k);
                     sum_extra = extra_k;
                     break;
-                case FormulaNode::LEAF_KSI:
+                case FormulaNode::LEAF_XI:
+                    if (facts.has_xi) {
+                        return; /* Avoid generating C26: ξ_kξ_l=ξ_k, k<=l */
+                    }
                     assert(extra_k >= 2);
-                    fformula = ksi_k(extra_k);
+                    fformula = xi_k(extra_k);
                     sum_extra = extra_k;
+                    ffacts.has_xi |= true;
                     break;
                 case FormulaNode::LEAF_MU:
                     fformula = mobius_k(extra_k);

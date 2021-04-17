@@ -304,7 +304,7 @@ FArith nb_divisors() {
     return tau(2);
 }
 
-FArith ksi_k(size_t k) {
+FArith xi_k(size_t k) {
     FArith res = {
         .A = FArithMatrix(k, k),
         .u = FArithMatrix(k, 1)
