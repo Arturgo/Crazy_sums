@@ -114,7 +114,7 @@ public:
         }
     };
 
-    enum LeafType { LEAF_BETA, LEAF_THETA, LEAF_ZETAK, LEAF_MU, LEAF_NU, LEAF_RHO,
+    enum LeafType { LEAF_THETA, LEAF_ZETAK, LEAF_MU, LEAF_NU, LEAF_RHO,
                     LEAF_SIGMA, LEAF_KSI, LEAF_SIGMA_PRIME, LEAF_TAUK, LEAF_PSI,
                     LEAF_JORDAN_T, LEAF_LIOUVILLE,
                     LEAF_UNKNOWN
@@ -205,17 +205,6 @@ protected:
                 } else {
                     auto value = leaf_extra.k.extract_value();
                     if (value != 2) {
-                        ret += "_" + std::to_string(value);
-                    }
-                }
-                break;
-            case LEAF_BETA:
-                ret = (latex ? "\\beta" : "β");
-                if (leaf_extra.k.is_symbolic()) {
-                    ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
-                } else {
-                    auto value = leaf_extra.k.extract_value();
-                    if (value != 1) {
                         ret += "_" + std::to_string(value);
                     }
                 }
@@ -490,10 +479,6 @@ public:
         return leaf_type == other->leaf_type;
     }
 
-    bool isBeta() const {
-        return isLeafOfType(LEAF_BETA);
-    }
-
     bool isMu() const {
         return isLeafOfType(LEAF_MU);
     }
@@ -580,7 +565,7 @@ public:
     NodeLeaf(LeafType type, LeafExtraArg extra) {
         assert( (   (!extra.k.is_symbolic() && (extra.k.extract_value()== 0))
                  && (!extra.l.is_symbolic() && (extra.l.extract_value()== 0)))
-                || type==LEAF_BETA || type==LEAF_MU || type==LEAF_NU || type==LEAF_SIGMA || type==LEAF_SIGMA_PRIME
+                || type==LEAF_MU || type==LEAF_NU || type==LEAF_SIGMA || type==LEAF_SIGMA_PRIME
                 || type==LEAF_ZETAK|| type==LEAF_JORDAN_T || type==LEAF_PSI || type==LEAF_TAUK || type==LEAF_KSI
                 || type==LEAF_RHO
               );

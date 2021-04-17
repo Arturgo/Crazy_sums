@@ -16,7 +16,6 @@ static constexpr GenerationConstraintLine generation_constraints_lines[] = {
     {FormulaNode::LEAF_TAUK       ,       0, 2,       {2, 2}},
     {FormulaNode::LEAF_THETA      ,       0, 1,       {}},
     {FormulaNode::LEAF_JORDAN_T   ,       0, 1,       {1, 2}},
-    {FormulaNode::LEAF_BETA       ,       0, 1,       {1, 3}},
     {FormulaNode::LEAF_SIGMA      ,       0, 2,       {1, 3}},
     {FormulaNode::LEAF_SIGMA_PRIME,       0, 2,       {1, 3}},
     {FormulaNode::LEAF_KSI        ,       0, 1,       {2, 3}},

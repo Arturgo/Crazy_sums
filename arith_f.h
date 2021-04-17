@@ -331,10 +331,12 @@ FArith psi_k(size_t k) {
  *                Useless functions                     *
  ********************************************************/
 
+/* We use directly liouville && sigma_prime_k */
 FArith beta_k(size_t k) {
     return sigma_prime_k(k) * liouville();
 }
 
+/* We use directly nu_k */
 FArith precompose_with_kth_power(FArith f, size_t k) {
     return f * nu_k(k);
 }

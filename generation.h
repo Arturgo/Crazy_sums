@@ -6,8 +6,6 @@
 
 typedef struct GenerationFacts {
     std::vector<int> i_sigma;
-    std::vector<int> i_sigma_prime;
-    int i_liouville = 0;
     int i_phi = 0;
     int i_mu = 0;
 } GenerationFacts;
@@ -48,14 +46,6 @@ static bool bad_formula(GenerationFacts facts)
     if ((facts.i_phi > 0) && (facts.i_sigma[0] > 0) && (facts.i_mu > 0)) {
         return true;
     }
-    /* Avoid generating λσ'_k=β_k */
-    if (facts.i_liouville > 0) {
-        for (size_t idx=0; idx<facts.i_sigma_prime.size(); idx++) {
-            if (facts.i_sigma_prime[idx] > 0) {
-                return true;
-            }
-        }
-    }
     return false;
 }
 
@@ -67,7 +57,8 @@ static HFormula name_append_component(const HFormula& name, FormulaNode::LeafTyp
 }
 
 static void add_relations(RelationGenerator &manager, Latex& latex,
-                          const GenerationConstraint& generation_constraints, size_t constraint_idx,
+                          const GenerationConstraint& generation_constraints,
+                          size_t constraint_idx, int extra_k, int extra_l,
                           const FArith& formula, const HFormula& name, int sum, int score,
                           GenerationFacts facts)
 {
@@ -77,13 +68,27 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
 
     if (constraint_idx < generation_constraints.lines_count) {
         const GenerationConstraintLine* gc = &generation_constraints.lines[constraint_idx];
+        extra_k = max(extra_k, gc->extra_constraint.min_k);
+        extra_l = max(extra_l, gc->extra_constraint.min_l);
+        if (extra_l > gc->extra_constraint.max_l) {
+            add_relations(manager, latex, generation_constraints,
+                          constraint_idx, extra_k+1, 0,
+                          formula, name, sum, score, facts);
+            return;
+        }
+        if (extra_k > gc->extra_constraint.max_k) {
+            add_relations(manager, latex, generation_constraints,
+                          constraint_idx+1, 0, 0,
+                          formula, name, sum, score, facts);
+            return;
+        }
+
         if (gc->min_exp == 0) {
-            add_relations(manager, latex, generation_constraints, constraint_idx+1,
+            add_relations(manager, latex, generation_constraints,
+                          constraint_idx, extra_k, extra_l+1,
                           formula, name, sum, score, facts);
         }
 
-        for (int extra_k=gc->extra_constraint.min_k; extra_k<=gc->extra_constraint.max_k; extra_k++) {
-        for (int extra_l=gc->extra_constraint.min_l; extra_l<=gc->extra_constraint.max_l; extra_l++) {
         for (int exp=gc->min_exp; exp<=gc->max_exp; exp++) {
             if (exp == 0) {
                 continue;
@@ -96,7 +101,6 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
                 case FormulaNode::LEAF_LIOUVILLE:
                     fformula = liouville();
                     sum_extra = 0;
-                    ffacts.i_liouville += exp;
                     assert(exp <= 1);
                     break;
                 case FormulaNode::LEAF_TAUK:
@@ -114,10 +118,6 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
                         ffacts.i_phi += exp;
                     }
                     break;
-                case FormulaNode::LEAF_BETA:
-                    fformula = beta_k(extra_k);
-                    sum_extra = extra_k;
-                    break;
                 case FormulaNode::LEAF_SIGMA:
                     fformula = sigma_k(extra_k);
                     sum_extra = extra_k;
@@ -126,7 +126,6 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
                 case FormulaNode::LEAF_SIGMA_PRIME:
                     fformula = sigma_prime_k(extra_k);
                     sum_extra = extra_k;
-                    facts_vector_helper(ffacts.i_sigma_prime, extra_k, exp);
                     break;
                 case FormulaNode::LEAF_KSI:
                     fformula = ksi_k(extra_k);
@@ -158,9 +157,10 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
             HFormula nname = name_append_component(name, gc->leaf_type, extra_k, extra_l, exp);
             int ssum = sum + (sum_extra * exp);
             int sscore = score + extra_k + extra_l + exp;
-            add_relations(manager, latex, generation_constraints, constraint_idx+1,
+            add_relations(manager, latex, generation_constraints,
+                          constraint_idx, extra_k, extra_l+1,
                           fformula, nname, ssum, sscore, ffacts);
-        }}}
+        }
     } else {
         if ((score == 0) || bad_formula(facts)) {
             return;
@@ -206,10 +206,12 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
         .max_sum = 10*generation_constraints.max_sum,
         .max_score = 1,
     };
-    add_relations(manager, latex, zeta_constraints, 0,
+    add_relations(manager, latex, zeta_constraints,
+                  0, 0, 0,
                   formula, name, sum, 1, facts);
 
     /* Add all other relations */
-    add_relations(manager, latex, generation_constraints, 0,
+    add_relations(manager, latex, generation_constraints,
+                  0, 0, 0,
                   formula, name, sum, score, facts);
 }
