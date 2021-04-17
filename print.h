@@ -114,10 +114,10 @@ public:
         }
     };
 
-    enum LeafType { LEAF_MU_K, LEAF_SIGMA, LEAF_THETA, LEAF_ZETAK,
+    enum LeafType { LEAF_BETA, LEAF_MU_K, LEAF_SIGMA, LEAF_SIGMA_PRIME, LEAF_THETA, LEAF_ZETAK,
                     LEAF_JORDAN_T, LEAF_LIOUVILLE, LEAF_NBDIVISORS,
-                    LEAF_TAUK, LEAF_BETA_K, LEAF_KSI_K, LEAF_PSI_K,
-                    LEAF_NU_K, LEAF_RHO_K_T, LEAF_SIGMA_PRIM_K,
+                    LEAF_TAUK, LEAF_KSI_K, LEAF_PSI_K,
+                    LEAF_NU_K, LEAF_RHO_K_T,
                     LEAF_UNKNOWN
                 };
     typedef struct LeafExtraArg {
@@ -165,7 +165,7 @@ protected:
                     }
                 }
                 break;
-            case LEAF_SIGMA_PRIM_K:
+            case LEAF_SIGMA_PRIME:
                 ret = (latex ? "\\sigma{}'" : "σ'");
                 if (leaf_extra.k.is_symbolic()) {
                     ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
@@ -213,7 +213,7 @@ protected:
                     }
                 }
                 break;
-            case LEAF_BETA_K:
+            case LEAF_BETA:
                 ret = (latex ? "\\beta" : "β");
                 if (leaf_extra.k.is_symbolic()) {
                     ret += (latex ? "_{" : "_{") + leaf_extra.k.extract_symbol().str + (latex ? "}" : "}");
@@ -494,12 +494,20 @@ public:
         return leaf_type == other->leaf_type;
     }
 
+    bool isBeta() const {
+        return isLeafOfType(LEAF_BETA);
+    }
+
     bool isMu() const {
         return isLeafOfType(LEAF_MU_K);
     }
 
     bool isSigma() const {
         return isLeafOfType(LEAF_SIGMA);
+    }
+
+    bool isSigmaPrime() const {
+        return isLeafOfType(LEAF_SIGMA_PRIME);
     }
 
     bool isTheta() const {
@@ -572,9 +580,10 @@ public:
     NodeLeaf(LeafType type, LeafExtraArg extra) {
         assert( (   (!extra.k.is_symbolic() && (extra.k.extract_value()== 0))
                  && (!extra.l.is_symbolic() && (extra.l.extract_value()== 0)))
-                || type==LEAF_MU_K || type==LEAF_BETA_K || type==LEAF_SIGMA || type==LEAF_ZETAK || type==LEAF_JORDAN_T
-                || type==LEAF_PSI_K || type==LEAF_TAUK || type==LEAF_KSI_K || type==LEAF_NU_K || type==LEAF_RHO_K_T
-                || type==LEAF_SIGMA_PRIM_K);
+                || type==LEAF_BETA || type==LEAF_MU_K || type==LEAF_SIGMA || type==LEAF_SIGMA_PRIME || type==LEAF_ZETAK
+                || type==LEAF_JORDAN_T || type==LEAF_PSI_K || type==LEAF_TAUK || type==LEAF_KSI_K || type==LEAF_NU_K
+                || type==LEAF_RHO_K_T
+              );
         formula_type = FORM_LEAF;
         leaf_type = type;
         leaf_extra = extra;
