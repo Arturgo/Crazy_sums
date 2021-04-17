@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <vector>
-using namespace std;
 
 class SmallInt {
     typedef int_fast64_t smallint;
@@ -17,7 +16,7 @@ public:
         n = val;
     }
 
-    string str() const {
+    std::string str() const {
         return std::to_string(n);
     }
 
@@ -103,7 +102,7 @@ using SomeInt = SmallInt;
 
 SomeInt gcd(const SomeInt& a, const SomeInt& b) {
   if(b == SomeInt(0))
-    return max(a, -a);
+    return std::max(a, -a);
   return gcd(b, a % b);
 }
 
@@ -118,7 +117,7 @@ bool normalFactorCanReduce(const SomeInt& a) {
   return a != SomeInt(1);
 }
 
-string toString(const SomeInt& a) {
+std::string toString(const SomeInt& a) {
   return a.str();
 }
 
@@ -167,8 +166,8 @@ public:
 
     friend std::string toString(const Mod& a) {
         if(a.value > modulo / 2)
-            return to_string(a.value - modulo);
-        return to_string(a.value);
+            return std::to_string(a.value - modulo);
+        return std::to_string(a.value);
     }
 
     friend std::ostream& operator << (std::ostream& out, const Mod &r) {
@@ -177,7 +176,7 @@ public:
     }
 };
 
-vector<Mod> inverseTable;
+std::vector<Mod> inverseTable;
 
 void precomputeInverses() {
     inverseTable.push_back(Mod(0));

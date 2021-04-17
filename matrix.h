@@ -415,13 +415,13 @@ Matrix<T> tensor(Matrix<T> a, Matrix<T> b) {
 template<typename T>
 std::ostream& operator << (std::ostream& out,const Matrix<T>& mat) {
    for(size_t iRow = 0;iRow < mat.nbRows();iRow++) {
-      cout << ((iRow == 0) ? "[" : " ") << "[ ";
+      out << ((iRow == 0) ? "[" : " ") << "[ ";
       for(size_t iCol = 0;iCol < mat.nbCols();iCol++) {
          T value = mat.coeffs[iRow].getCoeff(iCol);
-         cout << (is_zero(value) ? KGRY : "") << std::setw(2) << value
+         out << (is_zero(value) ? KGRY : "") << std::setw(2) << value
               << (is_zero(value) ? KRST : "") << " ";
       }
-      cout << "]" << ((iRow+1 == mat.nbRows()) ? "]" : "") << endl;
+      out << "]" << ((iRow+1 == mat.nbRows()) ? "]" : "") << endl;
    }
    return out;
 }

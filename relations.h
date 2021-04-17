@@ -7,7 +7,6 @@
 #include <random>
 #include <shared_mutex>
 #include <thread>
-#include "berlekamp.h"
 #include "matrix.h"
 #include "polynomial.h"
 #include "print.h"
@@ -287,7 +286,7 @@ void RelationGenerator::printRelations() {
    auto t4 = std::chrono::high_resolution_clock::now();
 
    std::chrono::duration<float> e43 = t4 - t3;
-   cerr << "Relations computed. " << "Size: " << relations_matrix.nbRows()<< " * " << relations_matrix.nbCols()
+   cerr << "Relations computed. " << "Size: " << relations_matrix.nbRows() << " * " << relations_matrix.nbCols()
         << KGRY << " (" << e43.count() << "s)" KRST << endl;
 
 

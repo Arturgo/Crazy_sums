@@ -328,13 +328,13 @@ FArith psi_k(size_t k) {
 }
 
 FArith precompose_with_kth_power(FArith f, size_t k) {
-	FArithMatrix A = f.A;
-	for(size_t i = 0;i < k - 1;i++) {
-		A = A * f.A;
-	}
+    FArithMatrix A = f.A;
+    for(size_t i = 0;i < k - 1;i++) {
+        A = A * f.A;
+    }
     return {
-		.A = A,
-		.u = f.u
+        .A = A,
+        .u = f.u
     };
 }
 
@@ -346,6 +346,3 @@ FArith precompose_with_kth_power(FArith f, size_t k) {
 FArith beta_k(size_t k) {
     return sigma_prime_k(k) * liouville();
 }
-
-/* We use directly nu_k */
-

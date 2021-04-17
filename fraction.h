@@ -1,5 +1,8 @@
 #pragma once
+#include <cassert>
 #include "bigint.h"
+#include "print.h"
+using namespace std;
 
 template<typename T>
 class Fraction {

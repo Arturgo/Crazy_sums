@@ -1,7 +1,7 @@
 constexpr int PRIME_MODULO = 997;
 
-#include <fstream>
 #include <iostream>
+#include "hformula.h"
 #include "generation.h"
 #include "print.h"
 #include "relations.h"
@@ -19,7 +19,7 @@ static constexpr GenerationConstraintLine generation_constraints_lines[] = {
     {FormulaNode::LEAF_SIGMA      ,       0, 2,       {1, 3}},
     {FormulaNode::LEAF_SIGMA_PRIME,       0, 2,       {1, 3}},
     {FormulaNode::LEAF_XI         ,       0, 1,       {2, 3}},
-    {FormulaNode::LEAF_NU         ,       0, 0,       {2, 2}},
+    {FormulaNode::LEAF_NU         ,       0, 1,       {2, 2}},
     //{FormulaNode::LEAF_MU         ,       0, 2,       {1, 2}},
     //{FormulaNode::LEAF_ZETAK      ,       0, 1,       {1, 3}},
 };

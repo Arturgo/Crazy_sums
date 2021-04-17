@@ -1,5 +1,4 @@
 #pragma once
-
 #include <unordered_map>
 #include "arith_f.h"
 #include "relations.h"
@@ -49,7 +48,7 @@ static bool bad_formula(GenerationFacts facts)
     if ((facts.i_phi > 0) && (facts.i_sigma[1] > 0) && (facts.i_mu > 0)) {
         return true;
     }
-    /* Avoid generating C23: λν_{2k} == 1 && λν_{2k+1} == λ */
+    /* Avoid generating C-23: λν_{2k} == 1 && λν_{2k+1} == λ */
     if ((facts.i_liouville > 0) && facts.has_nu) {
         return true;
     }
@@ -137,7 +136,7 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
                     break;
                 case FormulaNode::LEAF_XI:
                     if (facts.has_xi) {
-                        return; /* Avoid generating C26: ξ_kξ_l=ξ_k, k<=l */
+                        return; /* Avoid generating C-26: ξ_kξ_l=ξ_k, k<=l */
                     }
                     assert(extra_k >= 2);
                     fformula = xi_k(extra_k);

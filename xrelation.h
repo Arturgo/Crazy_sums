@@ -3,7 +3,10 @@
 #include <unordered_map>
 #include <set>
 #include <sstream>
-#include "print.h"
+#include <vector>
+#include "fraction.h"
+#include "hformula.h"
+using namespace std;
 
 #define DEBUG_TIME_CLASSIFY 0
 #if DEBUG_TIME_CLASSIFY
