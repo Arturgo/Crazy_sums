@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include <memory>
 #include <regex>
 #if defined(__GNUC__) && !defined(__llvm__) && (__GNUC__ < 8)
@@ -569,7 +570,9 @@ public:
     }
 
     NodeLeaf(LeafType type, LeafExtraArg extra) {
-        assert(type==LEAF_MU_K || type==LEAF_BETA_K || type==LEAF_SIGMA || type==LEAF_ZETAK || type==LEAF_JORDAN_T
+        assert( (   (!extra.k.is_symbolic() && (extra.k.extract_value()== 0))
+                 && (!extra.l.is_symbolic() && (extra.l.extract_value()== 0)))
+                || type==LEAF_MU_K || type==LEAF_BETA_K || type==LEAF_SIGMA || type==LEAF_ZETAK || type==LEAF_JORDAN_T
                 || type==LEAF_PSI_K || type==LEAF_TAUK || type==LEAF_KSI_K || type==LEAF_NU_K || type==LEAF_RHO_K_T
                 || type==LEAF_SIGMA_PRIM_K);
         formula_type = FORM_LEAF;

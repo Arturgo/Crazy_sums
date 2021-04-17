@@ -2,157 +2,63 @@ constexpr int PRIME_MODULO = 997;
 
 #include <fstream>
 #include <iostream>
-#include "arith_f.h"
+#include "generation.h"
 #include "print.h"
 #include "relations.h"
 using namespace std;
 
-static HFormula name_append_component(const HFormula& name, FormulaNode::LeafType component, int power)
-{
-    return HFormulaProduct(name, HFormulaPower(HFormulaLeaf(component), power));
-}
+/*
+ * Edit me as you wish to change the generated L-functions
+ */
+static constexpr GenerationConstraintLine generation_constraints_lines[] = {
+    /* leaf_type                 , min_exp, max_exp, [extra min/max k, [min/max l]] */
+    {FormulaNode::LEAF_LIOUVILLE ,       0, 1,       {}},
+    {FormulaNode::LEAF_NBDIVISORS,       0, 1,       {}},
+    {FormulaNode::LEAF_THETA     ,       0, 1,       {}},
+    {FormulaNode::LEAF_JORDAN_T  ,       0, 1,       {1, 2}},
+    {FormulaNode::LEAF_SIGMA     ,       0, 2,       {1, 3}},
+    {FormulaNode::LEAF_MU_K      ,       0, 0,       {1, 2}},
+    {FormulaNode::LEAF_ZETAK     ,       0, 0,       {1, 3}},
+};
 
-static HFormula name_append_component(const HFormula& name, FormulaNode::LeafType component,
-                                      int extra, int power)
-{
-    return HFormulaProduct(name, HFormulaPower(
-               HFormulaLeaf(component, (FormulaNode::LeafExtraArg){.k = extra, .l = 0}), power));
-}
-
-static HFormula name_make_lfunc(const HFormula& name, int exponent)
-{
-    return HFormulaLFunction(name, exponent);
-}
-
-static void add_relation(RelationGenerator &manager, Latex& latex,
-                         int i_lambda, int i_tau, int i_theta, int i_phi, int i_J_2,
-                         int i_sigma_1, int i_sigma_2, int i_sigma_3, int i_mu,
-                         int i_zeta1,
-                         int min_s, int max_s)
-{
-   auto t1 = std::chrono::high_resolution_clock::now();
-
-   assert(i_mu <= 2);
-   assert(i_lambda <= 1);
-
-   FArith formula =
-      pow(liouville(), i_lambda)
-    * pow(nb_divisors(), i_tau)
-    * pow(theta(), i_theta)
-    * pow(phi(), i_phi)
-    * pow(jordan_totient(2), i_J_2)
-    * pow(sigma_k(1), i_sigma_1)
-    * pow(sigma_k(2), i_sigma_2)
-    * pow(sigma_k(3), i_sigma_3)
-    * pow(mobius(), i_mu)
-    * pow(zeta_1(), i_zeta1)
-   ;
-
-   auto t2 = std::chrono::high_resolution_clock::now();
-   std::chrono::duration<float> initial_elapsed = t2 - t1;
-
-   HFormula name = HFormulaOne(); /* https://youtu.be/i8knduidWCw */
-   name = name_append_component(name, FormulaNode::LEAF_LIOUVILLE, i_lambda);
-   name = name_append_component(name, FormulaNode::LEAF_NBDIVISORS, i_tau);
-   name = name_append_component(name, FormulaNode::LEAF_THETA, i_theta);
-   name = name_append_component(name, FormulaNode::LEAF_JORDAN_T, 1, i_phi);
-   name = name_append_component(name, FormulaNode::LEAF_JORDAN_T, 2, i_J_2);
-   name = name_append_component(name, FormulaNode::LEAF_SIGMA, 1, i_sigma_1);
-   name = name_append_component(name, FormulaNode::LEAF_SIGMA, 2, i_sigma_2);
-   name = name_append_component(name, FormulaNode::LEAF_SIGMA, 3, i_sigma_3);
-   name = name_append_component(name, FormulaNode::LEAF_MU_K, 1, i_mu);
-   name = name_append_component(name, FormulaNode::LEAF_ZETAK, i_zeta1, ((i_zeta1 > 0) ? 1 : 0));
-
-   for (int s=min_s; s<=max_s; s++) {
-      auto t3 = std::chrono::high_resolution_clock::now();
-      FArith fformula = formula * pow(inv_id(), s);
-      Fraction<Univariate> frac = fformula.get_fraction();
-      auto t4 = std::chrono::high_resolution_clock::now();
-      HFormula fname = name_make_lfunc(name, s);
-
-      manager.addFraction(fname, frac);
-
-      if (1) {
-         std::chrono::duration<float>  elapsed = t4 - t3;
-         if (s == min_s) {
-             elapsed += initial_elapsed;
-         }
-         cout << KBLD << fname << KRST
-              << KGRY "   [" << fformula.A.nbCols() << "]  (" << elapsed.count() << "s)" KRST << endl;
-      }
-      if (0) {
-         cout << frac << endl;
-         fname.get()->print_full(latex.stream, 1);
-      }
-   }
-}
+/*
+ * Edit me as you wish to change the generated L-functions
+ */
+static constexpr GenerationConstraint generation_constraints = {
+    .lines = generation_constraints_lines,
+    .lines_count = sizeof(generation_constraints_lines)/sizeof(generation_constraints_lines[0]),
+    .min_sum = 0,
+    .max_sum = 8,
+    .max_score = 6,
+};
 
 int main([[maybe_unused]] int argc, [[maybe_unused]] char *argv[]) {
-   precomputeInverses();
-   X.setCoeff(1, 1);
-   U.setCoeff(0, 1);
-   x = Fraction<Univariate>(X);
-   u = Fraction<Univariate>(U);
-   z = Fraction<Univariate>(Z);
-   Latex latex;
+    precomputeInverses();
+    X.setCoeff(1, 1);
+    U.setCoeff(0, 1);
+    x = Fraction<Univariate>(X);
+    u = Fraction<Univariate>(U);
+    z = Fraction<Univariate>(Z);
+    Latex latex;
 
-   int maxi_lambda = 1;
-   int maxi_tau = 1;
-   int maxi_theta = 0;
-   int maxi_phi = 1;
-   int maxi_J_2 = 0;
-   int maxi_sigma_1 = 2;
-   int maxi_sigma_2 = 1;
-   int maxi_sigma_3 = 1;
-   int maxi_mu = 0;
-   int maxi_zeta1 = 0;
-   int maxi_sum = 8;
+    auto t1 = std::chrono::high_resolution_clock::now();
+    RelationGenerator manager(&latex);
+    add_relations(manager, latex, generation_constraints);
 
-   auto t1 = std::chrono::high_resolution_clock::now();
+    auto t2 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> e21 = t2 - t1;
+    cout.flush();
+    cerr << "Data generated ("<< manager.rational_fractions.size() << " fractions)"
+         << KGRY << " (" << e21.count() << "s)" KRST << endl;
 
-   RelationGenerator manager(&latex);
+    auto t3 = std::chrono::high_resolution_clock::now();
+    manager.prepareBasis();
+    auto t4 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float> e43 = t4 - t3;
+    cerr << "Basis prepared ("<< manager.polynomial_basis.size() << " polynomials)"
+         << KGRY << " (" << e43.count() << "s)" KRST << endl;
 
-   add_relation(manager, latex, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2+maxi_sum*10);
+    manager.printRelations();
 
-   for(int i_lambda = 0;i_lambda <= maxi_lambda;i_lambda++) {
-   for(int i_tau = 0;i_tau <= maxi_tau;i_tau++) {
-   for(int i_theta = 0;i_theta <= maxi_theta;i_theta++) {
-   for(int i_phi = 0;i_phi <= maxi_phi;i_phi++) {
-   for(int i_J_2 = 0;i_J_2 <= maxi_J_2;i_J_2++) {
-   for(int i_sigma_1 = 0;i_sigma_1 <= maxi_sigma_1;i_sigma_1++) {
-   for(int i_sigma_2 = 0;i_sigma_2 <= maxi_sigma_2;i_sigma_2++) {
-   for(int i_sigma_3 = 0;i_sigma_3 <= maxi_sigma_3;i_sigma_3++) {
-   for(int i_mu = 0;i_mu <= maxi_mu;i_mu++) {
-   for(int i_zeta1 = 0;i_zeta1 <= maxi_zeta1;i_zeta1++) {
-      int sum = 0*i_lambda + 1*i_tau + 0*i_theta + 1*i_phi + 2*i_J_2
-                + 1*i_sigma_1 + 2*i_sigma_2 + 3*i_sigma_3 + 0*i_mu
-                + 1*i_zeta1;
-      if ((i_phi > 0) && (i_sigma_1 > 0) && (i_mu > 0)) {
-         continue; /* Avoid generating C-8: J_2µ == φσµ */
-      }
-      int sum_exponents = i_lambda+i_tau+i_theta+i_phi+i_J_2+i_sigma_1+i_sigma_2+i_sigma_3+i_mu+i_zeta1;
-      if((sum_exponents > 0) && (sum_exponents <= 6)) {
-         int min_s = sum + 2;
-         int max_s = min_s + max(0, maxi_sum);
-         add_relation(manager, latex, i_lambda, i_tau, i_theta, i_phi, i_J_2,
-                      i_sigma_1, i_sigma_2, i_sigma_3, i_mu, i_zeta1, min_s, max_s);
-      }
-   }}}}}}}}}}
-
-   auto t2 = std::chrono::high_resolution_clock::now();
-   std::chrono::duration<float> e21 = t2 - t1;
-   cout.flush();
-   cerr << "Data generated ("<< manager.rational_fractions.size() << " fractions)"
-        << KGRY << " (" << e21.count() << "s)" KRST << endl;
-
-   auto t3 = std::chrono::high_resolution_clock::now();
-   manager.prepareBasis();
-   auto t4 = std::chrono::high_resolution_clock::now();
-   std::chrono::duration<float> e43 = t4 - t3;
-   cerr << "Basis prepared ("<< manager.polynomial_basis.size() << " polynomials)"
-        << KGRY << " (" << e43.count() << "s)" KRST << endl;
-
-   manager.printRelations();
-
-   return 0;
+    return 0;
 }
