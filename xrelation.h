@@ -900,10 +900,11 @@ private:
     bool check_D24(const RelationSummary& summary, string& out_name) {
         std::string name = "D-24";
                 vector<pair<HFormula, Rational>> vect{
-            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
-                FormulaNode::LEAF_KSI, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})), FormulaNode::Symbolic("s")), Rational(1)},
-            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(1)},
-            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("k*s")), Rational(-1)},
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_KSI, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})),
+                FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("k*s")), Rational(1)},
         };
         Relation formula = Relation(vect);
         formula.classify_raw(name);
@@ -1462,7 +1463,7 @@ private:
         /* Check for D-9: this is D-18 */
         &Relation::check_D10,
         &Relation::check_D11,
-        &Relation::check_D12, // TODO !
+        &Relation::check_D12,                     // TODO
         /* Check for D-13: handled in D-15 */
         /* D-14 we won't find */
         &Relation::check_D15,
@@ -1471,16 +1472,18 @@ private:
         /* D-19 & D-20 we won't find */
         &Relation::check_D21,
         &Relation::check_D22,
-        /* D-23 PHI_K not implemented */ //TODO
+        /* D-23 PHI_K not implemented */          // TODO
         &Relation::check_D24,
         &Relation::check_D25,
         &Relation::check_D26,
         &Relation::check_D27,
         &Relation::check_D28,
-        /* D-29 form is not handle by checker  TODO ! */
+        /* D-29 form is not handled by checker */ // TODO
         &Relation::check_D30,
         /* D-31 we won't find */
+
         /* ... */
+
         /* D-35 and D-36 we won't find */
         &Relation::check_D37,
         &Relation::check_D38,
@@ -1491,6 +1494,7 @@ private:
 
         /* ... */
 
+        /* D-44 and D-45 we won't find */
         &Relation::check_D46,
         &Relation::check_D47,
         /* D-48 we won't find */
@@ -1512,8 +1516,8 @@ private:
         /* D-59 and later we won't find */
 
         /*
-            * C formulae, found with CrazySums
-            */
+         * C formulae, found with CrazySums
+         */
         &Relation::check_C1,
         &Relation::check_C11,
         &Relation::check_C13,
