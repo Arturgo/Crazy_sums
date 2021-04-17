@@ -11,14 +11,18 @@ using namespace std;
  * Edit me as you wish to change the generated L-functions
  */
 static constexpr GenerationConstraintLine generation_constraints_lines[] = {
-    /* leaf_type                 , min_exp, max_exp, [extra min/max k, [min/max l]] */
-    {FormulaNode::LEAF_LIOUVILLE ,       0, 1,       {}},
-    {FormulaNode::LEAF_NBDIVISORS,       0, 1,       {}},
-    {FormulaNode::LEAF_THETA     ,       0, 1,       {}},
-    {FormulaNode::LEAF_JORDAN_T  ,       0, 1,       {1, 2}},
-    {FormulaNode::LEAF_SIGMA     ,       0, 2,       {1, 3}},
-    {FormulaNode::LEAF_MU_K      ,       0, 0,       {1, 2}},
-    {FormulaNode::LEAF_ZETAK     ,       0, 0,       {1, 3}},
+    /* leaf_type                  , min_exp, max_exp, [extra min/max k, [min/max l]] */
+    {FormulaNode::LEAF_LIOUVILLE  ,       0, 1,       {}},
+    {FormulaNode::LEAF_TAUK       ,       0, 2,       {2, 2}},
+    {FormulaNode::LEAF_THETA      ,       0, 1,       {}},
+    {FormulaNode::LEAF_JORDAN_T   ,       0, 1,       {1, 2}},
+    {FormulaNode::LEAF_BETA       ,       0, 1,       {1, 3}},
+    {FormulaNode::LEAF_SIGMA      ,       0, 2,       {1, 3}},
+    {FormulaNode::LEAF_SIGMA_PRIME,       0, 2,       {1, 3}},
+    {FormulaNode::LEAF_KSI        ,       0, 1,       {2, 3}},
+    {FormulaNode::LEAF_MU         ,       0, 0,       {1, 2}},
+    {FormulaNode::LEAF_NU         ,       0, 0,       {2, 2}},
+    {FormulaNode::LEAF_ZETAK      ,       0, 0,       {1, 3}},
 };
 
 /*

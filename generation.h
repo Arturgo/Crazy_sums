@@ -5,8 +5,10 @@
 #include "relations.h"
 
 typedef struct GenerationFacts {
+    std::vector<int> i_sigma;
+    std::vector<int> i_sigma_prime;
+    int i_liouville = 0;
     int i_phi = 0;
-    int i_sigma_1 = 0;
     int i_mu = 0;
 } GenerationFacts;
 
@@ -32,10 +34,27 @@ typedef struct GenerationConstraint {
     int max_score;
 } GenerationConstraint;
 
+static void facts_vector_helper(std::vector<int>& vec, size_t idx, int exp) {
+    while(!(idx < vec.size())) {
+        vec.push_back(0);
+    }
+    vec[idx] += exp;
+}
+
 static bool bad_formula(GenerationFacts facts)
 {
-    if ((facts.i_phi > 0) && (facts.i_sigma_1 > 0) && (facts.i_mu > 0)) {
-        return true; /* Avoid generating C-8: J_2µ == φσµ */
+    /* Avoid generating C-8: J_2µ == φσµ */
+    facts_vector_helper(facts.i_sigma, 1, 0);
+    if ((facts.i_phi > 0) && (facts.i_sigma[0] > 0) && (facts.i_mu > 0)) {
+        return true;
+    }
+    /* Avoid generating λσ'_k=β_k */
+    if (facts.i_liouville > 0) {
+        for (size_t idx=0; idx<facts.i_sigma_prime.size(); idx++) {
+            if (facts.i_sigma_prime[idx] > 0) {
+                return true;
+            }
+        }
     }
     return false;
 }
@@ -77,11 +96,12 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
                 case FormulaNode::LEAF_LIOUVILLE:
                     fformula = liouville();
                     sum_extra = 0;
+                    ffacts.i_liouville += exp;
                     assert(exp <= 1);
                     break;
-                case FormulaNode::LEAF_NBDIVISORS:
-                    fformula = nb_divisors();
-                    sum_extra = 1;
+                case FormulaNode::LEAF_TAUK:
+                    fformula = tau(extra_k);
+                    sum_extra = extra_k;
                     break;
                 case FormulaNode::LEAF_THETA:
                     fformula = theta();
@@ -94,18 +114,37 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
                         ffacts.i_phi += exp;
                     }
                     break;
+                case FormulaNode::LEAF_BETA:
+                    fformula = beta_k(extra_k);
+                    sum_extra = extra_k;
+                    break;
                 case FormulaNode::LEAF_SIGMA:
                     fformula = sigma_k(extra_k);
                     sum_extra = extra_k;
-                    if (extra_k == 1) {
-                        ffacts.i_sigma_1 += exp;
-                    }
+                    facts_vector_helper(ffacts.i_sigma, extra_k, exp);
                     break;
-                case FormulaNode::LEAF_MU_K:
+                case FormulaNode::LEAF_SIGMA_PRIME:
+                    fformula = sigma_prime_k(extra_k);
+                    sum_extra = extra_k;
+                    facts_vector_helper(ffacts.i_sigma_prime, extra_k, exp);
+                    break;
+                case FormulaNode::LEAF_KSI:
+                    fformula = ksi_k(extra_k);
+                    sum_extra = extra_k;
+                    assert(extra_k >= 2);
+                    break;
+                case FormulaNode::LEAF_MU:
                     fformula = mobius_k(extra_k);
                     sum_extra = 0;
                     ffacts.i_mu += exp;
                     assert(exp <= 2);
+                    break;
+                case FormulaNode::LEAF_NU:
+                    fformula = nu_k(extra_k);
+                    sum_extra = 1;
+                    ffacts.i_mu += exp;
+                    assert(extra_k >= 2);
+                    assert(exp <= 1);
                     break;
                 case FormulaNode::LEAF_ZETAK:
                     fformula = zeta_1();

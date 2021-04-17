@@ -143,6 +143,30 @@ FArith operator ^ (const FArith &a, const FArith &b) {
     return res;
 }
 
+FArith one() {
+    return {
+        .A = FArithMatrix({
+            {u}
+        }),
+        .u = FArithMatrix({
+            {u}
+        })
+    };
+}
+
+FArith pow(const FArith &a, size_t exp) {
+    /* Exponentiation by squaring */
+    if (exp <= 0) {
+        return one();
+    }
+    FArith res = pow(a, exp/2);
+    res = res * res;
+    if (exp%2 != 0) {
+        res = res * a;
+    }
+    return res;
+}
+
 /* Generate some usual function */
 
 FArith id() {
@@ -181,6 +205,10 @@ FArith mobius_k(size_t k) {
     return res;
 }
 
+FArith mobius() {
+    return mobius_k(1);
+}
+
 FArith nu_k(size_t k) {
     FArith res = {
         .A = FArithMatrix(k, k),
@@ -193,35 +221,6 @@ FArith nu_k(size_t k) {
     res.A.coeffs[k - 1].setCoeff(0, u);
 
     res.u.coeffs[0].setCoeff(0, u);
-    return res;
-}
-
-
-FArith mobius() {
-    return mobius_k(1);
-}
-
-FArith one() {
-    return {
-        .A = FArithMatrix({
-            {u}
-        }),
-        .u = FArithMatrix({
-            {u}
-        })
-    };
-}
-
-FArith pow(const FArith &a, size_t exp) {
-    /* Exponentiation by squaring */
-    if (exp <= 0) {
-        return one();
-    }
-    FArith res = pow(a, exp/2);
-    res = res * res;
-    if (exp%2 != 0) {
-        res = res * a;
-    }
     return res;
 }
 
@@ -301,6 +300,10 @@ FArith tau(size_t k) {
     return res;
 }
 
+FArith nb_divisors() {
+    return tau(2);
+}
+
 FArith ksi_k(size_t k) {
     FArith res = {
         .A = FArithMatrix(k, k),
@@ -322,10 +325,6 @@ FArith rho_k_s(size_t k, size_t s) {
 
 FArith psi_k(size_t k) {
     return pow(id(), k) ^ (mobius() * mobius());
-}
-
-FArith nb_divisors() {
-    return tau(2);
 }
 
 /********************************************************
