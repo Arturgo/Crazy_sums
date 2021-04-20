@@ -1450,6 +1450,47 @@ private:
         return good;
     }
 
+    bool check_C24(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-24";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_TAUK, (FormulaNode::LeafExtraArg){.k = 2, .l = 0}),
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA_PRIME, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})
+                ), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-2*k")), Rational(-2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(-2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-k")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-k")), Rational(2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("4*s+-2*k")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
+    bool check_C25(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-25";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_LIOUVILLE),
+                HFormulaLeaf(FormulaNode::LEAF_TAUK, (FormulaNode::LeafExtraArg){.k = 2, .l = 0}),
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA_PRIME, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})
+                ), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s+-k")), Rational(-2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-k")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("4*s+-2*k")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
     bool check_C27(const RelationSummary& summary, string& out_name) {
         std::string name = "C-27";
         vector<pair<HFormula, Rational>> vect{
@@ -1585,6 +1626,9 @@ private:
         &Relation::check_C17,
         &Relation::check_C18,
         &Relation::check_C19,
+
+        &Relation::check_C24,
+        &Relation::check_C25,
 
         &Relation::check_C27,
         &Relation::check_C28,
