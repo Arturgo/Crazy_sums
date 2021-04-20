@@ -826,10 +826,26 @@ private:
     }
 
     bool check_D12(const RelationSummary& summary, string& out_name) {
-        (void) summary;
-        (void) out_name;
-        // TODO ! (also, rm D3)
-        return false;
+        std::string name = "D-12";
+        Rational nb_zeta = summary.zeta;
+        if (nb_zeta.getDenominator() != 1) {
+            return false;
+        }
+        int nb_zeta_int = nb_zeta.getNumerator().to_int();
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(HFormulaLeaf(
+                FormulaNode::LEAF_TAUK, (FormulaNode::LeafExtraArg){.k = nb_zeta_int, .l = 0})), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), -nb_zeta},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        SymbolicInstantiation::assignment assignment;
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, &assignment, -1);
+        out_name = name;
+        if (nb_zeta_int == 2) {
+            out_name = "D-3";
+        }
+        return good;
     }
 
     bool check_D15(const RelationSummary& summary, string& out_name) {
@@ -1599,6 +1615,23 @@ private:
         return good;
     }
 
+    bool check_C33(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-33";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_TAUK, (FormulaNode::LeafExtraArg){.k = 2, .l = 0}),
+                HFormulaLeaf(FormulaNode::LEAF_NU, (FormulaNode::LeafExtraArg){.k = 2, .l = 0})
+                ), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-3)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("4*s")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
 
     vector<relation_classifier> classifiers{
         /*
@@ -1609,7 +1642,7 @@ private:
 
         /* D-1 we won't find */
         /* Check for D-2: handled in D-22 */
-        &Relation::check_D3,
+        //&Relation::check_D3,
         /* Check for D-4: handled in D-6 */
         /* Check for D-5: handled in D-52 */
         &Relation::check_D6,
@@ -1690,6 +1723,7 @@ private:
         &Relation::check_C30,
         &Relation::check_C31,
         &Relation::check_C32,
+        &Relation::check_C33,
     };
 
 public:

@@ -91,6 +91,10 @@ public:
     bool operator >= (const SmallInt& other) const {
         return n >= other.n;
     }
+
+    int to_int() {
+        return n;
+    }
 };
 
 #if 0
