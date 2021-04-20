@@ -400,52 +400,52 @@ private:
         SomeInt uninstanticated_var_times = 0;
         SomeInt sum = 0;
         for (auto n_symbol: n_symbols) {
-            vector<string> tmp = instantiate_split_helper(n_symbol, "*");
             SomeInt times;
-            string name;
-            if (tmp.size() == 1) {
-                if (tmp[0][0] == '-') {
-                    times = -1;
-                    name = tmp[0].substr(1);
-                } else {
-                    times = 1;
-                    name = tmp[0];
-                }
+            string n_symbol2;
+            if (n_symbol[0] == '-') {
+                times = -1;
+                n_symbol2 = n_symbol.substr(1);
             } else {
-                assert(tmp.size() == 2);
-                char c = tmp[0][0];
-                if ((c >= '0' && c <= '9') || c == '-') {
-                    /* Case: -4*x */
-                    times = std::stoi(tmp[0]);
+                times = 1;
+                n_symbol2 = n_symbol;
+            }
+            vector<string> tmp = instantiate_split_helper(n_symbol2, "*");
+            string name;
+            bool found_unkown_var = false;
+            
+            for (size_t pos = 0; pos < tmp.size(); pos++) {
+                if (tmp[pos][0] >= '0' && tmp[pos][0] <= '9') {
+                    times = times * std::stoi(tmp[pos]);
                 } else {
-                    /* Case: k*x */
-                    auto it = instantiation.variables.find(tmp[0]);
+                    auto it = instantiation.variables.find(tmp[pos]);
                     if (it != instantiation.variables.end()) {
-                        times = (it->second);
-                    } else {
+                        times = times * (it->second);
+                    } else if (found_unkown_var) {
                         /* We do not handle when the first part has not been instantiated. Do better someday? */
                         if (debug>=0) { cerr << string(debug, ' ') << __func__ << " I " KGRY "UPR" KRST << endl; }
                         return false;
+                    } else {
+                        name = tmp[pos];
+                        found_unkown_var = true;
                     }
                 }
-                name = tmp[1];
             }
-
-            /* Safety: check the name contains a single alpha character */
-            assert((name.length() == 1) && (isalpha(name[0])));
-
-            auto it = instantiation.variables.find(name);
-            if (it != instantiation.variables.end()) {
-                sum += times * (it->second);
-            } else {
+            assert (!found_unkown_var || name.size() == 1);
+            if (found_unkown_var) {
                 if (uninstanticated_var_cnt > 0) {
-                    /* We cannot instantiate more than one, bail out for now. Do better someday? */
-                    if (debug>=0) { cerr << string(debug, ' ') << __func__ << " I " KGRY "TMV" KRST << endl; }
-                    return false;
+                    if (name[0] == uninstanticated_var_name[0]) {
+                        uninstanticated_var_times += times;
+                    } else {
+                        /* We cannot instantiate more than one, bail out for now. Do better someday? */
+                        if (debug>=0) { cerr << string(debug, ' ') << __func__ << " I " KGRY "TMV" KRST << endl; }
+                        return false;
+                    }
                 }
                 uninstanticated_var_name = name;
                 uninstanticated_var_times = times;
                 uninstanticated_var_cnt++;
+            } else {
+                sum += times;
             }
         }
 
