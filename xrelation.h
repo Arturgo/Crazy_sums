@@ -1582,6 +1582,23 @@ private:
         return good;
     }
 
+    bool check_C32(const RelationSummary& summary, string& out_name) {
+        std::string name = "C-32";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_THETA),
+                HFormulaLeaf(FormulaNode::LEAF_NU, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0})
+                ), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("k*s")), Rational(-2)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*k*s")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+
 
     vector<relation_classifier> classifiers{
         /*
@@ -1672,6 +1689,7 @@ private:
         &Relation::check_C29,
         &Relation::check_C30,
         &Relation::check_C31,
+        &Relation::check_C32,
     };
 
 public:
