@@ -839,8 +839,7 @@ private:
         };
         Relation formula = Relation(vect);
         formula.classify_raw(name);
-        SymbolicInstantiation::assignment assignment;
-        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, &assignment, -1);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
         out_name = name;
         if (nb_zeta_int == 2) {
             out_name = "D-3";
@@ -1174,7 +1173,24 @@ private:
         out_name = name;
         return good;
     }
-
+    bool check_C43(const RelationSummary& summary, string& out_name) {
+        std::string name = "D-43";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_SIGMA_PRIME, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0}),
+                HFormulaLeaf(FormulaNode::LEAF_NU, (FormulaNode::LeafExtraArg){.k = 2, .l = 0})
+                ), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-2*k")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-k")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+    
     bool check_D46(const RelationSummary& summary, string& out_name) {
         std::string name = "D-46";
         vector<pair<HFormula, Rational>> vect{
@@ -1277,6 +1293,23 @@ private:
                 FormulaNode::Symbolic("s")), Rational(1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
             {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("s")), Rational(1)},
+        };
+        Relation formula = Relation(vect);
+        formula.classify_raw(name);
+        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
+        out_name = name;
+        return good;
+    }
+    
+    bool check_D55(const RelationSummary& summary, string& out_name) {
+        std::string name = "D-55";
+        vector<pair<HFormula, Rational>> vect{
+            {HFormulaLFunction(HFormulaProduct(
+                HFormulaLeaf(FormulaNode::LEAF_TAUK, (FormulaNode::LeafExtraArg){.k = 2, .l = 0}),
+                HFormulaLeaf(FormulaNode::LEAF_NU, (FormulaNode::LeafExtraArg){.k = 2, .l = 0})
+                ), FormulaNode::Symbolic("s")), Rational(1)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-3)},
+            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("4*s")), Rational(1)},
         };
         Relation formula = Relation(vect);
         formula.classify_raw(name);
@@ -1580,24 +1613,6 @@ private:
         return good;
     }
 
-    bool check_C31(const RelationSummary& summary, string& out_name) {
-        std::string name = "C-31";
-        vector<pair<HFormula, Rational>> vect{
-            {HFormulaLFunction(HFormulaProduct(
-                HFormulaLeaf(FormulaNode::LEAF_SIGMA_PRIME, (FormulaNode::LeafExtraArg){.k = FormulaNode::Symbolic("k"), .l = 0}),
-                HFormulaLeaf(FormulaNode::LEAF_NU, (FormulaNode::LeafExtraArg){.k = 2, .l = 0})
-                ), FormulaNode::Symbolic("s")), Rational(1)},
-            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-2*k")), Rational(-1)},
-            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s")), Rational(-1)},
-            {HFormulaLFunction(HFormulaOne(), FormulaNode::Symbolic("2*s+-k")), Rational(1)},
-        };
-        Relation formula = Relation(vect);
-        formula.classify_raw(name);
-        bool good = is_instance_of(RelationSummary::no_early_bailout, summary, formula, NULL, -1);
-        out_name = name;
-        return good;
-    }
-
     bool check_C32(const RelationSummary& summary, string& out_name) {
         std::string name = "C-32";
         vector<pair<HFormula, Rational>> vect{
@@ -1642,7 +1657,7 @@ private:
 
         /* D-1 we won't find */
         /* Check for D-2: handled in D-22 */
-        //&Relation::check_D3,
+        /* Check for D-3: handled in D-12 */
         /* Check for D-4: handled in D-6 */
         /* Check for D-5: handled in D-52 */
         &Relation::check_D6,
@@ -1650,7 +1665,7 @@ private:
         /* Check for D-9: this is D-18 */
         &Relation::check_D10,
         &Relation::check_D11,
-        &Relation::check_D12,                     // TODO
+        &Relation::check_D12,
         /* Check for D-13: handled in D-15 */
         /* D-14 we won't find */
         &Relation::check_D15,
@@ -1678,9 +1693,7 @@ private:
         &Relation::check_D40,
         &Relation::check_D41,
         &Relation::check_D42,
-
-        /* ... */
-
+        &Relation::check_C43,
         /* D-44 and D-45 we won't find */
         &Relation::check_D46,
         &Relation::check_D47,
@@ -1695,9 +1708,7 @@ private:
         &Relation::check_D52,
         &Relation::check_D53,
         /* D-54 we won't find */
-
-        /* ... */
-
+        &Relation::check_D55,
         /* D-56 & D-57 we won't find */
         &Relation::check_D58,
         /* D-59 and later we won't find */
@@ -1721,7 +1732,7 @@ private:
         &Relation::check_C28,
         &Relation::check_C29,
         &Relation::check_C30,
-        &Relation::check_C31,
+        /* Is in fact D43 */
         &Relation::check_C32,
         &Relation::check_C33,
     };

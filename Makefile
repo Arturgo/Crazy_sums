@@ -10,7 +10,7 @@ ifndef CXX_TOOL
 CXX_TOOL := g++
 endif
 ifeq ($(CXX_TOOL), g++)
-	LFLAGS += -lstdc++fs
+	LFLAGS += -lstdc++
 endif
 ifeq ($(CXX_TOOL), clang)
 	LFLAGS += -lstdc++
