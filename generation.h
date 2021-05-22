@@ -139,6 +139,7 @@ static void add_relations(RelationGenerator &manager, Latex& latex,
                         return; /* Avoid generating C-26: ξ_kξ_l=ξ_k, k<=l */
                     }
                     assert(extra_k >= 2);
+                    assert(exp <= 1);
                     fformula = xi_k(extra_k);
                     sum_extra = extra_k;
                     ffacts.has_xi |= true;
